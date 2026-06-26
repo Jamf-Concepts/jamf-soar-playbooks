@@ -127,7 +127,7 @@
         "version": "8.5.0.248"
     },
     "create_time": "2026-06-25T15:38:30.394937+00:00",
-    "draft_mode": true,
+    "draft_mode": false,
     "labels": [
         "*"
     ],
