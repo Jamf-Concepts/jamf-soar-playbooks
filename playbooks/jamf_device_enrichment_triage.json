@@ -21,7 +21,7 @@
                     "targetPort": "1_in"
                 }
             ],
-            "hash": "8ad3ff019feec1aaca6355f9a703ec6683cd0e47",
+            "hash": "688d7bbfbb933cff4f581fb602f4fd8b6b69f37e",
             "nodes": {
                 "0": {
                     "data": {
@@ -64,7 +64,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "test1"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -126,7 +126,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-06-25T15:38:30.394937+00:00",
+    "create_time": "2026-06-26T09:25:48.396223+00:00",
     "draft_mode": false,
     "labels": [
         "*"

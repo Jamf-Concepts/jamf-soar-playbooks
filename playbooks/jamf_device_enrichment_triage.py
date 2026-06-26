@@ -39,7 +39,7 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test 4"])
+    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"])
 
     return
 
