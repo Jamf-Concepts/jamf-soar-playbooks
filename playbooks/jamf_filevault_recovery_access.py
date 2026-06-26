@@ -124,8 +124,8 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     for get_local_user_accounts_1_result_item in get_local_user_accounts_1_result_data:
         if get_local_user_accounts_1_result_item[0] is not None:
             parameters.append({
-                "device_type": "computer",
                 "device_id": get_local_user_accounts_1_result_item[0],
+                "device_type": "computer",
                 "context": {'artifact_id': get_local_user_accounts_1_result_item[1]},
             })
 
@@ -158,10 +158,10 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
+                "password": " <your-recovery-lock-password>",
+                "device_id": get_device_by_serial_1_result_item[0],
                 "operation": "set",
                 "device_type": "computer",
-                "device_id": get_device_by_serial_1_result_item[0],
-                "password": " <your-recovery-lock-password>",
                 "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
             })
 
@@ -194,11 +194,11 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     for set_recovery_lock_1_result_item in set_recovery_lock_1_result_data:
         if set_recovery_lock_1_result_item[0] is not None:
             parameters.append({
-                "device_type": "computer",
                 "pin": "000000",
                 "message": " <your-lock-screen-message> ",
-                "phone_number": "<your-support-phone>",
                 "device_id": set_recovery_lock_1_result_item[0],
+                "device_type": "computer",
+                "phone_number": "<your-support-phone>",
                 "context": {'artifact_id': set_recovery_lock_1_result_item[1]},
             })
 
@@ -288,9 +288,9 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
+                "confirm": get_device_by_serial_1_result_item[0],
                 "device_id": get_device_by_serial_1_result_item[0],
                 "device_type": "computer",
-                "confirm": get_device_by_serial_1_result_item[0],
                 "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
             })
 
