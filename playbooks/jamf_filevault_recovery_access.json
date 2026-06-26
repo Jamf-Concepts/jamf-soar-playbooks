@@ -83,7 +83,7 @@
                     "targetPort": "1_in"
                 }
             ],
-            "hash": "a37751a979725f4349b01424cd240b8485632443",
+            "hash": "5104b5bca8923529419b5f95b3c2ce535843750c",
             "nodes": {
                 "0": {
                     "data": {
@@ -502,7 +502,7 @@
                             "device_id": "get_device_by_serial_1:action_result.data.*.id",
                             "device_type": "computer",
                             "operation": "set",
-                            "password": " <your-recovery-lock-password>"
+                            "password": "TestRecovery123"
                         },
                         "requiredParameters": [
                             {
@@ -564,8 +564,8 @@
                         "parameters": {
                             "device_id": "set_recovery_lock_1:action_result.data.*.device_id",
                             "device_type": "computer",
-                            "message": " <your-lock-screen-message> ",
-                            "phone_number": "<your-support-phone>",
+                            "message": "SOAR test lock ",
+                            "phone_number": "555-0100",
                             "pin": "000000"
                         },
                         "requiredParameters": [
@@ -630,7 +630,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-06-26T13:20:28.536907+00:00",
+    "create_time": "2026-06-26T13:54:40.049344+00:00",
     "draft_mode": false,
     "labels": [
         "*"

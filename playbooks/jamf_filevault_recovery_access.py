@@ -158,7 +158,7 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
-                "password": " <your-recovery-lock-password>",
+                "password": "TestRecovery123",
                 "device_id": get_device_by_serial_1_result_item[0],
                 "operation": "set",
                 "device_type": "computer",
@@ -195,10 +195,10 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
         if set_recovery_lock_1_result_item[0] is not None:
             parameters.append({
                 "pin": "000000",
-                "message": " <your-lock-screen-message> ",
+                "message": "SOAR test lock ",
                 "device_id": set_recovery_lock_1_result_item[0],
                 "device_type": "computer",
-                "phone_number": "<your-support-phone>",
+                "phone_number": "555-0100",
                 "context": {'artifact_id': set_recovery_lock_1_result_item[1]},
             })
 
