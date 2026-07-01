@@ -39,7 +39,7 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=get_filevault_recovery_key_1)
+    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=decision_2)
 
     return
 
@@ -212,7 +212,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=prompt_1)
+    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=code_1)
 
     return
 
@@ -271,6 +271,9 @@ def decision_1(action=None, success=None, container=None, results=None, handle=N
         wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
         return
 
+    # check for 'else' condition 2
+    code_2(action=action, success=success, container=container, results=results, handle=handle)
+
     return
 
 
@@ -305,6 +308,120 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ################################################################################
 
     phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["test1"])
+
+    return
+
+
+@phantom.playbook_block()
+def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_1() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(
+          container=container,
+          title="FileVault recovery access - device secured",
+          content=(
+              "Recovery context retrieved and handled securely. "
+              "Recovery lock and device lock have been queued for the target Mac. "
+              "NOTE: the FileVault recovery key is sensitive and is intentionally NOT included here. "
+              "TODO: replace this note with a Slack notification to a restricted security channel."
+          ),
+          note_type="general",
+      )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_1_called", value="True")
+
+    prompt_1(container=container)
+
+    return
+
+
+@phantom.playbook_block()
+def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_2() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(
+          container=container,
+          title="FileVault recovery - wipe NOT approved",
+          content=(
+              "The analyst declined the wipe at the approval prompt. "
+              "The device remains secured (recovery lock + device lock queued); no erase was performed."
+          ),
+          note_type="general",
+      )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_2_called", value="True")
+
+    return
+
+
+@phantom.playbook_block()
+def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_2() called")
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        conditions_dps=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        name="decision_2:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        get_filevault_recovery_key_1(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # check for 'else' condition 2
+    code_3(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_3() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    
+    phantom.add_note(
+          container=container,
+          title="FileVault recovery - no device found",
+          content=(
+              "No Jamf device matched the provided serial number. "
+              "Recovery access playbook stopped; no actions were taken. "
+              "Verify the serial and re-run."
+          ),
+          note_type="general",
+      )   
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_3_called", value="True")
 
     return
 
