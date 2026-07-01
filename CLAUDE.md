@@ -115,16 +115,13 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
-- **Input sub-playbooks with paired inputs (e.g. `device_id` + `device_type`)
-  must zip them, not cross them.** SOAR collects each `playbook_input:` datapath
-  separately and auto-generates a *nested* loop (Cartesian product), so for a
-  multi-device user the wrong id/type pairs resolve to unrelated devices and the
-  action silently hits the wrong device. Fix: rebuild `parameters` by `zip`-ing
-  in each action's Custom Code. **Input contract:** callers must pass
-  `device_id` and `device_type` as paired, equal-length lists (the engine
-  asserts this). Flat Automation playbooks are immune — they read both from one
-  action-result `collect2`, which returns aligned tuples. (See the
-  `Jamf - Device Enrichment (Input)` engine; PR #9 C1.)
+- **`get compliance status` needs a Jamf privilege.** It calls
+  `/api/v1/conditional-access/device-compliance-information/...`; the OAuth API role
+  must have the conditional-access / device-compliance read privilege (and the tenant
+  must have conditional access configured) or it returns HTTP 403 `INVALID_PRIVILEGE`.
+  Verified live 2026-07-01 — the compliance-drift template (#4) depends on this.
+- **Verified connector datapaths:** resolvers return device id at `data.*.id` and type
+  at `data.*.type` (NOT `jamf_device_id`/`device_type`); compliance is `data.*.compliance_state`.
 
 ---
 
@@ -135,3 +132,4 @@ how blocks chain (one action's output datapath feeds the next action's input).
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |
 | 2026-06-30 | `playbooks/jamf_compliance_drift_remediation.{py,json}`, `playbooks/README.md` | New (branch `playbook/compliance-drift-remediation`, issue #4): first hand-authored template. Correct-first backbone (redeploy framework → blank push → update inventory → flag EA → re-check compliance → decide corrected? → contain (quarantine group + lock) if not → analyst approval prompt with irreversibility warning → gated wipe). Applies #8 naming/block conventions; all values are `<...>` placeholders, no secrets. `.py` validated (`py_compile`); `.json` is a 20-node best-effort VPE graph (`draft_mode: true`) to re-save in the editor. |
 | 2026-07-01 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | Datapaths + params corrected against the LIVE connector "Jamf Pro" v1.0.0 (SOAR app id 4, queried via REST at localhost:8443). Fixes: resolver device id `action_result.data.*.jamf_device_id`→`.id`, device type `.device_type`→`.type`; compliance decision `.compliant`(bool)→`.compliance_state`=="COMPLIANT"(string); update-extension-attribute param `extension_attribute_id`→`ea_id`; wipe `confirm` boolean→required string "true". Action names (`wipe device`, `add to static group`, `update extension attribute`) confirmed correct as-is (the 2026-06-09 handover's `erase_device`/`add_to_group`/`set_extension_attribute` were never the implemented names). Logic test still green. Still confirm the `compliance_state` enum value and wipe `confirm` token against a real device response. |
+| 2026-07-01 | `playbooks/README.md`, `CLAUDE.md` | Documented the live-verified datapaths and the `get compliance status` prerequisite (conditional-access / device-compliance API privilege) after a live run in the SOAR test env: resolver + `get device by serial` succeeded against the real tenant (serial HC2F60R07T); `get compliance status` returned HTTP 403 `INVALID_PRIVILEGE` (Jamf API-role privilege gap, not a playbook bug). |

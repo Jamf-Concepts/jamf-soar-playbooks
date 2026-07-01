@@ -31,9 +31,18 @@ is irreversible.
 - Approver role — `prompt_escalate_wipe`
 - Re-check settle delay — `WAIT_MINUTES` in the `.py`
 
-**Verify against the installed connector version:** the device-id output field
-(`jamf_device_id`) and the compliance field (`compliant`) used in the re-check
-decision — adjust the datapaths if the app exposes different names.
+**Datapaths (verified against the live connector "Jamf Pro" v1.0.0):** the resolver
+returns the device id at `action_result.data.*.id` and type at `action_result.data.*.type`;
+`get compliance status` returns `action_result.data.*.compliance_state` (a string).
+Confirm the exact `compliance_state` value ("COMPLIANT") and the wipe `confirm` token
+against a real device response.
+
+**Prerequisite — Jamf API privilege for compliance:** `get compliance status` calls
+`GET /api/v1/conditional-access/device-compliance-information/{type}/{id}`. The OAuth
+API role used by the Jamf asset MUST have the conditional-access / device-compliance
+read privilege, and the tenant must have conditional access configured — otherwise the
+action returns **HTTP 403 `INVALID_PRIVILEGE`** and the re-check step fails. Grant this
+in Jamf Pro → Settings → API Roles and Clients before running the playbook.
 
 **Safety:** the `prompt_escalate_wipe → decide_wipe_approved` gate must never be
 removed. The wipe is reached only on an explicit `Approve` response.
