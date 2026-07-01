@@ -58,7 +58,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 2, "functionName": "get_compliance_status_initial", "id": "3",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -71,7 +71,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 3, "functionName": "get_configuration_profiles", "id": "4",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -84,7 +84,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 4, "functionName": "get_extension_attributes", "id": "5",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -97,7 +97,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 5, "functionName": "redeploy_management_framework", "id": "6",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -110,7 +110,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 6, "functionName": "send_blank_push", "id": "7",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -123,7 +123,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 7, "functionName": "update_inventory", "id": "8",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -136,8 +136,8 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 8, "functionName": "flag_under_review", "id": "9",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type", "extension_attribute_id": "<your-flag-ea-id>", "value": "<under-review>" },
-                        "requiredParameters": [ { "data_type": "string", "field": "device_id" }, { "data_type": "string", "field": "extension_attribute_id" } ],
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type", "ea_id": "<your-flag-ea-id>", "value": "<under-review>" },
+                        "requiredParameters": [ { "data_type": "string", "field": "device_id" }, { "data_type": "string", "field": "ea_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
                     "errors": {}, "id": "9", "type": "action", "warnings": {}, "x": 1000, "y": 1160
@@ -149,7 +149,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 9, "functionName": "recheck_compliance", "id": "10",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -163,7 +163,7 @@
                             {
                                 "conditionIndex": 0, "conditionKey": "condition_key_0", "logic": "and", "type": "if",
                                 "comparisons": [
-                                    { "comparisonKey": "comparison_key_0", "op": "==", "param": "recheck_compliance:action_result.data.*.compliant", "value": "True" }
+                                    { "comparisonKey": "comparison_key_0", "op": "==", "param": "recheck_compliance:action_result.data.*.compliance_state", "value": "COMPLIANT" }
                                 ]
                             },
                             { "conditionIndex": 1, "conditionKey": "condition_key_1", "logic": "and", "type": "else", "comparisons": [] }
@@ -187,7 +187,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 10, "functionName": "add_to_quarantine_group", "id": "13",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "group_name": "<your-quarantine-group>" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "group_name": "<your-quarantine-group>" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" }, { "data_type": "string", "field": "group_name" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -200,7 +200,7 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 11, "functionName": "lock_device", "id": "14",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type", "message": "<your-return-message>", "phone_number": "<your-callback-number>" },
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type", "message": "<your-return-message>", "phone_number": "<your-callback-number>" },
                         "requiredParameters": [ { "data_type": "string", "field": "device_id" } ],
                         "tab": "byConnector", "type": "action"
                     },
@@ -251,8 +251,8 @@
                         "connector": "Jamf Pro", "connectorConfigs": ["<your-jamf-asset>"],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d", "connectorVersion": "v1",
                         "functionId": 12, "functionName": "wipe_device", "id": "18",
-                        "parameters": { "device_id": "resolve_device:action_result.data.*.jamf_device_id", "device_type": "resolve_device:action_result.data.*.device_type", "confirm": true },
-                        "requiredParameters": [ { "data_type": "string", "field": "device_id" }, { "data_type": "boolean", "field": "confirm" } ],
+                        "parameters": { "device_id": "resolve_device:action_result.data.*.id", "device_type": "resolve_device:action_result.data.*.type", "confirm": "true" },
+                        "requiredParameters": [ { "data_type": "string", "field": "device_id" }, { "data_type": "string", "field": "confirm" } ],
                         "tab": "byConnector", "type": "action"
                     },
                     "errors": {}, "id": "18", "type": "action", "warnings": {}, "x": 620, "y": 2120
@@ -267,7 +267,7 @@
                     "errors": {}, "id": "19", "type": "utility", "warnings": {}, "x": 980, "y": 2120
                 }
             },
-            "notes": "Hand-authored template graph (Issue #4). Open and re-save in the Visual Playbook Editor to regenerate the canonical layout, ports, and hash. Verify the device-id output field (jamf_device_id) and the compliance field (compliant) against the installed jamf-splunk-soar app version."
+            "notes": "Hand-authored template graph (Issue #4). Open and re-save in the Visual Playbook Editor to regenerate the canonical layout, ports, and hash. Datapaths verified against live connector 'Jamf Pro' v1.0.0 (app id 4): resolver id=action_result.data.*.id, type=action_result.data.*.type; compliance=compliance_state. Confirm the compliance_state enum value and the wipe 'confirm' token against a real device response."
         },
         "input_spec": null,
         "output_spec": null,

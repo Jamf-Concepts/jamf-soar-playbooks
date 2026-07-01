@@ -29,16 +29,20 @@ Customer-config points (replace the <...> placeholders on import)
 -----------------------------------------------------------------
 - Jamf asset name ...... `assets=["<your-jamf-asset>"]` on every action block
 - Quarantine group ...... `group_name` in `add_to_quarantine_group`
-- Flag extension attr ... `extension_attribute_id` / value in `flag_under_review`
+- Flag extension attr ... `ea_id` / value in `flag_under_review`
 - Approver role ......... `role` in `prompt_escalate_wipe`
 - Re-check delay ........ `WAIT_MINUTES` below (force-check-in settle time)
 
-Connector-contract notes (verify against the installed app version)
--------------------------------------------------------------------
-- Device id output datapath is assumed to be `...action_result.data.*.jamf_device_id`
-  (contains: `jamf device id`) per the build blueprint. Older builds exposed `.id`.
-- The compliance field used in `decide_corrected` is assumed `...data.*.compliant`.
-  Confirm the real field name from `get compliance status` output and adjust.
+Connector-contract notes (verified against live connector "Jamf Pro" v1.0.0, app id 4)
+--------------------------------------------------------------------------------------
+- Resolver output: device id is `action_result.data.*.id` and device type is
+  `action_result.data.*.type` (NOT `jamf_device_id` / `device_type`).
+- `get compliance status` returns `action_result.data.*.compliance_state` (string) —
+  the decision compares it to "COMPLIANT". Confirm the exact enum against a real
+  device response (also: compliance_vendor, applicable).
+- `update extension attribute` param is `ea_id` (+ optional `ea_name`, `value`).
+- `wipe device` `confirm` is a REQUIRED STRING (set to "true"); confirm the exact
+  accepted token against the connector.
 - Notifications use `phantom.add_note` (container note) so the template needs no
   extra chat asset. Swap in your chat connector's "send message" action if desired.
 """
@@ -91,8 +95,8 @@ def _device_params(container, results):
     resolved = phantom.collect2(
         container=container,
         datapath=[
-            "resolve_device:action_result.data.*.jamf_device_id",
-            "resolve_device:action_result.data.*.device_type",
+            "resolve_device:action_result.data.*.id",
+            "resolve_device:action_result.data.*.type",
             "resolve_device:action_result.parameter.context.artifact_id",
         ],
         action_results=results,
@@ -235,7 +239,8 @@ def flag_under_review(action=None, success=None, container=None, results=None, h
     parameters = _device_params(container, results)
     for p in parameters:
         # Customer-config: the EA used to flag a device as under review, and the value.
-        p["extension_attribute_id"] = "<your-flag-ea-id>"
+        # Connector param is `ea_id` (verified against the live connector).
+        p["ea_id"] = "<your-flag-ea-id>"
         p["value"] = "<under-review>"
 
     phantom.act(
@@ -275,14 +280,16 @@ def decide_corrected(action=None, success=None, container=None, results=None, ha
     """Corrected? Compliant now -> close; still non-compliant -> contain."""
     phantom.debug("decide_corrected() called")
 
-    # NOTE: confirm the real compliance field name from `get compliance status`.
+    # Verified against the live connector: `get compliance status` returns
+    # `compliance_state` (string), not a `compliant` boolean. Confirm the exact
+    # value string ("COMPLIANT") against a real device's response.
     corrected = phantom.decision(
         container=container,
         conditions=[
-            ["recheck_compliance:action_result.data.*.compliant", "==", True]
+            ["recheck_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"]
         ],
         conditions_dps=[
-            ["recheck_compliance:action_result.data.*.compliant", "==", True]
+            ["recheck_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"]
         ],
         name="decide_corrected:condition_1",
         delimiter=None,
@@ -463,8 +470,9 @@ def wipe_device(action=None, success=None, container=None, results=None, handle=
 
     parameters = _device_params(container, results)
     for p in parameters:
-        # `confirm` is the action's safety flag — it must be True, not the device id.
-        p["confirm"] = True
+        # Connector's `confirm` is a REQUIRED STRING safety flag (verified live),
+        # not a boolean. Confirm the exact accepted value against the connector.
+        p["confirm"] = "true"
 
     phantom.act(
         "wipe device",

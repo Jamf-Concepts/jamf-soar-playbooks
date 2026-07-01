@@ -30,6 +30,14 @@ paired `.json` (the visual diagram SOAR draws) is a best-effort version that
 should be opened and re-saved once in SOAR's Visual Playbook Editor to tidy up
 the layout.
 
+**Update (2026-07-01):** we checked the template against the *real* Jamf connector
+that's actually installed in the SOAR test environment (not a guess) and corrected
+the data wiring: the connector returns a device's id as `id` (not `jamf_device_id`),
+its type as `type`, and compliance as a `compliance_state` text field (not a
+true/false `compliant`); the "flag" attribute uses `ea_id`; and the wipe safety
+`confirm` is a text value. The action names we used were already right. The
+playbook's logic still passes its flow test after the fixes.
+
 ---
 
 ## 2026-06-08 — Repo skeleton created
