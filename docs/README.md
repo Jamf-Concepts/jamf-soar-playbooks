@@ -6,34 +6,31 @@ people who aren't deep in the playbooks.
 
 ---
 
-## 2026-07-06 — First playbook: Device Enrichment & Triage (in review)
+## 2026-06-30 — First playbook template: Compliance Drift / MDM Tamper
 
-The first real playbook landed (PR #9). It's **read-only** — it looks a device
-up and writes a tidy summary note onto the case; it doesn't change anything, so
-there's no approval gate needed.
+Added the first real playbook template under `playbooks/` (issue #4), on the
+`playbook/compliance-drift-remediation` branch:
 
-It's built in two pieces on purpose:
+- **`jamf_compliance_drift_remediation.py` / `.json`** — responds to a device
+  flagged as non-compliant or MDM-tampered. Unlike a "contain first" flow, this
+  one **tries to fix the device first** (re-establish MDM control, force a
+  check-in, refresh inventory, flag it as under review), then **re-checks**. If
+  the device is healthy again, it just notes that and stops. Only if it's *still*
+  broken does it quarantine and lock the device — and a full wipe happens **only**
+  after an analyst clicks Approve on a prompt that spells out the wipe is
+  permanent and irreversible.
+- **`playbooks/README.md`** — an index of templates and how to adapt them.
 
-- **`Jamf - Device Enrichment (Input)`** — the reusable "engine." Hand it a
-  device and it gathers everything (device details, compliance, groups, installed
-  apps, config profiles, local accounts, extension attributes), formats a
-  summary, and hands it back. The other playbooks we build will call this instead
-  of each rebuilding the same lookups.
-- **`Jamf - Device Enrichment and Triage`** — the entry point. It finds the
-  device (by username), calls the engine, and writes the summary as a note on the
-  case.
+Everything in the template is a clearly-marked placeholder (Jamf asset,
+quarantine group, the flag attribute, approver role) — no real names, no
+secrets. It follows the naming/safety conventions agreed in issue #8.
 
-Things to know when adopting it:
+One caveat: the `.py` (the actual logic) is complete and syntax-checked, but the
+paired `.json` (the visual diagram SOAR draws) is a best-effort version that
+should be opened and re-saved once in SOAR's Visual Playbook Editor to tidy up
+the layout.
 
-- Set your Jamf asset where it says `<your-jamf-asset>`.
-- After importing, re-point the wrapper's sub-playbook block to your copy of the
-  engine (SOAR ties sub-playbooks to a specific repo; naming your Source Control
-  repo `jamf-soar-playbooks` makes the built-in reference line up).
-- It currently finds devices by **username** (from the event's `sourceUserName`
-  field). Finding by serial / name / MAC, and mobile-only steps, are planned next.
-- If you build your own playbook that calls the enrichment engine directly, pass
-  `device_id` and `device_type` as **paired, equal-length lists** (one type per
-  id) — the engine assumes they line up and now fails loudly if they don't.
+---
 
 ## 2026-06-08 — Repo skeleton created
 

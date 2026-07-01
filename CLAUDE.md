@@ -17,13 +17,9 @@ skip this step.
 ## Architecture
 
 ### Current state
-The first playbook has landed (in review, PR #9): **Device Enrichment & Triage**
-(read-only), built as a reusable **Input sub-playbook** (`Jamf - Device
-Enrichment (Input)`) plus a thin **Automation wrapper** (`Jamf - Device
-Enrichment and Triage`) that resolves the device, calls the sub-playbook, and
-writes a summary note. Playbooks live under `playbooks/` as `.py` + `.json`
-pairs. Remaining templates (lost/stolen, compromised user, IdP breach, malicious
-file, etc.) are still to build.
+Governance skeleton plus the first templates landing under `playbooks/` (one
+`.py` + `.json` pair per template). Templates are developed on feature branches
+and merged via PR — **never committed directly to `main`**.
 
 ### How it fits together
 - Each playbook is a **SOAR playbook synced via git**. SOAR clones this repo as
@@ -44,6 +40,24 @@ file, etc.) are still to build.
 | `.gitignore` | Secrets + SOAR `.tgz`/`.tar.gz` exports + Python build junk + OS/editor junk + `personal/` scratch |
 | `.github/ISSUE_TEMPLATE/new-playbook.md` | Template for proposing a playbook |
 | `docs/README.md` | Plain-English changelog per the docs rule |
+
+### File Map — Playbooks
+| File | Issue | Purpose |
+|------|-------|---------|
+| `playbooks/README.md` | — | Index of templates; authoring note (`.py` is source of truth, `.json` is a VPE graph to re-save in the editor) |
+| `playbooks/jamf_compliance_drift_remediation.py` | #4 | Compliance drift / MDM tamper: correct-first remediation, re-check, contain-if-needed, gated wipe |
+| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (20 nodes / 21 edges); `draft_mode: true` until canonicalized in the editor |
+
+### Playbook conventions (from issue #8 + benchmark research)
+- **Playbook name:** `Jamf - <Scenario>` (Title Case + dash).
+- **Block names:** imperative verbs, descriptive (`resolve_device`, `recheck_compliance`),
+  not auto-numbered (`get_device_by_serial_1`). Decision blocks read as a question.
+- **Destructive-step prompt** states the action's consequence + irreversibility in the
+  message the approver sees.
+- **Generic only:** every customer value is a `<...>` placeholder / named config point —
+  no real asset names, group ids, approver names, or secrets.
+- **Authoring:** hand-authored `.py` is the reviewable source of truth; the `.json` is a
+  best-effort VPE graph to open and re-save in the editor to regenerate ports/layout/hash.
 
 ### Planned playbook templates
 Backbone for every template: resolve device → contain → enrich/notify →
@@ -119,3 +133,4 @@ how blocks chain (one action's output datapath feeds the next action's input).
 |------|------|--------------|
 | 2026-07-06 | `playbooks/` | First playbook (#5, PR #9): **Device Enrichment & Triage** (read-only). Shipped as an **Input sub-playbook** (`Jamf - Device Enrichment (Input)`: get device + 6 enrich actions → format → `enrichment_summary` output) plus an **Automation wrapper** (`Jamf - Device Enrichment and Triage`: resolve by username → call sub-playbook → `add_note`). Asset scrubbed to `<your-jamf-asset>`. Known adaptation points: sub-playbook repo reference (`jamf-soar-playbooks/…`) must be re-linked on import; resolver reads `artifact.*.cef.sourceUserName`; serial/name/MAC + mobile branches deferred. |
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |
+| 2026-06-30 | `playbooks/jamf_compliance_drift_remediation.{py,json}`, `playbooks/README.md` | New (branch `playbook/compliance-drift-remediation`, issue #4): first hand-authored template. Correct-first backbone (redeploy framework → blank push → update inventory → flag EA → re-check compliance → decide corrected? → contain (quarantine group + lock) if not → analyst approval prompt with irreversibility warning → gated wipe). Applies #8 naming/block conventions; all values are `<...>` placeholders, no secrets. `.py` validated (`py_compile`); `.json` is a 20-node best-effort VPE graph (`draft_mode: true`) to re-save in the editor. Verify `jamf_device_id` + `compliant` datapaths against the connector. |
