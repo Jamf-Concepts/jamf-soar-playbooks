@@ -37,12 +37,29 @@ returns the device id at `action_result.data.*.id` and type at `action_result.da
 Confirm the exact `compliance_state` value ("COMPLIANT") and the wipe `confirm` token
 against a real device response.
 
-**Prerequisite — Jamf API privilege for compliance:** `get compliance status` calls
-`GET /api/v1/conditional-access/device-compliance-information/{type}/{id}`. The OAuth
-API role used by the Jamf asset MUST have the conditional-access / device-compliance
-read privilege, and the tenant must have conditional access configured — otherwise the
-action returns **HTTP 403 `INVALID_PRIVILEGE`** and the re-check step fails. Grant this
-in Jamf Pro → Settings → API Roles and Clients before running the playbook.
+### Prerequisites — Jamf API role privileges (set these BEFORE running)
+
+Each action needs specific privileges on the OAuth API role used by the Jamf asset
+(Jamf Pro → **Settings → API Roles and Clients**). Missing privileges surface as
+**HTTP 403 `INVALID_PRIVILEGE`** at runtime — grant these up front so adopters don't
+hit surprise failures. Verified live against the connector 2026-07-01.
+
+| Action in this playbook | Required API-role privilege(s) |
+|-------------------------|--------------------------------|
+| `get compliance status` | Conditional-access / device-compliance **read** (tenant must have conditional access configured) |
+| `redeploy management framework` | **Send Computer Remote Command to Install Package** + **Read Check-In** (the Check-In read is required and easy to miss — it's the usual cause of the 403) |
+| `lock device` | **Send Computer Remote Command to Lock Computer** |
+| `add to static group` | **Update Static Computer Groups** |
+| `wipe device` | **Send Computer Remote Command to Erase Device** |
+
+**Required config values (not privileges) — replace before running:**
+- `lock device` needs a real **6-digit `pin`** (the code to unlock the Mac afterward); the
+  `<your-6-digit-pin>` placeholder fails connector validation.
+- `add to static group` needs a real `group_name` (an existing static group).
+- `send blank push` / `get compliance status` etc. take the resolver's `device_id` (`data.*.id`).
+
+> **Note:** `lock device` and `wipe device` are **queued MDM commands** and, on a real
+> device, actually lock/erase it. Test against a spare/test device — never a production Mac.
 
 **Safety:** the `prompt_escalate_wipe → decide_wipe_approved` gate must never be
 removed. The wipe is reached only on an explicit `Approve` response.

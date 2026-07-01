@@ -38,6 +38,25 @@ true/false `compliant`); the "flag" attribute uses `ea_id`; and the wipe safety
 `confirm` is a text value. The action names we used were already right. The
 playbook's logic still passes its flow test after the fixes.
 
+**Update (2026-07-01) — rebuilt and proven working live.** The first hand-written
+version wouldn't open in SOAR's Visual Playbook Editor (the file format for the
+decision/prompt/note blocks is too intricate to write by hand). We rebuilt it by
+copying the structure of an already-working playbook, then **ran it live in the SOAR
+test environment against the real Jamf tenant — every step succeeded** (look up device
+→ redeploy management → force check-in → check compliance → quarantine → lock), it
+**paused for analyst approval before the wipe**, and we **denied, so nothing was
+erased**. That's a full end-to-end proof of the playbook and its safety gate.
+
+Two things we learned and wrote down so nobody trips on them:
+- **Prerequisites matter.** Each action needs specific Jamf API permissions (there's a
+  table in `playbooks/README.md`), plus real values for the quarantine group and a
+  6-digit lock PIN. Missing permissions show up as "403" errors at run time.
+- **Playbooks are built in SOAR's editor, then saved to git** — not written by hand.
+  There's now a step-by-step build sheet (`playbooks/…​.BUILD.md`) for recreating it.
+
+The committed template keeps generic `<placeholders>` (no real asset names, group
+names, or PINs) so it's safe to share; real values live only in the SOAR instance.
+
 ---
 
 ## 2026-06-08 — Repo skeleton created

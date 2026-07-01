@@ -46,7 +46,8 @@ and merged via PR — **never committed directly to `main`**.
 |------|-------|---------|
 | `playbooks/README.md` | — | Index of templates; authoring note (`.py` is source of truth, `.json` is a VPE graph to re-save in the editor) |
 | `playbooks/jamf_compliance_drift_remediation.py` | #4 | Compliance drift / MDM tamper: correct-first remediation, re-check, contain-if-needed, gated wipe |
-| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (20 nodes / 21 edges); `draft_mode: true` until canonicalized in the editor |
+| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (12 nodes / 13 edges), rebuilt to a VPE-valid schema and live-verified end-to-end |
+| `playbooks/jamf_compliance_drift_remediation.BUILD.md` | #4 | Block-by-block VPE build sheet (verified action names/datapaths/prereqs) — the reliable authoring path |
 
 ### Playbook conventions (from issue #8 + benchmark research)
 - **Playbook name:** `Jamf - <Scenario>` (Title Case + dash).
@@ -122,6 +123,20 @@ how blocks chain (one action's output datapath feeds the next action's input).
   Verified live 2026-07-01 — the compliance-drift template (#4) depends on this.
 - **Verified connector datapaths:** resolvers return device id at `data.*.id` and type
   at `data.*.type` (NOT `jamf_device_id`/`device_type`); compliance is `data.*.compliance_state`.
+- **Playbooks must be authored in the VPE (Visual Playbook Editor), then exported to git.**
+  Hand-authored `.json` graphs do NOT open — the utility/prompt/decision node schemas are
+  intricate and decision branches are mapped by an edge-level `conditions:[{index,conditionKey}]`
+  array (both branches share `<id>_out`), not by port name. SOAR blocks playbook create/delete
+  via REST (`Method not allowed`); the working route is VPE build → export → commit, or import a
+  correctly-formatted `.tgz` (py + json pair, no embedded python — the .py is a separate file).
+  To rebuild by hand, clone node schemas from an existing validated playbook.
+- **`update inventory` is mobile-only in the connector** — for computers, macOS recon runs
+  on-device via a policy, not as an MDM command; calling it for a computer fails.
+- **`lock device` / `wipe device` on a computer need a 6-digit `pin`** and their own remote-command
+  privileges; they are queued MDM commands that actually lock/erase a real device — test on a spare.
+- **Redeploy management framework 403 trap:** the API role needs BOTH `Send Computer Remote Command
+  to Install Package` AND `Read Check-In` (Jamf Pro Server Settings). The Check-In read is the
+  commonly-missed one. Full per-action privilege table is in `playbooks/README.md`.
 
 ---
 
@@ -133,3 +148,6 @@ how blocks chain (one action's output datapath feeds the next action's input).
 | 2026-06-30 | `playbooks/jamf_compliance_drift_remediation.{py,json}`, `playbooks/README.md` | New (branch `playbook/compliance-drift-remediation`, issue #4): first hand-authored template. Correct-first backbone (redeploy framework → blank push → update inventory → flag EA → re-check compliance → decide corrected? → contain (quarantine group + lock) if not → analyst approval prompt with irreversibility warning → gated wipe). Applies #8 naming/block conventions; all values are `<...>` placeholders, no secrets. `.py` validated (`py_compile`); `.json` is a 20-node best-effort VPE graph (`draft_mode: true`) to re-save in the editor. |
 | 2026-07-01 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | Datapaths + params corrected against the LIVE connector "Jamf Pro" v1.0.0 (SOAR app id 4, queried via REST at localhost:8443). Fixes: resolver device id `action_result.data.*.jamf_device_id`→`.id`, device type `.device_type`→`.type`; compliance decision `.compliant`(bool)→`.compliance_state`=="COMPLIANT"(string); update-extension-attribute param `extension_attribute_id`→`ea_id`; wipe `confirm` boolean→required string "true". Action names (`wipe device`, `add to static group`, `update extension attribute`) confirmed correct as-is (the 2026-06-09 handover's `erase_device`/`add_to_group`/`set_extension_attribute` were never the implemented names). Logic test still green. Still confirm the `compliance_state` enum value and wipe `confirm` token against a real device response. |
 | 2026-07-01 | `playbooks/README.md`, `CLAUDE.md` | Documented the live-verified datapaths and the `get compliance status` prerequisite (conditional-access / device-compliance API privilege) after a live run in the SOAR test env: resolver + `get device by serial` succeeded against the real tenant (serial HC2F60R07T); `get compliance status` returned HTTP 403 `INVALID_PRIVILEGE` (Jamf API-role privilege gap, not a playbook bug). |
+| 2026-07-01 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | **Rebuilt to a VPE-valid graph and verified live end-to-end.** Hand-authored node schemas (utility/prompt/decision) didn't open in the editor; rebuilt by cloning the validated filevault playbook's node schemas + the edge-level `conditions` branch mapping (12 nodes / 13 edges). Dropped `update inventory` (connector rejects it for computers — macOS recon is policy-based, not MDM). Ran in SOAR against the real tenant with EVERY action green (resolve → redeploy → blank push → compliance → add-to-group → lock), held at the approval prompt, wipe never fired (denied). Committed files re-genericized: `<your-jamf-asset>`, `<your-quarantine-group>`, `<your-6-digit-pin>` (real test values kept only in the SOAR copy). |
+| 2026-07-01 | `playbooks/README.md` | Added "Prerequisites — Jamf API role privileges" table (per-action privileges incl. the easy-to-miss **Read Check-In** for redeploy) + required-config-values note, so adopters configure privileges/pin/group before first run and avoid surprise 403s. |
+| 2026-07-01 | `playbooks/jamf_compliance_drift_remediation.BUILD.md` | New: block-by-block VPE build sheet (the reliable authoring path — SOAR only accepts editor-built playbooks; API create/delete are blocked). |
