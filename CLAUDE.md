@@ -17,9 +17,32 @@ skip this step.
 ## Architecture
 
 ### Current state
-This repo is currently a **governance skeleton only** — no playbooks yet. The
-first template (lost / stolen device) will drive the on-disk layout for exported
-playbooks.
+The **first playbook has landed** (issue #7, branch
+`playbook/filevault-recovery-access`): `playbooks/Jamf - FileVault Recovery
+Access (macOS).{json,py}` — a SOAR VPE export (blockly/coa `.json` + generated
+`.py`). Scenario: secured recovery access to a Mac after a compromise or during
+offboarding. Flow: resolve by serial → (device found?) → enrich (FileVault
+recovery key [SENSITIVE], local user accounts, compliance status) → secure (set
+recovery lock, lock device) → note/notify → analyst approval gate → wipe
+**only** on approval; a decline or a no-device-found path just adds a note.
+Authored in the SOAR VPE on the shared box and synced via git, then
+**export-scrubbed** for template distribution.
+
+**State of this playbook:**
+- Analyst approval gate before wipe ✅ (never auto-wipes); `wipe device`
+  `confirm` wired to `device_id` (matches the connector's #7 gate).
+- Genericized (2026-07-02): asset → `<your-jamf-asset>` (7 blocks), approver →
+  `<security-analyst-role>`, recovery-lock password / lock message / phone →
+  placeholders (a **real `TestRecovery123` password** + a test phone were
+  scrubbed), wipe prompt states irreversibility, docstring filled.
+- **Notify step is a STUB** — `code_1` adds a note with a TODO to replace it with
+  a real restricted-channel Slack notification (key never posted). Still to build.
+- **Deliberately left:** resolve serial `HNWYQ246Q2` (a real wired datapath needs
+  the #8 artifact-field contract — a hand-typed non-standard CEF path stores as a
+  literal and never resolves) and lock PIN `000000` (a `<...>` placeholder would
+  fail the connector's 6-ASCII-digit rule).
+- **Deferred to a VPE pass:** block renaming to the imperative #8 convention
+  (blocks are still `get_device_by_serial_1`, `prompt_1`, `decision_1/2`, `code_1/2/3`).
 
 ### How it fits together
 - Each playbook is a **SOAR playbook synced via git**. SOAR clones this repo as
@@ -97,6 +120,24 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
+- **A playbook is a `.py` + `.json` pair; the `.json` (blockly/coa) is
+  canonical.** SOAR's VPE drives the `.json` and regenerates the `.py`.
+  Hand-editing risks drift — for value scrubs, edit BOTH in sync (asset/param
+  values live in `coa.data.nodes.*`; `blockly_xml` does NOT carry them).
+- **Genericizing the asset is an EXPORT scrub, not a VPE edit.** The VPE asset
+  field is a dropdown of *configured* assets — you can't type `<your-jamf-asset>`.
+  So the placeholder swap is done on the committed export files (git-side) as the
+  FINAL step before sharing. After scrubbing, do NOT re-open/Save in the VPE
+  (SOAR would push its real-asset store copy and clobber the scrub) — or re-scrub.
+- **A `/` in a SOAR playbook NAME becomes a directory separator on export.** #7
+  was first named `… Key / Recovery Access …`, which git stored as an accidental
+  `playbooks/… Key /…` subdirectory. Fixed by renaming in the VPE to drop the
+  slash. Avoid `/` in playbook names.
+- **The shared box pushes to the branch from other sessions — your local can be
+  badly stale.** #7's remote advanced 9 commits (VPE saves) while the local repo
+  sat at the old base, so a scrub done locally was on obsolete, wrongly-named
+  files. ALWAYS `git fetch` and reconcile before editing/scrubbing an
+  actively-synced playbook branch (ties to the per-dev-connection rule).
 
 ---
 
@@ -104,3 +145,4 @@ how blocks chain (one action's output datapath feeds the next action's input).
 | Date | File | What Changed |
 |------|------|--------------|
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |
+| 2026-07-02 | playbooks/Jamf - FileVault Recovery Access (macOS).{json,py}, CLAUDE.md, docs/README.md | **First playbook: renamed + genericized (#7).** (1) **Renamed in the SOAR VPE** `Jamf - FileVault Key / Recovery Access (macOS)` → `Jamf - FileVault Recovery Access (macOS)` to kill the `/` that had become an accidental `playbooks/… Key /…` subdirectory on export (SOAR re-pushed clean filenames; old slashed files gone). (2) **Export-scrubbed** the `.py` + `.json` in sync for template distribution: asset `test1` → `<your-jamf-asset>` (7 blocks), approver `Sarah` → `<security-analyst-role>`, a **real recovery-lock password `TestRecovery123`** + a test lock-message + test phone `555-0100` → placeholders, wipe prompt reworded to state irreversibility (#8), docstring filled. `.json` re-validated; `.py` re-parsed; no dev values remain except the deliberately-kept serial + PIN. **Context:** local repo was 9 commits stale — the remote had advanced via SOAR VPE saves adding the resolve→(device-found?)→…→notify(note stub)→approval→wipe/decline/no-device branches; reset local to the remote tip (dropped an obsolete local scrub done on the pre-rename files) before re-scrubbing. **Still open:** notify step is a note STUB (build a restricted-channel Slack notify), serial hardcoding (blocked on #8), block renaming (VPE). |

@@ -219,7 +219,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -392,7 +392,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -452,7 +452,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -512,7 +512,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -572,7 +572,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -633,7 +633,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -669,7 +669,7 @@
                             "device_id": "get_device_by_serial_1:action_result.data.*.id",
                             "device_type": "computer",
                             "operation": "set",
-                            "password": "TestRecovery123"
+                            "password": "<your-recovery-lock-password>"
                         },
                         "requiredParameters": [
                             {
@@ -696,7 +696,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -731,8 +731,8 @@
                         "parameters": {
                             "device_id": "set_recovery_lock_1:action_result.data.*.device_id",
                             "device_type": "computer",
-                            "message": "SOAR test lock ",
-                            "phone_number": "555-0100",
+                            "message": "<your-lock-screen-message>",
+                            "phone_number": "<your-support-phone>",
                             "pin": "000000"
                         },
                         "requiredParameters": [
@@ -758,12 +758,12 @@
                         },
                         "approver": {
                             "type": "user",
-                            "value": "Sarah"
+                            "value": "<security-analyst-role>"
                         },
                         "functionId": 1,
                         "functionName": "prompt_1",
                         "id": "9",
-                        "message": " Wipe this Mac? (offboarding erase)",
+                        "message": "Approve device WIPE? This permanently erases the Mac (offboarding) and is irreversible.",
                         "parameters": [],
                         "responseTime": 30,
                         "responses": [
