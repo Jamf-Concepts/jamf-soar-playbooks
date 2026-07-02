@@ -3,7 +3,11 @@ Jamf - Compliance Drift / MDM Tamper Remediation
 Correct-first: resolve -> correct (redeploy management framework + blank push) ->
 re-check compliance -> if still non-compliant: contain (quarantine + lock) -> analyst
 approval prompt (irreversible warning) -> gated wipe. Never auto-wipe.
-Block names match the VPE graph (auto-numbered) so the .py and .json stay in sync.
+
+Block names are descriptive verbs (issue #8 convention), not auto-numbered.
+NOTE: the paired .json still carries the old auto-numbered node ids; it must be
+re-opened in the VPE, renamed to match these names, and re-exported so the two
+stay in sync (see jamf_compliance_drift_remediation.BUILD.md for the rename map).
 """
 
 import phantom.rules as phantom
@@ -14,116 +18,130 @@ from datetime import datetime, timedelta
 @phantom.playbook_block()
 def on_start(container):
     phantom.debug('on_start() called')
-    get_device_by_serial_1(container=container)
+    resolve_device(container=container)
     return
 
 
 @phantom.playbook_block()
-def get_device_by_serial_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_device_by_serial_1() called")
+def resolve_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("resolve_device() called")
     parameters = [{"serial_number": "artifact:*.cef.serialNumber"}]
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["<your-jamf-asset>"], callback=redeploy_management_framework_1)
+    phantom.act("get device by serial", parameters=parameters, name="resolve_device", assets=["<your-jamf-asset>"], callback=redeploy_framework)
     return
 
 
 def _dev(container, results):
-    data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id", "get_device_by_serial_1:action_result.data.*.type"], action_results=results)
+    data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id", "resolve_device:action_result.data.*.type"], action_results=results)
     return [{"device_id": r[0], "device_type": r[1]} for r in data if r[0] is not None]
 
 
 @phantom.playbook_block()
-def redeploy_management_framework_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("redeploy_management_framework_1() called")
-    phantom.act("redeploy management framework", parameters=_dev(container, results), name="redeploy_management_framework_1", assets=["<your-jamf-asset>"], callback=send_blank_push_1)
+def redeploy_framework(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("redeploy_framework() called")
+    phantom.act("redeploy management framework", parameters=_dev(container, results), name="redeploy_framework", assets=["<your-jamf-asset>"], callback=force_checkin)
     return
 
 
 @phantom.playbook_block()
-def send_blank_push_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("send_blank_push_1() called")
+def force_checkin(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("force_checkin() called")
     # 'update inventory' removed — connector rejects it for computers (macOS recon
     # runs on-device via policy, not MDM). redeploy + blank push force a check-in.
-    phantom.act("send blank push", parameters=_dev(container, results), name="send_blank_push_1", assets=["<your-jamf-asset>"], callback=get_compliance_status_1)
+    phantom.act("send blank push", parameters=_dev(container, results), name="force_checkin", assets=["<your-jamf-asset>"], callback=check_compliance)
     return
 
 
 @phantom.playbook_block()
-def get_compliance_status_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_compliance_status_1() called")
-    phantom.act("get compliance status", parameters=_dev(container, results), name="get_compliance_status_1", assets=["<your-jamf-asset>"], callback=decision_1)
+def check_compliance(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("check_compliance() called")
+    phantom.act("get compliance status", parameters=_dev(container, results), name="check_compliance", assets=["<your-jamf-asset>"], callback=is_compliant)
     return
 
 
 @phantom.playbook_block()
-def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_1() called")
-    # Corrected? compliant now -> end; still non-compliant -> contain
-    matched = phantom.decision(
+def is_compliant(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("is_compliant() called")
+    # Fail-safe: only CONTAIN when the compliance read SUCCEEDED and positively reports
+    # a non-compliant device. A failed/403 read (documented INVALID_PRIVILEGE case) or an
+    # empty/unknown value falls through to on_finish and is NEVER treated as non-compliant —
+    # a missing signal must not silently escalate toward containment/wipe.
+    # NOTE: the non-compliant enum value is not yet confirmed against the live connector; we
+    # escalate on "not COMPLIANT" gated by a successful read. Once the exact non-compliant
+    # token is known, tighten the second condition to an explicit equality.
+    escalate = phantom.decision(
         container=container,
-        conditions=[["get_compliance_status_1:action_result.data.*.compliance_state", "==", "COMPLIANT"]],
-        name="decision_1:condition_1",
+        conditions=[
+            ["check_compliance:action_result.status", "==", "success"],
+            ["check_compliance:action_result.data.*.compliance_state", "!=", "COMPLIANT"],
+        ],
+        name="is_compliant:condition_1",
     )
-    if matched:
-        return  # remediated -> on_finish
-    add_to_static_group_1(action=action, success=success, container=container, results=results, handle=handle)
-    return
+    if escalate:
+        quarantine_device(action=action, success=success, container=container, results=results, handle=handle)
+    return  # compliant OR failed/empty read -> on_finish (safe)
 
 
 @phantom.playbook_block()
-def add_to_static_group_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("add_to_static_group_1() called")
-    data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id"], action_results=results)
+def quarantine_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("quarantine_device() called")
+    data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id"], action_results=results)
     parameters = [{"device_id": r[0], "group_name": "<your-quarantine-group>"} for r in data if r[0] is not None]
-    phantom.act("add to static group", parameters=parameters, name="add_to_static_group_1", assets=["<your-jamf-asset>"], callback=lock_device_1)
+    phantom.act("add to static group", parameters=parameters, name="quarantine_device", assets=["<your-jamf-asset>"], callback=lock_device)
     return
 
 
 @phantom.playbook_block()
-def lock_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("lock_device_1() called")
+def lock_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("lock_device() called")
     params = _dev(container, results)
     for p in params:
         p["pin"] = "<your-6-digit-pin>"   # computers require a 6-digit unlock pin
         p["message"] = "<your-return-message>"
         p["phone_number"] = "<your-callback-number>"
-    phantom.act("lock device", parameters=params, name="lock_device_1", assets=["<your-jamf-asset>"], callback=prompt_1)
+    phantom.act("lock device", parameters=params, name="lock_device", assets=["<your-jamf-asset>"], callback=approve_wipe)
     return
 
 
 @phantom.playbook_block()
-def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("prompt_1() called")
-    message = ("Device remains non-compliant after automated correction and is contained "
-               "(locked + quarantined). Approve device WIPE? This ERASES the device and is IRREVERSIBLE.")
+def approve_wipe(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("approve_wipe() called")
+    # Message states what was ATTEMPTED, not asserted fact — the containment steps are queued
+    # MDM commands and are not confirmed applied at prompt time.
+    message = ("Device is still reported non-compliant after automated correction. Quarantine + "
+               "lock were queued (verify they applied). Approve device WIPE? This ERASES the "
+               "device and is IRREVERSIBLE.")
     response_types = [{
         "prompt": "Approve device WIPE? (irreversible)",
         "options": {"type": "list", "required": True, "choices": ["Yes", "No"]},
     }]
     phantom.prompt2(container=container, user=None, role="Administrator", message=message,
-                    respond_in_mins=30, name="prompt_1", parameters=[], response_types=response_types, callback=decision_2)
+                    respond_in_mins=30, name="approve_wipe", parameters=[], response_types=response_types, callback=is_wipe_approved)
     return
 
 
 @phantom.playbook_block()
-def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_2() called")
+def is_wipe_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("is_wipe_approved() called")
+    # Fail-safe: wipe requires an explicit "Yes". Timeout / "No" / no response all fall through
+    # to on_finish and never wipe.
     approved = phantom.decision(
         container=container,
-        conditions=[["prompt_1:action_result.summary.responses.0", "==", "Yes"]],
-        name="decision_2:condition_1",
+        conditions=[["approve_wipe:action_result.summary.responses.0", "==", "Yes"]],
+        name="is_wipe_approved:condition_1",
     )
     if approved:
-        wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
+        wipe_device(action=action, success=success, container=container, results=results, handle=handle)
     return
 
 
 @phantom.playbook_block()
-def wipe_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("wipe_device_1() called")
+def wipe_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_device() called")
     params = _dev(container, results)
     for p in params:
         p["confirm"] = "true"
-    phantom.act("wipe device", parameters=params, name="wipe_device_1", assets=["<your-jamf-asset>"])
+        p["pin"] = "<your-6-digit-pin>"   # computer erase requires a 6-digit pin (same as lock)
+    phantom.act("wipe device", parameters=params, name="wipe_device", assets=["<your-jamf-asset>"])
     return
 
 

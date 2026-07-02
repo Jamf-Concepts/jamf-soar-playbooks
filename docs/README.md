@@ -6,6 +6,35 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-02 — PR review fixes on the Compliance Drift template (#4)
+
+Ran a full multi-agent PR review on the #4 template before opening the PR and fixed
+what it found:
+
+- **Scrubbed a leak.** The build sheet (`.BUILD.md`) still named a real Jamf asset
+  and a real device serial. Replaced both with `<...>` placeholders — templates must
+  stay generic.
+- **Made a dangerous edge case safe.** The compliance check now only escalates to
+  "quarantine + lock" when the read actually *succeeds and* says non-compliant. Before,
+  a permission error / 403 (which this repo documents as a real possibility) was silently
+  treated as "non-compliant" and pushed the device toward containment. A failed read now
+  ends the run safely.
+- **Renamed the blocks** to plain descriptive verbs (`resolve_device`, `check_compliance`,
+  `approve_wipe`, …) per the agreed convention, instead of the auto-numbered defaults, and
+  fixed the docs that pointed at old/nonexistent block names.
+- **Regenerated the build sheet** to match the real 12-step playbook (earlier it described
+  an older 20-step design with steps that were since dropped, including one action the
+  connector rejects for computers).
+- Added the 6-digit PIN to the wipe step (computers need it, same as lock) and reworded the
+  approval prompt so it says containment was *queued* rather than asserting it as done.
+
+The `.json` diagram was also regenerated to match (new block names, the fail-safe check, the
+wipe PIN, the new prompt), so SOAR runs the fixed playbook without a manual rebuild. Because
+it was edited outside the editor, it's marked draft: open it once in SOAR's editor and run it
+once to confirm it loads and the wipe gate still holds — then export to lock it in.
+
+---
+
 ## 2026-06-30 — First playbook template: Compliance Drift / MDM Tamper
 
 Added the first real playbook template under `playbooks/` (issue #4), on the
@@ -13,16 +42,15 @@ Added the first real playbook template under `playbooks/` (issue #4), on the
 
 - **`jamf_compliance_drift_remediation.py` / `.json`** — responds to a device
   flagged as non-compliant or MDM-tampered. Unlike a "contain first" flow, this
-  one **tries to fix the device first** (re-establish MDM control, force a
-  check-in, refresh inventory, flag it as under review), then **re-checks**. If
-  the device is healthy again, it just notes that and stops. Only if it's *still*
-  broken does it quarantine and lock the device — and a full wipe happens **only**
-  after an analyst clicks Approve on a prompt that spells out the wipe is
-  permanent and irreversible.
+  one **tries to fix the device first** (re-establish MDM control and force a
+  check-in), then **checks compliance**. If the device is healthy again, it just
+  stops. Only if it's *still* broken does it quarantine and lock the device — and
+  a full wipe happens **only** after an analyst clicks Approve on a prompt that
+  spells out the wipe is permanent and irreversible.
 - **`playbooks/README.md`** — an index of templates and how to adapt them.
 
 Everything in the template is a clearly-marked placeholder (Jamf asset,
-quarantine group, the flag attribute, approver role) — no real names, no
+quarantine group, PIN, approver role) — no real names, no
 secrets. It follows the naming/safety conventions agreed in issue #8.
 
 One caveat: the `.py` (the actual logic) is complete and syntax-checked, but the

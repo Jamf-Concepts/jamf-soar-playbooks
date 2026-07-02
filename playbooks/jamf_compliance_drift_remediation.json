@@ -170,7 +170,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 2,
-      "functionName": "get_device_by_serial_1",
+      "functionName": "resolve_device",
       "id": "2",
       "loop": {
        "conditions": [
@@ -230,7 +230,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 3,
-      "functionName": "redeploy_management_framework_1",
+      "functionName": "redeploy_framework",
       "id": "3",
       "loop": {
        "conditions": [
@@ -258,8 +258,8 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
-       "device_type": "get_device_by_serial_1:action_result.data.*.type"
+       "device_id": "resolve_device:action_result.data.*.id",
+       "device_type": "resolve_device:action_result.data.*.type"
       },
       "requiredParameters": [
        {
@@ -291,7 +291,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 4,
-      "functionName": "send_blank_push_1",
+      "functionName": "force_checkin",
       "id": "4",
       "loop": {
        "conditions": [
@@ -319,8 +319,8 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
-       "device_type": "get_device_by_serial_1:action_result.data.*.type"
+       "device_id": "resolve_device:action_result.data.*.id",
+       "device_type": "resolve_device:action_result.data.*.type"
       },
       "requiredParameters": [
        {
@@ -352,7 +352,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 6,
-      "functionName": "get_compliance_status_1",
+      "functionName": "check_compliance",
       "id": "6",
       "loop": {
        "conditions": [
@@ -380,8 +380,8 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
-       "device_type": "get_device_by_serial_1:action_result.data.*.type"
+       "device_id": "resolve_device:action_result.data.*.id",
+       "device_type": "resolve_device:action_result.data.*.type"
       },
       "requiredParameters": [
        {
@@ -407,13 +407,19 @@
       "conditions": [
        {
         "type": "if",
-        "logic": "and",
+        "logic": "or",
         "comparisons": [
          {
           "op": "==",
-          "param": "get_compliance_status_1:action_result.data.*.compliance_state",
+          "param": "check_compliance:action_result.data.*.compliance_state",
           "value": "COMPLIANT",
           "comparisonKey": "comparison_key_7_0"
+         },
+         {
+          "op": "!=",
+          "param": "check_compliance:action_result.status",
+          "value": "success",
+          "comparisonKey": "comparison_key_7_1"
          }
         ],
         "conditionKey": "condition_key_7_if",
@@ -435,7 +441,7 @@
        }
       ],
       "functionId": 7,
-      "functionName": "decision_1",
+      "functionName": "is_compliant",
       "id": "7",
       "type": "decision"
      },
@@ -460,7 +466,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 8,
-      "functionName": "add_to_static_group_1",
+      "functionName": "quarantine_device",
       "id": "8",
       "loop": {
        "conditions": [
@@ -488,7 +494,7 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
+       "device_id": "resolve_device:action_result.data.*.id",
        "group_name": "<your-quarantine-group>"
       },
       "requiredParameters": [
@@ -525,7 +531,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 9,
-      "functionName": "lock_device_1",
+      "functionName": "lock_device",
       "id": "9",
       "loop": {
        "conditions": [
@@ -553,8 +559,8 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
-       "device_type": "get_device_by_serial_1:action_result.data.*.type",
+       "device_id": "resolve_device:action_result.data.*.id",
+       "device_type": "resolve_device:action_result.data.*.type",
        "pin": "<your-6-digit-pin>",
        "message": "<your-return-message>",
        "phone_number": "<your-callback-number>"
@@ -585,9 +591,9 @@
        "value": "Administrator"
       },
       "functionId": 10,
-      "functionName": "prompt_1",
+      "functionName": "approve_wipe",
       "id": "10",
-      "message": "Device remains non-compliant after automated correction and is contained (locked + quarantined). Approve device WIPE? This ERASES the device and is IRREVERSIBLE.",
+      "message": "Device is still reported non-compliant after automated correction. Quarantine + lock were queued (verify they applied). Approve device WIPE? This ERASES the device and is IRREVERSIBLE.",
       "parameters": [],
       "responseTime": 30,
       "responses": [
@@ -622,7 +628,7 @@
         "comparisons": [
          {
           "op": "==",
-          "param": "prompt_1:action_result.summary.responses.0",
+          "param": "approve_wipe:action_result.summary.responses.0",
           "value": "Yes",
           "comparisonKey": "comparison_key_11_0"
          }
@@ -646,7 +652,7 @@
        }
       ],
       "functionId": 11,
-      "functionName": "decision_2",
+      "functionName": "is_wipe_approved",
       "id": "11",
       "type": "decision"
      },
@@ -671,7 +677,7 @@
       "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
       "connectorVersion": "v1",
       "functionId": 12,
-      "functionName": "wipe_device_1",
+      "functionName": "wipe_device",
       "id": "12",
       "loop": {
        "conditions": [
@@ -699,9 +705,10 @@
        "pauseValue": 2
       },
       "parameters": {
-       "device_id": "get_device_by_serial_1:action_result.data.*.id",
-       "device_type": "get_device_by_serial_1:action_result.data.*.type",
-       "confirm": "true"
+       "device_id": "resolve_device:action_result.data.*.id",
+       "device_type": "resolve_device:action_result.data.*.type",
+       "confirm": "true",
+       "pin": "<your-6-digit-pin>"
       },
       "requiredParameters": [
        {
@@ -710,6 +717,10 @@
        },
        {
         "field": "confirm",
+        "data_type": "string"
+       },
+       {
+        "field": "pin",
         "data_type": "string"
        }
       ],

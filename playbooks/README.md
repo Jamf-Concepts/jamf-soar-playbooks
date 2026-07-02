@@ -14,22 +14,27 @@ and `CONTRIBUTING.md` for the workflow and the non-negotiable safety rules.
 
 | Playbook | Issue | Scenario | Backbone |
 |----------|-------|----------|----------|
-| `jamf_compliance_drift_remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → enrich → **correct-first** → re-check → contain-if-needed → approval gate → wipe |
+| `jamf_compliance_drift_remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → **correct-first** → check → contain-if-needed → approval gate → wipe |
 
 ### `jamf_compliance_drift_remediation`
 Apple/MDM-unique template (no shipped SOAR equivalent). Leads with **non-destructive
-correction** — redeploy the management framework, force an MDM check-in, refresh
-inventory, flag the device under review — then **re-checks compliance**. Only if the
-device is *still* non-compliant does it contain (quarantine group + lock), and a
-wipe happens **only** behind an analyst approval prompt whose text states the action
-is irreversible.
+correction** — redeploy the management framework and send a blank push to force an MDM
+check-in — then **checks compliance**. Only if the read *succeeds and* the device is
+*still* non-compliant does it contain (quarantine group + lock); a wipe happens **only**
+behind an analyst approval prompt whose text states the action is irreversible. A failed
+or 403 compliance read is **not** treated as non-compliant — it ends the run safely rather
+than escalating.
+
+Flow (block names, in order): `resolve_device` → `redeploy_framework` → `force_checkin`
+→ `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device` →
+`approve_wipe` → `is_wipe_approved?` → `wipe_device`.
 
 **Customer-config points** (replace the `<...>` placeholders on import):
 - Jamf asset — `assets=["<your-jamf-asset>"]` on every action block
-- Quarantine static group — `add_to_quarantine_group`
-- Flag extension attribute id + value — `flag_under_review`
-- Approver role — `prompt_escalate_wipe`
-- Re-check settle delay — `WAIT_MINUTES` in the `.py`
+- Quarantine static group — `group_name` on `quarantine_device`
+- Lock/wipe PIN — `<your-6-digit-pin>` on `lock_device` and `wipe_device`
+- Lock return message + callback number — on `lock_device`
+- Approver role — on `approve_wipe` (default `Administrator`)
 
 **Datapaths (verified against the live connector "Jamf Pro" v1.0.0):** the resolver
 returns the device id at `action_result.data.*.id` and type at `action_result.data.*.type`;
@@ -61,5 +66,5 @@ hit surprise failures. Verified live against the connector 2026-07-01.
 > **Note:** `lock device` and `wipe device` are **queued MDM commands** and, on a real
 > device, actually lock/erase it. Test against a spare/test device — never a production Mac.
 
-**Safety:** the `prompt_escalate_wipe → decide_wipe_approved` gate must never be
-removed. The wipe is reached only on an explicit `Approve` response.
+**Safety:** the `approve_wipe → is_wipe_approved` gate must never be removed. The wipe
+is reached only on an explicit `Yes` response; a timeout, `No`, or no response never wipes.
