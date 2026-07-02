@@ -45,7 +45,7 @@ def get_device_by_username_1(action=None, success=None, container=None, results=
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by username", parameters=parameters, name="get_device_by_username_1", assets=["test 4"], callback=get_device_by_username_1_callback)
+    phantom.act("get device by username", parameters=parameters, name="get_device_by_username_1", assets=["<your-jamf-asset>"], callback=get_device_by_username_1_callback)
 
     return
 
@@ -95,7 +95,7 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 
@@ -129,7 +129,7 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get installed applications", parameters=parameters, name="get_installed_applications_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get installed applications", parameters=parameters, name="get_installed_applications_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 
@@ -163,7 +163,7 @@ def get_group_membership_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get group membership", parameters=parameters, name="get_group_membership_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get group membership", parameters=parameters, name="get_group_membership_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 
@@ -197,7 +197,7 @@ def get_configuration_profiles_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get configuration profiles", parameters=parameters, name="get_configuration_profiles_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get configuration profiles", parameters=parameters, name="get_configuration_profiles_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 
@@ -230,7 +230,7 @@ def get_local_user_accounts_1(action=None, success=None, container=None, results
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 
@@ -264,7 +264,7 @@ def get_extension_attributes_1(action=None, success=None, container=None, result
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get extension attributes", parameters=parameters, name="get_extension_attributes_1", assets=["test 4"], callback=join_format_1)
+    phantom.act("get extension attributes", parameters=parameters, name="get_extension_attributes_1", assets=["<your-jamf-asset>"], callback=join_format_1)
 
     return
 

@@ -204,7 +204,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -264,7 +264,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -325,7 +325,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -386,7 +386,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -447,7 +447,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -508,7 +508,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -568,7 +568,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test 4"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
