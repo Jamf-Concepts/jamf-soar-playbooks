@@ -45,8 +45,8 @@ and merged via PR — **never committed directly to `main`**.
 | File | Issue | Purpose |
 |------|-------|---------|
 | `playbooks/README.md` | — | Index of templates; authoring note (`.py` is source of truth, `.json` is a VPE graph to re-save in the editor) |
-| `playbooks/jamf_compliance_drift_remediation.py` | #4 | Compliance drift / MDM tamper: correct-first remediation, check, contain-if-needed, gated wipe. Descriptive block names; fail-safe compliance decision. **Source of truth.** |
-| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (12 nodes / 13 edges). Regenerated in-place to match the `.py`: descriptive node names, fail-safe `is_compliant` (IF = OR(compliant, read-not-success)→END, no edge rewiring), wipe `pin`, new prompt text. `hash:""` and `draft_mode:false` (matches the proven-importable Jul-1 export) — **open once in the VPE + live-run to confirm it loads and recompute the hash** |
+| `playbooks/jamf_compliance_drift_remediation.py` | #4 | Compliance drift / MDM tamper: correct-first remediation, check, contain-if-needed, gated wipe. **SOAR-generated** (exported from the VPE 2026-07-03), so per-block `collect2`/param loops + `Custom Code` stubs, no hand-written `_dev()` helper or comments. Fail-safe compliance decision preserved (as `OR(compliant, status!=success)→END; else quarantine`). |
+| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (12 nodes / 13 edges), **exported from SOAR** (repo 2 `local`, playbook id 196) 2026-07-03. Descriptive node names; fail-safe `is_compliant`; wipe `pin` + `confirm:true` (boolean). `draft_mode:false`. `hash:""` — SOAR stamped a real hash on export but scrubbing the real asset name to `<your-jamf-asset>` invalidates it, and a generic template's placeholder graph can never match a real instance's hash (SOAR recomputes on import), so hash is deliberately blank. |
 | `playbooks/jamf_compliance_drift_remediation.BUILD.md` | #4 | Block-by-block VPE build sheet (12 nodes; verified action names/datapaths/prereqs) + old→new rename map — the reliable authoring path |
 
 ### Playbook conventions (from issue #8 + benchmark research)
@@ -116,6 +116,16 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
+- **A generic template's `.json` hash can never match a real instance.** SOAR stamps
+  `coa.data.hash` over the graph on export, but the graph embeds the asset name — and a
+  shareable template must carry `<your-jamf-asset>`, not a real asset. Scrubbing the real
+  asset name (mandatory) invalidates SOAR's exported hash, and SOAR recomputes the hash on
+  import against the customer's own wired asset regardless. So commit `hash:""` (proven
+  importable Jul-1) rather than a hash that won't match the placeholder graph.
+- **VPE codegen writes `confirm` as a Python boolean (`True`), not the string `"true"`.**
+  The wipe `confirm` checkbox in the editor exports as `"confirm": True`. This supersedes the
+  2026-07-01 hand-authored string `"true"`; it's the editor-canonical form, still unconfirmed
+  on a real erase (wipe has never been fired — always denied at the gate).
 - **`get compliance status` needs a Jamf privilege.** It calls
   `/api/v1/conditional-access/device-compliance-information/...`; the OAuth API role
   must have the conditional-access / device-compliance read privilege (and the tenant
@@ -149,7 +159,7 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
-| 2026-07-06 | `playbooks/` | First playbook (#5, PR #9): **Device Enrichment & Triage** (read-only). Shipped as an **Input sub-playbook** (`Jamf - Device Enrichment (Input)`: get device + 6 enrich actions → format → `enrichment_summary` output) plus an **Automation wrapper** (`Jamf - Device Enrichment and Triage`: resolve by username → call sub-playbook → `add_note`). Asset scrubbed to `<your-jamf-asset>`. Known adaptation points: sub-playbook repo reference (`jamf-soar-playbooks/…`) must be re-linked on import; resolver reads `artifact.*.cef.sourceUserName`; serial/name/MAC + mobile branches deferred. |
+| 2026-07-03 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | **Re-synced from SOAR's canonical VPE export** (repo 2 `local`, playbook id 196). Opened → saved → exported the playbook and replaced both files with SOAR's own output, so the repo mirrors what actually runs. Verified the fail-safe survived the round-trip: SOAR renders `is_compliant` as `OR(compliance_state==COMPLIANT, status!=success)→END; else→quarantine` — same truth table as the hand-authored `AND(status==success, !=COMPLIANT)→escalate` (a failed/403 read never escalates). Wipe gate unchanged (`responses.0=="Yes"`). **Scrubbed** the leaked real asset name (`jamf_canonical`, 7× per file) → `<your-jamf-asset>`. Consequences of the export: `.py` is now SOAR-generated (per-block `collect2`/param loops + `Custom Code` stubs; hand-written `_dev()` helper + comments gone); wipe `confirm` is now boolean `True` (VPE codegen) not string `"true"`. `hash` set back to `""` — SOAR's exported hash (`99ab7f21…`) was computed over the real-asset graph and can't match the scrubbed placeholder graph (SOAR recomputes on import). `.py` re-`py_compile`d; `.json` re-validated (12 nodes/13 edges). |
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |
 | 2026-06-30 | `playbooks/jamf_compliance_drift_remediation.{py,json}`, `playbooks/README.md` | New (branch `playbook/compliance-drift-remediation`, issue #4): first hand-authored template. Correct-first backbone (redeploy framework → blank push → update inventory → flag EA → re-check compliance → decide corrected? → contain (quarantine group + lock) if not → analyst approval prompt with irreversibility warning → gated wipe). Applies #8 naming/block conventions; all values are `<...>` placeholders, no secrets. `.py` validated (`py_compile`); `.json` is a 20-node best-effort VPE graph (`draft_mode: true`) to re-save in the editor. |
 | 2026-07-01 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | Datapaths + params corrected against the LIVE connector "Jamf Pro" v1.0.0 (SOAR app id 4, queried via REST at localhost:8443). Fixes: resolver device id `action_result.data.*.jamf_device_id`→`.id`, device type `.device_type`→`.type`; compliance decision `.compliant`(bool)→`.compliance_state`=="COMPLIANT"(string); update-extension-attribute param `extension_attribute_id`→`ea_id`; wipe `confirm` boolean→required string "true". Action names (`wipe device`, `add to static group`, `update extension attribute`) confirmed correct as-is (the 2026-06-09 handover's `erase_device`/`add_to_group`/`set_extension_attribute` were never the implemented names). Logic test still green. Still confirm the `compliance_state` enum value and wipe `confirm` token against a real device response. |

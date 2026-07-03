@@ -1,14 +1,7 @@
 """
-Jamf - Compliance Drift / MDM Tamper Remediation
-Correct-first: resolve -> correct (redeploy management framework + blank push) ->
-re-check compliance -> if still non-compliant: contain (quarantine + lock) -> analyst
-approval prompt (irreversible warning) -> gated wipe. Never auto-wipe.
-
-Block names are descriptive verbs (issue #8 convention), not auto-numbered.
-NOTE: the paired .json still carries the old auto-numbered node ids; it must be
-re-opened in the VPE, renamed to match these names, and re-exported so the two
-stay in sync (see jamf_compliance_drift_remediation.BUILD.md for the rename map).
+Jamf - Compliance Drift / MDM Tamper Remediation (correct-first, gated wipe).
 """
+
 
 import phantom.rules as phantom
 import json
@@ -18,134 +11,352 @@ from datetime import datetime, timedelta
 @phantom.playbook_block()
 def on_start(container):
     phantom.debug('on_start() called')
-    resolve_device(container=container)
-    return
 
+    # call 'resolve_device' block
+    resolve_device(container=container)
+
+    return
 
 @phantom.playbook_block()
 def resolve_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("resolve_device() called")
-    parameters = [{"serial_number": "artifact:*.cef.serialNumber"}]
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.serialNumber","artifact:*.id"])
+
+    parameters = []
+
+    # build parameters list for 'resolve_device' call
+    for container_artifact_item in container_artifact_data:
+        if container_artifact_item[0] is not None:
+            parameters.append({
+                "serial_number": container_artifact_item[0],
+                "context": {'artifact_id': container_artifact_item[1]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
     phantom.act("get device by serial", parameters=parameters, name="resolve_device", assets=["<your-jamf-asset>"], callback=redeploy_framework)
+
     return
-
-
-def _dev(container, results):
-    data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id", "resolve_device:action_result.data.*.type"], action_results=results)
-    return [{"device_id": r[0], "device_type": r[1]} for r in data if r[0] is not None]
 
 
 @phantom.playbook_block()
 def redeploy_framework(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("redeploy_framework() called")
-    phantom.act("redeploy management framework", parameters=_dev(container, results), name="redeploy_framework", assets=["<your-jamf-asset>"], callback=force_checkin)
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.data.*.type","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'redeploy_framework' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "device_id": resolve_device_result_item[0],
+                "device_type": resolve_device_result_item[1],
+                "context": {'artifact_id': resolve_device_result_item[2]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("redeploy management framework", parameters=parameters, name="redeploy_framework", assets=["<your-jamf-asset>"], callback=force_checkin)
+
     return
 
 
 @phantom.playbook_block()
 def force_checkin(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("force_checkin() called")
-    # 'update inventory' removed — connector rejects it for computers (macOS recon
-    # runs on-device via policy, not MDM). redeploy + blank push force a check-in.
-    phantom.act("send blank push", parameters=_dev(container, results), name="force_checkin", assets=["<your-jamf-asset>"], callback=check_compliance)
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.data.*.type","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'force_checkin' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "device_id": resolve_device_result_item[0],
+                "device_type": resolve_device_result_item[1],
+                "context": {'artifact_id': resolve_device_result_item[2]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("send blank push", parameters=parameters, name="force_checkin", assets=["<your-jamf-asset>"], callback=check_compliance)
+
     return
 
 
 @phantom.playbook_block()
 def check_compliance(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("check_compliance() called")
-    phantom.act("get compliance status", parameters=_dev(container, results), name="check_compliance", assets=["<your-jamf-asset>"], callback=is_compliant)
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.data.*.type","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'check_compliance' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "device_id": resolve_device_result_item[0],
+                "device_type": resolve_device_result_item[1],
+                "context": {'artifact_id': resolve_device_result_item[2]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("get compliance status", parameters=parameters, name="check_compliance", assets=["<your-jamf-asset>"], callback=is_compliant)
+
     return
 
 
 @phantom.playbook_block()
 def is_compliant(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("is_compliant() called")
-    # Fail-safe: only CONTAIN when the compliance read SUCCEEDED and positively reports
-    # a non-compliant device. A failed/403 read (documented INVALID_PRIVILEGE case) or an
-    # empty/unknown value falls through to on_finish and is NEVER treated as non-compliant —
-    # a missing signal must not silently escalate toward containment/wipe.
-    # NOTE: the non-compliant enum value is not yet confirmed against the live connector; we
-    # escalate on "not COMPLIANT" gated by a successful read. Once the exact non-compliant
-    # token is known, tighten the second condition to an explicit equality.
-    escalate = phantom.decision(
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
         container=container,
+        logical_operator="or",
         conditions=[
-            ["check_compliance:action_result.status", "==", "success"],
-            ["check_compliance:action_result.data.*.compliance_state", "!=", "COMPLIANT"],
+            ["check_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"],
+            ["check_compliance:action_result.status", "!=", "success"]
+        ],
+        conditions_dps=[
+            ["check_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"],
+            ["check_compliance:action_result.status", "!=", "success"]
         ],
         name="is_compliant:condition_1",
-    )
-    if escalate:
-        quarantine_device(action=action, success=success, container=container, results=results, handle=handle)
-    return  # compliant OR failed/empty read -> on_finish (safe)
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        return
+
+    # check for 'else' condition 2
+    quarantine_device(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
 
 
 @phantom.playbook_block()
 def quarantine_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("quarantine_device() called")
-    data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id"], action_results=results)
-    parameters = [{"device_id": r[0], "group_name": "<your-quarantine-group>"} for r in data if r[0] is not None]
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'quarantine_device' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "device_id": resolve_device_result_item[0],
+                "group_name": "<your-quarantine-group>",
+                "context": {'artifact_id': resolve_device_result_item[1]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
     phantom.act("add to static group", parameters=parameters, name="quarantine_device", assets=["<your-jamf-asset>"], callback=lock_device)
+
     return
 
 
 @phantom.playbook_block()
 def lock_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("lock_device() called")
-    params = _dev(container, results)
-    for p in params:
-        p["pin"] = "<your-6-digit-pin>"   # computers require a 6-digit unlock pin
-        p["message"] = "<your-return-message>"
-        p["phone_number"] = "<your-callback-number>"
-    phantom.act("lock device", parameters=params, name="lock_device", assets=["<your-jamf-asset>"], callback=approve_wipe)
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.data.*.type","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'lock_device' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "pin": "<your-6-digit-pin>",
+                "message": "<your-return-message>",
+                "device_id": resolve_device_result_item[0],
+                "device_type": resolve_device_result_item[1],
+                "phone_number": "<your-callback-number>",
+                "context": {'artifact_id': resolve_device_result_item[2]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("lock device", parameters=parameters, name="lock_device", assets=["<your-jamf-asset>"], callback=approve_wipe)
+
     return
 
 
 @phantom.playbook_block()
 def approve_wipe(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("approve_wipe() called")
-    # Message states what was ATTEMPTED, not asserted fact — the containment steps are queued
-    # MDM commands and are not confirmed applied at prompt time.
-    message = ("Device is still reported non-compliant after automated correction. Quarantine + "
-               "lock were queued (verify they applied). Approve device WIPE? This ERASES the "
-               "device and is IRREVERSIBLE.")
-    response_types = [{
-        "prompt": "Approve device WIPE? (irreversible)",
-        "options": {"type": "list", "required": True, "choices": ["Yes", "No"]},
-    }]
-    phantom.prompt2(container=container, user=None, role="Administrator", message=message,
-                    respond_in_mins=30, name="approve_wipe", parameters=[], response_types=response_types, callback=is_wipe_approved)
+
+    # set approver and message variables for phantom.prompt call
+
+    user = None
+    role = "Administrator"
+    message = """Device is still reported non-compliant after automated correction. Quarantine + lock were queued (verify they applied). Approve device WIPE? This ERASES the device and is IRREVERSIBLE."""
+
+    # parameter list for template variable replacement
+    parameters = []
+
+    # responses
+    response_types = [
+        {
+            "prompt": "Approve device WIPE? (irreversible)",
+            "options": {
+                "type": "list",
+                "required": True,
+                "choices": [
+                    "Yes",
+                    "No"
+                ],
+            },
+        }
+    ]
+
+    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="approve_wipe", parameters=parameters, response_types=response_types, callback=is_wipe_approved)
+
     return
 
 
 @phantom.playbook_block()
 def is_wipe_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("is_wipe_approved() called")
-    # Fail-safe: wipe requires an explicit "Yes". Timeout / "No" / no response all fall through
-    # to on_finish and never wipe.
-    approved = phantom.decision(
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
         container=container,
-        conditions=[["approve_wipe:action_result.summary.responses.0", "==", "Yes"]],
+        conditions=[
+            ["approve_wipe:action_result.summary.responses.0", "==", "Yes"]
+        ],
+        conditions_dps=[
+            ["approve_wipe:action_result.summary.responses.0", "==", "Yes"]
+        ],
         name="is_wipe_approved:condition_1",
-    )
-    if approved:
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
         wipe_device(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
     return
 
 
 @phantom.playbook_block()
 def wipe_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("wipe_device() called")
-    params = _dev(container, results)
-    for p in params:
-        p["confirm"] = "true"
-        p["pin"] = "<your-6-digit-pin>"   # computer erase requires a 6-digit pin (same as lock)
-    phantom.act("wipe device", parameters=params, name="wipe_device", assets=["<your-jamf-asset>"])
+
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    resolve_device_result_data = phantom.collect2(container=container, datapath=["resolve_device:action_result.data.*.id","resolve_device:action_result.data.*.type","resolve_device:action_result.parameter.context.artifact_id"], action_results=results)
+
+    parameters = []
+
+    # build parameters list for 'wipe_device' call
+    for resolve_device_result_item in resolve_device_result_data:
+        if resolve_device_result_item[0] is not None:
+            parameters.append({
+                "pin": "<your-6-digit-pin>",
+                "confirm": True,
+                "device_id": resolve_device_result_item[0],
+                "device_type": resolve_device_result_item[1],
+                "context": {'artifact_id': resolve_device_result_item[2]},
+            })
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("wipe device", parameters=parameters, name="wipe_device", assets=["<your-jamf-asset>"])
+
     return
 
 
 @phantom.playbook_block()
 def on_finish(container, summary):
     phantom.debug("on_finish() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
     return

@@ -6,6 +6,34 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-03 — Re-synced the Compliance Drift template from SOAR's canonical export (#4)
+
+Opened the playbook in SOAR's Visual Playbook Editor, saved and **exported** it, and
+replaced the repo's `.py` / `.json` with what SOAR actually produces. Why: the previous
+`.json` had been hand-edited programmatically, so it wasn't byte-for-byte what the editor
+generates. Now the repo holds SOAR's own canonical graph and code.
+
+What this changed and what we checked:
+- **Safety logic verified intact after the round-trip.** SOAR expresses the compliance
+  decision as "if compliant *or* the read failed → stop; otherwise quarantine" — which is
+  exactly our fail-safe: a failed / permission-denied compliance read still never escalates
+  toward the wipe. The wipe still fires only on an explicit `Yes` at the approval prompt.
+- **Scrubbed a leaked asset name.** SOAR's export baked in the real test-environment asset
+  name; replaced every occurrence with the `<your-jamf-asset>` placeholder so the template
+  stays generic.
+- **The `.py` is now SOAR-generated**, so the hand-written helper and explanatory comments
+  are gone (SOAR writes its own per-block boilerplate). Same behaviour, just SOAR's style.
+- **About the integrity "hash":** SOAR stamps a hash over the graph, but that graph includes
+  the asset name — and a shareable template must use a placeholder, not a real asset. So no
+  committed hash can ever match a real deployment; SOAR recomputes it on import anyway. We
+  therefore left the hash blank (the state we already proved imports cleanly), rather than
+  ship a hash that wouldn't match the placeholder graph.
+
+Net: the repo now mirrors SOAR's real output (layout, decision wiring, code style), with the
+one unavoidable generic-template differences (placeholder asset, blank hash) clearly recorded.
+
+---
+
 ## 2026-07-02 — PR review fixes on the Compliance Drift template (#4)
 
 Ran a full multi-agent PR review on the #4 template before opening the PR and fixed

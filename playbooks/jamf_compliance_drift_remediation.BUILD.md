@@ -44,7 +44,7 @@ playbooks must be authored in the VPE — build here, and SOAR generates valid f
 | 8 | **lock_device** (action) | `lock device` | `device_id` ← resolve id · `device_type` ← resolve type · `pin` = `<your-6-digit-pin>` · `message` = `<your-return-message>` · `phone_number` = `<your-callback-number>` |
 | 9 | **approve_wipe** (prompt) | approval gate, config below | → 10 |
 | 10 | **is_wipe_approved** (decision) | conditions below | approved → 11; else → END |
-| 11 | **wipe_device** (action) | `wipe device` | `device_id` ← resolve id · `device_type` ← resolve type · `confirm` = `true` · `pin` = `<your-6-digit-pin>` |
+| 11 | **wipe_device** (action) | `wipe device` | `device_id` ← resolve id · `device_type` ← resolve type · `confirm` checkbox = on (exports as boolean `True`) · `pin` = `<your-6-digit-pin>` |
 | 12 | **on_finish** (END) | — | — |
 
 > **Dropped vs. earlier drafts:** `update inventory` (connector rejects it for computers —
@@ -106,16 +106,23 @@ HTTP 403 `INVALID_PRIVILEGE`. See the full per-action privilege table in `README
 ---
 
 ## Re-sync note (for maintainers)
-The committed `.json` has **already been regenerated** to match the `.py`: descriptive node
-names, the `is_compliant` fail-safe (IF = `compliance_state == COMPLIANT` **OR**
-`status != success` → END; ELSE → contain — no edge rewiring), the wipe `pin`, and the new
-prompt text. `hash` is empty and `draft_mode:false` (matching the proven-importable export).
+**Done (2026-07-03):** the committed `.py`/`.json` pair is now **SOAR's own canonical export**
+(opened in the VPE → saved → exported from repo 2 `local`, playbook id 196), not a hand-edited
+graph. The `is_compliant` fail-safe survived the round-trip — SOAR renders it as
+`OR(compliance_state == COMPLIANT, status != success) → END; ELSE → contain`, the same truth
+table as the hand-authored form (a failed/403 read never escalates). The old→new rename map
+below is kept only as history.
 
-Because it was edited outside the editor, do one confirming pass before relying on it:
-**open the playbook in the VPE → verify it loads and the diagram matches → run it once against a
-test device (confirm it holds at the approval gate) → export.** The export recomputes the hash,
-clears the draft flag, and becomes the authoritative pair. If it does *not* open, rebuild from
-the block table above; the old→new rename map below is kept for reference.
+Two things about the committed files that are intentional, not drift:
+- **`hash` is empty.** SOAR's export stamped a real hash, but it was computed over the graph
+  with the real asset name; scrubbing that to `<your-jamf-asset>` (mandatory for a template)
+  invalidates it, and no placeholder-graph hash can match a real instance anyway — SOAR
+  recomputes on import. So `hash:""` is deliberate.
+- **The `.py` is SOAR-generated** (per-block `collect2`/param loops, `Custom Code` stubs), so
+  the earlier hand-authored `_dev()` helper and explanatory comments are gone by design.
+
+If a future edit needs re-syncing again, repeat: VPE → save → export → **scrub the asset name**
+→ blank the hash → commit.
 
 | Old (auto-numbered) | New (descriptive) |
 |---|---|
