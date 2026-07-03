@@ -129,7 +129,7 @@
                     "targetPort": "17_in"
                 }
             ],
-            "hash": "6ff2991af2071001c82c9150104da22d76d9224b",
+            "hash": "cabfabcfdb6bcc95786093709e216096cfd739f1",
             "nodes": {
                 "0": {
                     "data": {
@@ -145,7 +145,7 @@
                     "type": "start",
                     "warnings": {},
                     "x": 980,
-                    "y": 239.99999999999955
+                    "y": 239.99999999999943
                 },
                 "1": {
                     "data": {
@@ -425,7 +425,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "serial_number": "HNWYQ246Q2"
+                            "serial_number": "artifact:*.cef.serialNumber"
                         },
                         "requiredParameters": [
                             {
@@ -803,7 +803,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-01T09:23:01.410160+00:00",
+    "create_time": "2026-07-03T10:10:54.422618+00:00",
     "draft_mode": false,
     "labels": [
         "*"

@@ -23,11 +23,17 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
+    container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.serialNumber","artifact:*.id"])
+
     parameters = []
 
-    parameters.append({
-        "serial_number": "HNWYQ246Q2",
-    })
+    # build parameters list for 'get_device_by_serial_1' call
+    for container_artifact_item in container_artifact_data:
+        if container_artifact_item[0] is not None:
+            parameters.append({
+                "serial_number": container_artifact_item[0],
+                "context": {'artifact_id': container_artifact_item[1]},
+            })
 
     ################################################################################
     ## Custom Code Start
