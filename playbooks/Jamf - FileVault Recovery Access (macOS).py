@@ -1,5 +1,23 @@
-"""
+"""Jamf - FileVault Recovery Access (macOS) — playbook #7.
 
+Secured recovery access to a Mac following a compromise or during employee
+offboarding. Flow: resolve the Mac by serial (from the event artifact) ->
+(device found?) -> retrieve recovery context (FileVault personal recovery key
+[SENSITIVE], local user accounts, compliance status) -> secure (set recovery
+lock, lock device) -> note/notify -> analyst approval gate -> wipe device ONLY
+on approval; a decline or no-device-found path just adds a note.
+
+Template notes (replace before use):
+- Jamf asset on every action block           -> <your-jamf-asset>
+- Approval-prompt approver (user or role)     -> <security-analyst-role>
+- Recovery-lock password (prefer a secret)    -> <your-recovery-lock-password>
+- Lock-screen message / support phone         -> <your-lock-screen-message> / <your-support-phone>
+- Lock PIN defaults to 000000                 -> replace with your chosen 6-digit unlock PIN
+- The FileVault recovery key is SENSITIVE     -> never route it to a broad channel/note.
+- Resolve reads the serial from the container artifact (artifact:*.cef.serialNumber)
+  -> map your event's serial to that CEF field.
+- code_1 adds a note as the "notify securely" step -> replace with a restricted-
+  channel notification (never post the key).
 """
 
 
@@ -45,7 +63,7 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=decision_2)
+    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["<your-jamf-asset>"], callback=decision_2)
 
     return
 
@@ -78,7 +96,7 @@ def get_filevault_recovery_key_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get filevault recovery key", parameters=parameters, name="get_filevault_recovery_key_1", assets=["test1"], callback=get_local_user_accounts_1)
+    phantom.act("get filevault recovery key", parameters=parameters, name="get_filevault_recovery_key_1", assets=["<your-jamf-asset>"], callback=get_local_user_accounts_1)
 
     return
 
@@ -111,7 +129,7 @@ def get_local_user_accounts_1(action=None, success=None, container=None, results
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["test1"], callback=get_compliance_status_1)
+    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["<your-jamf-asset>"], callback=get_compliance_status_1)
 
     return
 
@@ -145,7 +163,7 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["test1"], callback=set_recovery_lock_1)
+    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["<your-jamf-asset>"], callback=set_recovery_lock_1)
 
     return
 
@@ -164,7 +182,7 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
-                "password": "TestRecovery123",
+                "password": "<your-recovery-lock-password>",
                 "device_id": get_device_by_serial_1_result_item[0],
                 "operation": "set",
                 "device_type": "computer",
@@ -181,7 +199,7 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.act("set recovery lock", parameters=parameters, name="set_recovery_lock_1", assets=["test1"], callback=lock_device_1)
+    phantom.act("set recovery lock", parameters=parameters, name="set_recovery_lock_1", assets=["<your-jamf-asset>"], callback=lock_device_1)
 
     return
 
@@ -201,10 +219,10 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
         if set_recovery_lock_1_result_item[0] is not None:
             parameters.append({
                 "pin": "000000",
-                "message": "SOAR test lock ",
+                "message": "<your-lock-screen-message>",
                 "device_id": set_recovery_lock_1_result_item[0],
                 "device_type": "computer",
-                "phone_number": "555-0100",
+                "phone_number": "<your-support-phone>",
                 "context": {'artifact_id': set_recovery_lock_1_result_item[1]},
             })
 
@@ -218,7 +236,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=code_1)
+    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["<your-jamf-asset>"], callback=code_1)
 
     return
 
@@ -229,9 +247,9 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 
     # set approver and message variables for phantom.prompt call
 
-    user = "Sarah"
+    user = "<security-analyst-role>"
     role = None
-    message = """ Wipe this Mac? (offboarding erase)"""
+    message = """Approve device WIPE? This permanently erases the Mac (offboarding) and is irreversible."""
 
     # parameter list for template variable replacement
     parameters = []
@@ -313,7 +331,7 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["test1"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"])
 
     return
 
