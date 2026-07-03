@@ -60,13 +60,26 @@ playbooks must be authored in the VPE — build here, and SOAR generates valid f
 **Block 6 — "is_compliant" (fail-safe)**
 Escalate to containment ONLY when the read succeeded AND the device is not compliant.
 A failed/403 read or an empty/unknown value must fall through to END, never to containment.
-- **IF** (path → block 7, contain) — BOTH conditions (AND):
-  - `check_compliance:action_result.status` **==** `success`
-  - `check_compliance:action_result.data.*.compliance_state` **!=** `COMPLIANT`
-- **ELSE** (path → END): compliant, or the read failed/returned nothing.
+The committed graph expresses this as the **safe-end-first** form (this is what SOAR's VPE
+exports — match it so the build stays identical to the committed `.json`):
+- **IF** (path → END) — `logical_operator = OR`, any one condition ends the run:
+  - `check_compliance:action_result.data.*.compliance_state` **==** `COMPLIANT`
+  - `check_compliance:action_result.status` **!=** `success`
+  - `check_compliance:action_result.summary.total` **==** `0`  *(empty-read guard)*
+- **ELSE** (path → block 7, contain): read succeeded AND returned ≥1 record AND device is not compliant.
 
-> Confirm the exact non-compliant `compliance_state` token against a real device response.
-> Once known, tighten the second condition to an explicit `==` on that value (e.g.
+This is logically equivalent (De Morgan) to "escalate when `status == success` AND
+`summary.total != 0` AND `compliance_state != COMPLIANT`" — either wording yields the same
+behaviour, but build the OR/IF→END form to match the committed graph exactly.
+
+> **The third condition (`summary.total == 0`) closes the case-(d) gap:** a *successful-but-empty*
+> compliance read (status `success`, zero records) would otherwise satisfy neither of the first
+> two IF conditions and fall through to contain. `summary.total` is a declared numeric output of
+> `get compliance status`, so `== 0` reliably ends the run on an empty read. (Note: this branch
+> can't be live-exercised while `get compliance status` still 403s in the test env — a failed
+> read short-circuits at `status != success` first — but it's schema-sound.)
+> **Still to confirm:** the exact non-compliant `compliance_state` token against a real device
+> response. Once known, replace `!= COMPLIANT` with an explicit `==` on that value (e.g.
 > `NOT_COMPLIANT`) so only a positively non-compliant read escalates.
 
 **Block 10 — "is_wipe_approved"**
@@ -76,7 +89,8 @@ A failed/403 read or an empty/unknown value must fall through to END, never to c
 ---
 
 ## Prompt config — Block 9 "approve_wipe"
-- **Approver:** a role/user (use `<your-security-analyst-role>` or the container owner).
+- **Approver:** the committed playbook ships the `Administrator` role as the default; change it
+  to your security-analyst role (or the container owner) per environment.
 - **Response time:** 30 minutes.
 - **Response 1 (required, yes/no):**
   - Prompt text: **"Device is still reported non-compliant after automated correction. Quarantine + lock were queued (verify they applied). Approve device WIPE? This ERASES the device and is IRREVERSIBLE."**
@@ -90,7 +104,7 @@ A failed/403 read or an empty/unknown value must fall through to END, never to c
 - Quarantine static group: `<your-quarantine-group>` (block 7)
 - Lock/wipe PIN: `<your-6-digit-pin>` (blocks 8, 11 — the placeholder fails connector validation)
 - Lock message + callback number: `<your-return-message>` / `<your-callback-number>` (block 8)
-- Approver role: `<your-security-analyst-role>` (block 9)
+- Approver role: block 9 ships `Administrator` by default — change per environment
 
 ## Prerequisite (Jamf side)
 `get compliance status` needs the API role to have the **conditional-access / device-compliance

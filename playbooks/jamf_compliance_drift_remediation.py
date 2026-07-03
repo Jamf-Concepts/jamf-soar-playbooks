@@ -162,11 +162,13 @@ def is_compliant(action=None, success=None, container=None, results=None, handle
         logical_operator="or",
         conditions=[
             ["check_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"],
-            ["check_compliance:action_result.status", "!=", "success"]
+            ["check_compliance:action_result.status", "!=", "success"],
+            ["check_compliance:action_result.summary.total", "==", 0]
         ],
         conditions_dps=[
             ["check_compliance:action_result.data.*.compliance_state", "==", "COMPLIANT"],
-            ["check_compliance:action_result.status", "!=", "success"]
+            ["check_compliance:action_result.status", "!=", "success"],
+            ["check_compliance:action_result.summary.total", "==", 0]
         ],
         name="is_compliant:condition_1",
         delimiter=None)

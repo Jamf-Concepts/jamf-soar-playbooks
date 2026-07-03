@@ -138,7 +138,7 @@
                     "type": "start",
                     "warnings": {},
                     "x": 1000,
-                    "y": 99.99999999999989
+                    "y": 99.99999999999972
                 },
                 "1": {
                     "data": {
@@ -571,6 +571,13 @@
                                         "op": "!=",
                                         "param": "check_compliance:action_result.status",
                                         "value": "success"
+                                    },
+                                    {
+                                        "comparisonKey": "comparison_key_a65ee7ac-26d0-4dec-9e4b-210f4af61e26",
+                                        "conditionKey": "condition_key_7_if",
+                                        "op": "==",
+                                        "param": "check_compliance:action_result.summary.total",
+                                        "value": "0"
                                     }
                                 ],
                                 "conditionIndex": 0,
@@ -601,7 +608,11 @@
                     "errors": {},
                     "id": "7",
                     "type": "decision",
-                    "warnings": {},
+                    "warnings": {
+                        "config": [
+                            "Reconfigure invalid datapath."
+                        ]
+                    },
                     "x": 1000,
                     "y": 1000
                 },
@@ -745,7 +756,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-02T15:28:25.674407+00:00",
+    "create_time": "2026-07-03T12:28:20.317972+00:00",
     "draft_mode": false,
     "labels": [
         "*"

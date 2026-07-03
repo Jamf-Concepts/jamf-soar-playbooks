@@ -21,9 +21,10 @@ Apple/MDM-unique template (no shipped SOAR equivalent). Leads with **non-destruc
 correction** — redeploy the management framework and send a blank push to force an MDM
 check-in — then **checks compliance**. Only if the read *succeeds and* the device is
 *still* non-compliant does it contain (quarantine group + lock); a wipe happens **only**
-behind an analyst approval prompt whose text states the action is irreversible. A failed
-or 403 compliance read is **not** treated as non-compliant — it ends the run safely rather
-than escalating.
+behind an analyst approval prompt whose text states the action is irreversible. Escalation
+requires a *present, successful, non-compliant* signal: a failed/403 read (`status != success`)
+**or** a successful-but-empty read (`summary.total == 0`) both end the run safely rather than
+escalating.
 
 Flow (block names, in order): `resolve_device` → `redeploy_framework` → `force_checkin`
 → `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device` →
@@ -39,8 +40,9 @@ Flow (block names, in order): `resolve_device` → `redeploy_framework` → `for
 **Datapaths (verified against the live connector "Jamf Pro" v1.0.0):** the resolver
 returns the device id at `action_result.data.*.id` and type at `action_result.data.*.type`;
 `get compliance status` returns `action_result.data.*.compliance_state` (a string).
-Confirm the exact `compliance_state` value ("COMPLIANT") and the wipe `confirm` token
-against a real device response.
+Confirm the exact `compliance_state` value ("COMPLIANT") and the wipe `confirm` value
+against a real device response — the `.json` graph stores `confirm: "true"` (string) while
+SOAR's generated `.py` sends boolean `True`; neither has been verified on a real erase.
 
 ### Prerequisites — Jamf API role privileges (set these BEFORE running)
 

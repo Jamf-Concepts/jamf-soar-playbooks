@@ -6,6 +6,41 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-03 — Closed the "empty compliance read" edge case (#10)
+
+The review found one real logic gap: if the compliance check ever came back "successful but
+with no records," the playbook would have treated that as non-compliant and escalated to
+quarantine + lock. Added a guard so a **success-with-zero-records** read now ends the run
+safely instead. Escalation to containment now requires a genuine, present, non-compliant
+result — a failed read, a permission-denied read, and an empty read all stop the flow.
+
+Done in SOAR's editor and re-exported. (One hiccup: the editor kept dropping either the new
+condition or the block's name between saves, so the final file was assembled from the good
+export with the block name restored — the behaviour and wiring are unchanged.) The irreversible
+wipe is still gated behind explicit analyst approval, untouched.
+
+---
+
+## 2026-07-03 — PR-review doc fixes (#10)
+
+A final review pass before marking PR #10 ready caught three documentation problems (no
+playbook logic changed):
+
+- **Fixed a wrong claim about the wipe `confirm` value.** Earlier notes said SOAR's export
+  stores `confirm` as a boolean. In fact the graph file (`.json`) stores it as the text
+  `"true"`, and only SOAR's generated Python file uses a boolean. Corrected the docs and
+  flagged that neither form has been tested on an actual wipe (we've never let one run).
+- **Scrubbed real environment details** that had crept into the internal change log — a test
+  device serial, real asset names, an internal host address, and a graph fingerprint — since
+  this repo mirrors a public project. Replaced with generic phrasing.
+- **Corrected the build sheet** so its decision-block instructions match the exact form the
+  committed playbook uses, and fixed the approver setting (it ships as `Administrator`, not a
+  placeholder). Also noted a known edge case: if the compliance check ever returns "success
+  but no data," the current logic would still escalate — worth tightening when we learn the
+  real non-compliant value.
+
+---
+
 ## 2026-07-03 — Re-synced the Compliance Drift template from SOAR's canonical export (#4)
 
 Opened the playbook in SOAR's Visual Playbook Editor, saved and **exported** it, and
