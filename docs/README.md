@@ -6,6 +6,23 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-03 — FileVault Recovery Access: serial now pulled from the event + distribution PR
+
+Two things:
+- **The Mac's serial is no longer hardcoded.** The resolve step now reads the
+  serial straight from the incoming SOAR event (`artifact:*.cef.serialNumber`),
+  the same way the Compliance-drift playbook does it — so the template works on
+  whatever device the event is about, instead of a fixed test serial.
+- **Distribution PR opened.** The generic, ready-to-share version (placeholder
+  asset/approver/passwords, no real values) goes to `main` via its own branch,
+  while the working copy stays runnable in SOAR for testing. This keeps the
+  live playbook and the shareable template from stepping on each other.
+
+Still to finish: the secure-notification step (still a placeholder note) and
+friendlier block names.
+
+---
+
 ## 2026-07-02 — First playbook: Jamf - FileVault Recovery Access (macOS)
 
 The first real playbook is in (issue #7): **Jamf - FileVault Recovery Access
