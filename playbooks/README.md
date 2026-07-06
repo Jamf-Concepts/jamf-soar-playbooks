@@ -9,6 +9,13 @@ and `CONTRIBUTING.md` for the workflow and the non-negotiable safety rules.
 > Editor (VPE). When a template is hand-authored, the `.py` is the reviewable
 > source of truth; the `.json` is a best-effort VPE graph that should be opened
 > and re-saved in the editor to canonicalize its layout, ports, and hash.
+>
+> **Filename convention.** The playbook *name* follows `Jamf - <Scenario>` (Title Case
+> + dash, per issue #8), but the on-disk *filenames* are `snake_case`
+> (`jamf_compliance_drift_remediation.{py,json}`) on purpose: the `/` in a
+> `Jamf - <Scenario>` name makes SOAR treat it as a subdirectory path on export, so the
+> file pair is stored snake_cased to keep it a flat, portable pair. The display name
+> inside SOAR still reads `Jamf - <Scenario>`.
 
 ## Templates
 
@@ -29,6 +36,13 @@ escalating.
 Flow (block names, in order): `resolve_device` → `redeploy_framework` → `force_checkin`
 → `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device` →
 `approve_wipe` → `is_wipe_approved?` → `wipe_device`.
+
+> **Deferred — enrichment stage.** Issue #4 also calls for an enrichment step
+> (`get configuration profiles`, `get extension attributes`) alongside the correction
+> steps. It's intentionally left out here: the reusable enrichment engine ships in the
+> Device Enrichment Input playbook (PR #9). Once #9 merges, wire that Input sub-playbook
+> in rather than re-implementing the lookups. The `update inventory` correction step is
+> permanently dropped — the connector rejects it for computers (macOS recon is policy-based).
 
 **Customer-config points** (replace the `<...>` placeholders on import):
 - Jamf asset — `assets=["<your-jamf-asset>"]` on every action block

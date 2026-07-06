@@ -6,6 +6,23 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — PR #10 review fixes (docs only)
+
+Ron's review approved-with-changes; addressed all three items (no playbook logic changed):
+
+- **Blocking — root `README.md` was out of sync.** It still said "no playbooks have been
+  built yet" and its "Planned playbook templates" table didn't list this one. Flipped the
+  status note and added a **Compliance drift / MDM tamper — In review (PR #10)** row.
+- **Nit — enrichment stage noted as deferred.** `playbooks/README.md` now states the issue-#4
+  enrichment step (`get configuration profiles` / `get extension attributes`) is intentionally
+  left out pending the reusable enrichment engine in PR #9, and reiterates that `update
+  inventory` is permanently dropped (connector rejects it for computers).
+- **Nit — snake_case filename explained.** Added a one-line note that the on-disk filenames are
+  `snake_case` on purpose (the `/` in a `Jamf - <Scenario>` name makes SOAR treat it as a
+  subdirectory on export), while the display name inside SOAR still reads `Jamf - <Scenario>`.
+
+---
+
 ## 2026-07-03 — Closed the "empty compliance read" edge case (#10)
 
 The review found one real logic gap: if the compliance check ever came back "successful but

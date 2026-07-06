@@ -9,8 +9,8 @@ This repo is **not** a connector. It holds reusable playbooks that *call* the
 Jamf SOAR app's actions. The companion connector app lives in
 [`Jamf-Concepts/jamf-splunk-soar`](https://github.com/Jamf-Concepts/jamf-splunk-soar).
 
-> Status: **Pre-release / private development.** First playbook templates are
-> in review — see the table below.
+> Status: **Pre-release / private development.** The first template has landed
+> (in review); more are planned.
 
 ---
 
@@ -71,7 +71,7 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
-| **Device enrichment & triage (read-only)** | **In review (PR #9)** | Reusable enrichment building block: resolve device → enrich → write a summary note. Ships as an Input sub-playbook (`Jamf - Device Enrichment (Input)`) the other templates call, plus a triage wrapper. No destructive step, so no approval gate. |
+| **Compliance drift / MDM tamper** | **In review (PR #10)** | Correct-first: redeploy the management framework + force a check-in, re-check compliance, and only contain (quarantine + lock) if still non-compliant. Wipe is gated behind an analyst approval prompt. |
 | Lost / stolen device | Planned | Resolve device, lock + contain, notify, hold for analyst approval, then erase as a last resort. |
 | Compromised user | Planned | Contain the user's enrolled devices, enrich with identity context, gate before destructive action. |
 | Identity-provider (IdP) breach | Planned | Broad containment across affected accounts/devices; approval gate before any mass group change. |
