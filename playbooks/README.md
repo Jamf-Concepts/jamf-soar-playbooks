@@ -54,9 +54,12 @@ Flow (block names, in order): `resolve_device` → `redeploy_framework` → `for
 **Datapaths (verified against the live connector "Jamf Pro" v1.0.0):** the resolver
 returns the device id at `action_result.data.*.id` and type at `action_result.data.*.type`;
 `get compliance status` returns `action_result.data.*.compliance_state` (a string).
-Confirm the exact `compliance_state` value ("COMPLIANT") and the wipe `confirm` value
-against a real device response — the `.json` graph stores `confirm: "true"` (string) while
-SOAR's generated `.py` sends boolean `True`; neither has been verified on a real erase.
+Confirm the exact `compliance_state` value ("COMPLIANT") against a real device response.
+**Known bug (PR #10 review C1):** the wipe `confirm` param is wired wrong. The connector
+requires `confirm` to *exactly equal the `device_id` string*; the template currently sends a
+truthy flag (`"true"` in the `.json`, boolean `True` in the `.py`), so an approved wipe is
+rejected (`WIPE_NOT_CONFIRMED`) and never fires. Fix pending a VPE edit: wire `confirm` to
+`resolve_device:action_result.data.*.id` (as the FileVault playbook does).
 
 ### Prerequisites — Jamf API role privileges (set these BEFORE running)
 
@@ -69,9 +72,15 @@ hit surprise failures. Verified live against the connector 2026-07-01.
 |-------------------------|--------------------------------|
 | `get compliance status` | Conditional-access / device-compliance **read** (tenant must have conditional access configured) |
 | `redeploy management framework` | **Send Computer Remote Command to Install Package** + **Read Check-In** (the Check-In read is required and easy to miss — it's the usual cause of the 403) |
-| `lock device` | **Send Computer Remote Command to Lock Computer** |
+| `send blank push` | **Send MDM command information in Jamf Pro API** (queued via `/api/v2/mdm/commands`) |
+| `lock device` | **Send MDM command information in Jamf Pro API** (queued via `/api/v2/mdm/commands`) |
 | `add to static group` | **Update Static Computer Groups** |
-| `wipe device` | **Send Computer Remote Command to Erase Device** |
+| `wipe device` | **Send MDM command information in Jamf Pro API** (queued via `/api/v2/mdm/commands`) |
+
+> The lock / wipe / blank-push commands all queue through the connector's shared
+> `/api/v2/mdm/commands` engine (`jamf_connector.py`), so they need the **v2** "Send MDM command
+> information in Jamf Pro API" privilege — **not** the Classic per-command privileges. `redeploy
+> management framework` is the exception: it uses the Classic remote-command path above.
 
 **Required config values (not privileges) — replace before running:**
 - `lock device` needs a real **6-digit `pin`** (the code to unlock the Mac afterward); the

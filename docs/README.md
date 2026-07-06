@@ -6,6 +6,31 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — PR #10 second review (Sarah): doc-only fixes; logic deferred
+
+Sarah's review found two critical logic issues (C1 the wipe can't fire; C2 a failed compliance
+read ends silently) plus several important ones. Those are **playbook-logic** changes that must
+be made in the Visual Playbook Editor and re-verified live, so they are **deferred** — not fixed
+in this pass. What *was* fixed here is doc-only, and only where verified against the connector
+source:
+
+- **Corrected wrong wipe-`confirm` guidance (C1).** Confirmed in `jamf_connector.py:1674-1680`
+  that the connector requires `confirm` to *exactly equal the `device_id` string*. Our docs
+  previously told maintainers to "change it to string `'true'`" — which still ≠ device_id and
+  would never fire. Docs now record the real bug and the correct fix (wire `confirm` to the
+  resolved device-id datapath) as a pending VPE edit.
+- **Fixed the API-privilege table (I5).** `lock`, `wipe`, and `send blank push` all queue via
+  `/api/v2/mdm/commands`, so they need the **v2 "Send MDM command information in Jamf Pro API"**
+  privilege — not the Classic per-command privileges we'd listed; added the missing blank-push
+  row. Verified against `jamf_connector.py:1576-1577`.
+- **Walked back the "verified end-to-end" overclaim (I5).** The live run's `get compliance
+  status` actually 403'd and only the wipe-*deny* path ran; corrected the two spots that implied
+  a clean full pass.
+
+The remaining findings (C1 code fix, C2, I1 positive NON_COMPLIANT match, I2 terminal-path
+notes, I3 gate-on-containment-success, I4 device_type branching, approver-role placeholder) are
+tracked for the next VPE session.
+
 ## 2026-07-06 — PR #10 review fixes (docs only)
 
 Ron's review approved-with-changes; addressed all three items (no playbook logic changed):
@@ -150,10 +175,13 @@ playbook's logic still passes its flow test after the fixes.
 version wouldn't open in SOAR's Visual Playbook Editor (the file format for the
 decision/prompt/note blocks is too intricate to write by hand). We rebuilt it by
 copying the structure of an already-working playbook, then **ran it live in the SOAR
-test environment against the real Jamf tenant — every step succeeded** (look up device
-→ redeploy management → force check-in → check compliance → quarantine → lock), it
-**paused for analyst approval before the wipe**, and we **denied, so nothing was
-erased**. That's a full end-to-end proof of the playbook and its safety gate.
+test environment against the real Jamf tenant** (look up device → redeploy management
+→ force check-in → check compliance → quarantine → lock), it **paused for analyst
+approval before the wipe**, and we **denied, so nothing was erased**. That proves the
+control flow and the safety gate. **Caveat (PR #10 review):** this was not a clean
+end-to-end pass — `get compliance status` returned **HTTP 403** (the test API role
+lacks the conditional-access privilege), and only the wipe-*deny* path was exercised.
+The compliance read and the actual wipe path remain unverified live.
 
 Two things we learned and wrote down so nobody trips on them:
 - **Prerequisites matter.** Each action needs specific Jamf API permissions (there's a
