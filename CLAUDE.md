@@ -101,6 +101,16 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
+- **Input sub-playbooks with paired inputs (e.g. `device_id` + `device_type`)
+  must zip them, not cross them.** SOAR collects each `playbook_input:` datapath
+  separately and auto-generates a *nested* loop (Cartesian product), so for a
+  multi-device user the wrong id/type pairs resolve to unrelated devices and the
+  action silently hits the wrong device. Fix: rebuild `parameters` by `zip`-ing
+  in each action's Custom Code. **Input contract:** callers must pass
+  `device_id` and `device_type` as paired, equal-length lists (the engine
+  asserts this). Flat Automation playbooks are immune — they read both from one
+  action-result `collect2`, which returns aligned tuples. (See the
+  `Jamf - Device Enrichment (Input)` engine; PR #9 C1.)
 
 ---
 

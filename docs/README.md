@@ -31,6 +31,9 @@ Things to know when adopting it:
   repo `jamf-soar-playbooks` makes the built-in reference line up).
 - It currently finds devices by **username** (from the event's `sourceUserName`
   field). Finding by serial / name / MAC, and mobile-only steps, are planned next.
+- If you build your own playbook that calls the enrichment engine directly, pass
+  `device_id` and `device_type` as **paired, equal-length lists** (one type per
+  id) — the engine assumes they line up and now fails loudly if they don't.
 
 ## 2026-06-08 — Repo skeleton created
 
