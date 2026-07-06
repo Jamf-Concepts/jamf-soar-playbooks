@@ -1,5 +1,21 @@
-"""
+"""Jamf - FileVault Recovery Access (macOS) - playbook #7.
 
+Secured recovery access to a Mac after a compromise or during offboarding.
+Flow: resolve by serial (from the event artifact) -> (device found?) -> retrieve
+recovery context (FileVault personal recovery key [SENSITIVE], local user
+accounts, compliance status) -> secure (set recovery lock, lock device) ->
+note/notify -> analyst approval gate -> wipe device ONLY on approval; a decline
+or no-device path just adds a note.
+
+Template notes (replace before use):
+- Jamf asset on every action block         -> <your-jamf-asset>
+- Approval-prompt approver (user or role)   -> <security-analyst-role>
+- Recovery-lock password (prefer a secret)  -> <your-recovery-lock-password>
+- Lock-screen message / support phone       -> <your-lock-screen-message> / <your-support-phone>
+- Lock PIN defaults to 000000               -> replace with a chosen 6-digit unlock PIN
+- The FileVault recovery key is SENSITIVE   -> never route it to a broad channel/note.
+- Resolve reads the serial from artifact:*.cef.serialNumber.
+- code_1 is the notify step (a note) -> replace with a restricted-channel notifier.
 """
 
 
@@ -192,7 +208,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id ","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
@@ -340,7 +356,7 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     lock_status = lk[0][0] if lk else None
 
     lines = []
-    if fv_status != "success" or key_present in (False, "False", None):
+    if fv_status != "success" or key_present not in (True, "True", "true"):
           lines.append("WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.".format(fv_status,
   key_present))
     if rl_status != "success" or lock_status != "success":
