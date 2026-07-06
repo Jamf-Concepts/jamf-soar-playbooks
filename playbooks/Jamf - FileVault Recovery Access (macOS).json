@@ -129,7 +129,7 @@
                     "targetPort": "17_in"
                 }
             ],
-            "hash": "cabfabcfdb6bcc95786093709e216096cfd739f1",
+            "hash": "f4d1792ad851f373c35d0454c69c8e2688a107bc",
             "nodes": {
                 "0": {
                     "data": {
@@ -145,7 +145,7 @@
                     "type": "start",
                     "warnings": {},
                     "x": 980,
-                    "y": 239.99999999999943
+                    "y": 239.9999999999992
                 },
                 "1": {
                     "data": {
@@ -291,7 +291,7 @@
                     "errors": {},
                     "id": "14",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"FileVault recovery access - device secured\",\n          content=(\n              \"Recovery context retrieved and handled securely. \"\n              \"Recovery lock and device lock have been queued for the target Mac. \"\n              \"NOTE: the FileVault recovery key is sensitive and is intentionally NOT included here. \"\n              \"TODO: replace this note with a Slack notification to a restricted security channel.\"\n          ),\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n\n    lines = []\n    if fv_status != \"success\" or key_present in (False, \"False\", None):\n          lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status,\n  key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n          lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n\n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
                     "warnings": {},
                     "x": 960,
                     "y": 960
@@ -378,7 +378,7 @@
                     "errors": {},
                     "id": "17",
                     "type": "code",
-                    "userCode": "\n    \n    phantom.add_note(\n          container=container,\n          title=\"FileVault recovery - no device found\",\n          content=(\n              \"No Jamf device matched the provided serial number. \"\n              \"Recovery access playbook stopped; no actions were taken. \"\n              \"Verify the serial and re-run.\"\n          ),\n          note_type=\"general\",\n      )   \n\n",
+                    "userCode": "\n    \n    rows = phantom.collect2(container=container, datapath=[\"get_device_by_serial_1:action_result.status\"], action_results=results)\n    lookup_status = rows[0][0] if rows and rows[0] else None\n\n    if lookup_status == \"success\":\n        title = \"FileVault recovery - no device matched\"\n        content = (\"No Jamf device matched the provided serial number. \"\n                     \"No actions were taken. Verify the serial is correct and re-run.\")\n    else:\n          title = \"FileVault recovery - device lookup FAILED\"\n          content = (\"The 'get device by serial' lookup did not succeed (status: {}). \"\n                     \"No device was resolved and no actions were taken. This usually means a \"\n                     \"Jamf asset / credential / privilege problem, NOT a wrong serial - check \"\n                     \"the asset config and API role, then re-run.\".format(lookup_status))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n\n",
                     "warnings": {},
                     "x": 1208,
                     "y": 504
@@ -729,7 +729,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "set_recovery_lock_1:action_result.data.*.device_id",
+                            "device_id": "get_device_by_serial_1:action_result.data.*.id ",
                             "device_type": "computer",
                             "message": "<your-lock-screen-message>",
                             "phone_number": "<your-support-phone>",
@@ -763,8 +763,12 @@
                         "functionId": 1,
                         "functionName": "prompt_1",
                         "id": "9",
-                        "message": "Approve device WIPE? This permanently erases the Mac (offboarding) and is irreversible.",
-                        "parameters": [],
+                        "message": "Approve device WIPE? This permanently ERASES the Mac and is IRREVERSIBLE.\n- FileVault recovery key escrowed in Jamf: {0}\n  - Set recovery lock queued: {1}\n  - Lock device queued: {2}",
+                        "parameters": [
+                            "get_filevault_recovery_key_1:action_result.summary.key_present",
+                            "set_recovery_lock_1:action_result.status",
+                            "lock_device_1:action_result.status"
+                        ],
                         "responseTime": 30,
                         "responses": [
                             {
@@ -803,7 +807,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-03T10:10:54.422618+00:00",
+    "create_time": "2026-07-06T09:37:42.565551+00:00",
     "draft_mode": false,
     "labels": [
         "*"
