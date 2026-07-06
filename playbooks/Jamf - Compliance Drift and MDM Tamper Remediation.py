@@ -1,5 +1,5 @@
 """
-Jamf - Compliance Drift / MDM Tamper Remediation (correct-first, gated wipe).
+Jamf - Compliance Drift and MDM Tamper Remediation (correct-first, gated wipe).
 
 v2 (PR #10 review): device-found gate, positive NON_COMPLIANT match with a
 manual-review note for compliant/unknown/failed reads, containment-success gate

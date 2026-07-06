@@ -6,6 +6,14 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — Renamed the playbook to the standard `Jamf - <Scenario>` format
+
+Renamed the files from `jamf_compliance_drift_remediation.*` to
+**`Jamf - Compliance Drift and MDM Tamper Remediation.*`** so they match the naming standard
+(and the sibling templates like `Jamf - FileVault Recovery Access (macOS)`) and the name shown
+in SOAR. The scenario had a slash ("Compliance Drift / MDM Tamper"), which can't go in a
+filename, so it's reworded to "and". No behaviour changed — same graph and logic, new name.
+
 ## 2026-07-06 — v2 rebuild: all review logic fixed, validated, and run live (green)
 
 Rebuilt the playbook to fix every logic issue the reviews raised, imported it into SOAR, and
@@ -200,7 +208,7 @@ once to confirm it loads and the wipe gate still holds — then export to lock i
 Added the first real playbook template under `playbooks/` (issue #4), on the
 `playbook/compliance-drift-remediation` branch:
 
-- **`jamf_compliance_drift_remediation.py` / `.json`** — responds to a device
+- **`Jamf - Compliance Drift and MDM Tamper Remediation.py` / `.json`** — responds to a device
   flagged as non-compliant or MDM-tampered. Unlike a "contain first" flow, this
   one **tries to fix the device first** (re-establish MDM control and force a
   check-in), then **checks compliance**. If the device is healthy again, it just

@@ -10,28 +10,27 @@ and `CONTRIBUTING.md` for the workflow and the non-negotiable safety rules.
 > source of truth; the `.json` is a best-effort VPE graph that should be opened
 > and re-saved in the editor to canonicalize its layout, ports, and hash.
 >
-> **Filename convention.** The playbook *name* follows `Jamf - <Scenario>` (Title Case
-> + dash, per issue #8), but the on-disk *filenames* are `snake_case`
-> (`jamf_compliance_drift_remediation.{py,json}`) on purpose: the `/` in a
-> `Jamf - <Scenario>` name makes SOAR treat it as a subdirectory path on export, so the
-> file pair is stored snake_cased to keep it a flat, portable pair. The display name
-> inside SOAR still reads `Jamf - <Scenario>`.
+> **Filename convention.** Files are named `Jamf - <Scenario>.{py,json}` (Title Case + dash,
+> per issue #8) — matching the display name in SOAR and the sibling templates (e.g.
+> `Jamf - FileVault Recovery Access (macOS)`). The scenario must avoid `/` (SOAR would read
+> it as a subdirectory on export), so "Compliance Drift / MDM Tamper" is written
+> `Jamf - Compliance Drift and MDM Tamper Remediation`.
 
 ## Templates
 
 | Playbook | Issue | Scenario | Backbone |
 |----------|-------|----------|----------|
-| `jamf_compliance_drift_remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → **correct-first** → check → contain-if-needed → approval gate → wipe |
+| `Jamf - Compliance Drift and MDM Tamper Remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → **correct-first** → check → contain-if-needed → approval gate → wipe |
 
-### `jamf_compliance_drift_remediation`
+### `Jamf - Compliance Drift and MDM Tamper Remediation`
 Apple/MDM-unique template (no shipped SOAR equivalent). Leads with **non-destructive
 correction** — redeploy the management framework and send a blank push to force an MDM
 check-in — then **checks compliance**. Only if the read *succeeds and* the device is
 *still* non-compliant does it contain (quarantine group + lock); a wipe happens **only**
-behind an analyst approval prompt whose text states the action is irreversible. Escalation
-requires a *present, successful, non-compliant* signal: a failed/403 read (`status != success`)
-**or** a successful-but-empty read (`summary.total == 0`) both end the run safely rather than
-escalating.
+behind an analyst approval prompt whose text states the action is irreversible. Escalation is a
+**positive match** — `is_compliant` contains only on `status == success` AND
+`compliance_state == NON_COMPLIANT`; a COMPLIANT / UNKNOWN / None / empty / failed (403) read
+all end the run safely at `note_no_drift` rather than escalating.
 
 Flow (v2, block names in order): `resolve_device` → `device_found?` → `redeploy_framework`
 → `force_checkin` → `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device`

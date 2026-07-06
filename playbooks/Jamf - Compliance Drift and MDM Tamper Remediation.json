@@ -4,7 +4,7 @@
     "category": "Jamf Incident Response",
     "coa": {
         "data": {
-            "description": "Jamf - Compliance Drift / MDM Tamper Remediation (correct-first, gated wipe).",
+            "description": "Jamf - Compliance Drift and MDM Tamper Remediation (correct-first, gated wipe).",
             "edges": [
                 {
                     "id": "port_0_to_port_2",
