@@ -72,7 +72,7 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 | Scenario | Status | Notes |
 |----------|--------|-------|
 | **Lost / stolen device** | **First template (planned)** | Resolve device, lock + contain, notify, hold for analyst approval, then erase as a last resort. |
-| Compromised user | Planned | Contain the user's enrolled devices, enrich with identity context, gate before destructive action. |
+| **Compromised user** | **In review (PR #2)** | Sweep the user's device(s): quarantine (static group) + lock + blank push, then an analyst approval gate before an (optional) wipe. |
 | Identity-provider (IdP) breach | Planned | Broad containment across affected accounts/devices; approval gate before any mass group change. |
 | Malicious file | Planned | Locate affected device(s), contain, enrich the file verdict, remediate behind a gate. |
 

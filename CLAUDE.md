@@ -103,4 +103,5 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
+| 2026-07-06 | `playbooks/` | Second playbook (#2, PR): **Compromised User Device Sweep** (Automation). Resolves the user's device(s) by `sourceUserName` → contains each (add to static group + lock + send blank push) → containment note → **analyst approval prompt** → gated `wipe device` (deny path tested; wipe path wired, not run live). Config points scrubbed to placeholders: `<your-jamf-asset>`, `<your-suspended-group-id>`, `<lock-pin>`, `<your-callback-number>`, `<your-approver-role>`. Enrichment (calling the Input engine) intentionally deferred. |
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |

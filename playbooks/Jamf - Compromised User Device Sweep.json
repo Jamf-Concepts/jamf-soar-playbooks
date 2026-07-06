@@ -1,0 +1,634 @@
+{
+  "blockly": false,
+  "blockly_xml": "<xml></xml>",
+  "category": "Uncategorized",
+  "coa": {
+    "data": {
+      "description": "",
+      "edges": [
+        {
+          "id": "port_0_to_port_2",
+          "sourceNode": "0",
+          "sourcePort": "0_out",
+          "targetNode": "2",
+          "targetPort": "2_in"
+        },
+        {
+          "id": "port_2_to_port_3",
+          "sourceNode": "2",
+          "sourcePort": "2_out",
+          "targetNode": "3",
+          "targetPort": "3_in"
+        },
+        {
+          "id": "port_2_to_port_4",
+          "sourceNode": "2",
+          "sourcePort": "2_out",
+          "targetNode": "4",
+          "targetPort": "4_in"
+        },
+        {
+          "id": "port_2_to_port_5",
+          "sourceNode": "2",
+          "sourcePort": "2_out",
+          "targetNode": "5",
+          "targetPort": "5_in"
+        },
+        {
+          "id": "port_3_to_port_6",
+          "sourceNode": "3",
+          "sourcePort": "3_out",
+          "targetNode": "6",
+          "targetPort": "6_in"
+        },
+        {
+          "id": "port_5_to_port_6",
+          "sourceNode": "5",
+          "sourcePort": "5_out",
+          "targetNode": "6",
+          "targetPort": "6_in"
+        },
+        {
+          "id": "port_4_to_port_6",
+          "sourceNode": "4",
+          "sourcePort": "4_out",
+          "targetNode": "6",
+          "targetPort": "6_in"
+        },
+        {
+          "id": "port_6_to_port_7",
+          "sourceNode": "6",
+          "sourcePort": "6_out",
+          "targetNode": "7",
+          "targetPort": "7_in"
+        },
+        {
+          "id": "port_7_to_port_8",
+          "sourceNode": "7",
+          "sourcePort": "7_out",
+          "targetNode": "8",
+          "targetPort": "8_in"
+        },
+        {
+          "id": "port_8_to_port_9",
+          "sourceNode": "8",
+          "sourcePort": "8_out",
+          "targetNode": "9",
+          "targetPort": "9_in"
+        },
+        {
+          "conditions": [
+            {
+              "conditionKey": "condition_key_0",
+              "index": 0
+            }
+          ],
+          "id": "port_9_to_port_10",
+          "sourceNode": "9",
+          "sourcePort": "9_out",
+          "targetNode": "10",
+          "targetPort": "10_in"
+        },
+        {
+          "conditions": [
+            {
+              "conditionKey": "condition_key_e603b57a-5d9c-4a0b-9f19-e0ce5584c799",
+              "index": 1
+            }
+          ],
+          "id": "port_9_to_port_11",
+          "sourceNode": "9",
+          "sourcePort": "9_out",
+          "targetNode": "11",
+          "targetPort": "11_in"
+        },
+        {
+          "id": "port_11_to_port_1",
+          "sourceNode": "11",
+          "sourcePort": "11_out",
+          "targetNode": "1",
+          "targetPort": "1_in"
+        },
+        {
+          "id": "port_10_to_port_1",
+          "sourceNode": "10",
+          "sourcePort": "10_out",
+          "targetNode": "1",
+          "targetPort": "1_in"
+        }
+      ],
+      "nodes": {
+        "0": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionName": "on_start",
+            "id": "0",
+            "type": "start"
+          },
+          "errors": {},
+          "id": "0",
+          "type": "start",
+          "warnings": {},
+          "x": 1000,
+          "y": 419.99999999999994
+        },
+        "1": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionName": "on_finish",
+            "id": "1",
+            "type": "end"
+          },
+          "errors": {},
+          "id": "1",
+          "type": "end",
+          "warnings": {},
+          "x": 1000,
+          "y": 1460
+        },
+        "10": {
+          "data": {
+            "action": "wipe device",
+            "actionType": "contain",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "wipe_device_1",
+            "id": "10",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "confirm": "true",
+              "device_id": "get_device_by_username_1:action_result.data.*.id",
+              "device_type": "get_device_by_username_1:action_result.data.*.type",
+              "pin": "<lock-pin>"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "confirm"
+              },
+              {
+                "data_type": "string",
+                "field": "device_id"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "10",
+          "type": "action",
+          "warnings": {},
+          "x": 1180,
+          "y": 1300
+        },
+        "11": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionId": 2,
+            "functionName": "code_2",
+            "id": "11",
+            "inputParameters": [],
+            "outputVariables": [],
+            "type": "code"
+          },
+          "errors": {},
+          "id": "11",
+          "type": "code",
+          "userCode": "\n    phantom.add_note(\n        container=container,\n        note_type=\"general\",\n        title=\"Wipe denied\",\n        content=\"Analyst denied wipe \u2014 device remains contained (locked + quarantined).\",\n        note_format=\"markdown\",\n    )\n\n",
+          "warnings": {},
+          "x": 820,
+          "y": 1300
+        },
+        "2": {
+          "data": {
+            "action": "get device by username",
+            "actionType": "investigate",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "get_device_by_username_1",
+            "id": "2",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "username": "artifact:*.cef.sourceUserName"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "username"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "2",
+          "type": "action",
+          "warnings": {},
+          "x": 980,
+          "y": 520
+        },
+        "3": {
+          "data": {
+            "action": "add to static group",
+            "actionType": "contain",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "add_to_static_group_1",
+            "id": "3",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "device_id": "get_device_by_username_1:action_result.data.*.id",
+              "device_type": "get_device_by_username_1:action_result.data.*.type",
+              "group_id": "<your-suspended-group-id>"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "device_id"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "3",
+          "type": "action",
+          "warnings": {},
+          "x": 980,
+          "y": 620
+        },
+        "4": {
+          "data": {
+            "action": "send blank push",
+            "actionType": "correct",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "send_blank_push_1",
+            "id": "4",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "device_id": "get_device_by_username_1:action_result.data.*.id",
+              "device_type": "get_device_by_username_1:action_result.data.*.type"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "device_id"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "4",
+          "type": "action",
+          "warnings": {},
+          "x": 680,
+          "y": 620
+        },
+        "5": {
+          "data": {
+            "action": "lock device",
+            "actionType": "contain",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "lock_device_1",
+            "id": "5",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "device_id": "get_device_by_username_1:action_result.data.*.id",
+              "device_type": "get_device_by_username_1:action_result.data.*.type",
+              "message": "This device has been locked by security. Contact IT.",
+              "phone_number": "<your-callback-number>",
+              "pin": "<lock-pin>"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "device_id"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "5",
+          "type": "action",
+          "warnings": {},
+          "x": 1300,
+          "y": 620
+        },
+        "6": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionId": 1,
+            "functionName": "format_1",
+            "id": "6",
+            "parameters": [
+              "get_device_by_username_1:action_result.data.*.username",
+              "get_device_by_username_1:action_result.data.*.general.name",
+              "get_device_by_username_1:action_result.data.*.serial_number"
+            ],
+            "template": "## Compromised User \u2014 Device Contained\n\n- **User:** {0}\n- **Device:** {1} ({2})\n- **Actions taken:** added to quarantine group, locked, blank push sent",
+            "type": "format"
+          },
+          "errors": {},
+          "id": "6",
+          "type": "format",
+          "warnings": {},
+          "x": 980,
+          "y": 780
+        },
+        "7": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionId": 1,
+            "functionName": "code_1",
+            "id": "7",
+            "inputParameters": [
+              "format_1:formatted_data"
+            ],
+            "outputVariables": [],
+            "type": "code"
+          },
+          "errors": {},
+          "id": "7",
+          "type": "code",
+          "userCode": "\n    def _flat(x):\n        out = []\n        if isinstance(x, (list, tuple)):\n            for i in x:\n                out.extend(_flat(i))\n        elif x not in (None, \"\"):\n            out.append(str(x))\n        return out\n\n    text = \"\\n\".join(_flat(format_1))\n\n    phantom.add_note(\n        container=container,\n        note_type=\"general\",\n        title=\"Compromised User \u2014 Device Contained\",\n        content=text,\n        note_format=\"markdown\",\n    )\n\n",
+          "warnings": {},
+          "x": 980,
+          "y": 900
+        },
+        "8": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "approver": {
+              "type": "role",
+              "value": "<your-approver-role>"
+            },
+            "functionId": 1,
+            "functionName": "prompt_1",
+            "id": "8",
+            "message": "Compromised-user containment complete for {0} (device {1}).",
+            "parameters": [
+              "get_device_by_username_1:action_result.parameter.username",
+              "get_device_by_username_1:action_result.data.*.general.name"
+            ],
+            "responseTime": 30,
+            "responses": [
+              {
+                "required": true,
+                "responseOptions": [
+                  "Wipe",
+                  "Do not wipe"
+                ],
+                "responsePrompt": "Wipe this device? This is irreversible.",
+                "responseType": "customList"
+              }
+            ],
+            "type": "prompt"
+          },
+          "errors": {},
+          "id": "8",
+          "type": "prompt",
+          "warnings": {},
+          "x": 980,
+          "y": 1020
+        },
+        "9": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "conditions": [
+              {
+                "comparisons": [
+                  {
+                    "comparisonKey": "comparison_key_0",
+                    "op": "==",
+                    "param": "prompt_1:action_result.summary.responses.0",
+                    "value": "Wipe"
+                  }
+                ],
+                "conditionIndex": 0,
+                "conditionKey": "condition_key_0",
+                "logic": "and",
+                "type": "if"
+              },
+              {
+                "comparisons": [
+                  {
+                    "comparisonKey": "comparison_key_eada902f-3388-4103-878e-b08d19dc3c52",
+                    "op": "==",
+                    "param": "",
+                    "value": ""
+                  }
+                ],
+                "conditionIndex": 1,
+                "conditionKey": "condition_key_e603b57a-5d9c-4a0b-9f19-e0ce5584c799",
+                "logic": "and",
+                "type": "else"
+              }
+            ],
+            "functionId": 1,
+            "functionName": "decision_1",
+            "id": "9",
+            "type": "decision"
+          },
+          "errors": {},
+          "id": "9",
+          "type": "decision",
+          "warnings": {},
+          "x": 1060,
+          "y": 1140
+        }
+      },
+      "notes": ""
+    },
+    "input_spec": null,
+    "output_spec": null,
+    "playbook_trigger": "artifact_created",
+    "playbook_type": "automation",
+    "python_version": "3.13",
+    "schema": "5.0.24",
+    "version": "8.5.0.248"
+  },
+  "create_time": "2026-07-06T02:43:11.596374+00:00",
+  "draft_mode": false,
+  "labels": [
+    "*"
+  ],
+  "tags": []
+}
