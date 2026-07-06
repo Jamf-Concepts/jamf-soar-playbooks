@@ -17,8 +17,63 @@ from datetime import datetime, timedelta
 def on_start(container):
     phantom.debug('on_start() called')
 
-    # call 'resolve_device' block
-    resolve_device(container=container)
+    # call 'has_serial' block
+    has_serial(container=container)
+
+    return
+
+
+@phantom.playbook_block()
+def has_serial(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("has_serial() called")
+
+    # Guard: only resolve if the triggering artifact actually carries a serial number.
+    # An empty serial would make resolve_device build empty params and silently no-op.
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["artifact:*.cef.serialNumber", "!=", ""]
+        ],
+        conditions_dps=[
+            ["artifact:*.cef.serialNumber", "!=", ""]
+        ],
+        name="has_serial:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        resolve_device(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # call connected blocks for the else condition 2
+    note_no_serial(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def note_no_serial(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_no_serial() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(
+          container=container,
+          title="Compliance drift - no serial on artifact",
+          content=(
+              "The triggering artifact carried no serialNumber, so no device could be resolved. "
+              "Playbook stopped; nothing was attempted. Map the event's serial to cef.serialNumber."
+          ),
+          note_type="general",
+      )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="note_no_serial_called", value="True")
 
     return
 
@@ -402,7 +457,7 @@ def approve_wipe(action=None, success=None, container=None, results=None, handle
 
     user = None
     role = "Administrator"
-    message = """Device is still reported NON_COMPLIANT after automated correction, and containment (quarantine + lock) completed successfully. Approve device WIPE? This ERASES the device and is IRREVERSIBLE."""
+    message = """Device is still reported NON_COMPLIANT after automated correction. Quarantine and lock were QUEUED (lock is an async MDM command — queued, not confirmed applied). Approve device WIPE? This ERASES the device and is IRREVERSIBLE."""
 
     # parameter list for template variable replacement
     parameters = []
@@ -496,7 +551,6 @@ def wipe_device(action=None, success=None, container=None, results=None, handle=
     for resolve_device_result_item in resolve_device_result_data:
         if resolve_device_result_item[0] is not None:
             parameters.append({
-                "pin": "<your-6-digit-pin>",
                 "confirm": resolve_device_result_item[0],
                 "device_id": resolve_device_result_item[0],
                 "device_type": resolve_device_result_item[1],
@@ -513,7 +567,63 @@ def wipe_device(action=None, success=None, container=None, results=None, handle=
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device", assets=["<your-jamf-asset>"], callback=note_wipe_queued)
+    phantom.act("wipe device", parameters=parameters, name="wipe_device", assets=["<your-jamf-asset>"], callback=wipe_ok)
+
+    return
+
+
+@phantom.playbook_block()
+def wipe_ok(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_ok() called")
+
+    # B3: only post the "ERASE queued" note if the wipe actually succeeded. A failed wipe
+    # (HTTP 500 on a user-enrolled Mac, no managementId, 403, network error) must NOT tell the
+    # analyst the device is being erased when nothing was queued.
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["wipe_device:action_result.status", "==", "success"]
+        ],
+        conditions_dps=[
+            ["wipe_device:action_result.status", "==", "success"]
+        ],
+        name="wipe_ok:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        note_wipe_queued(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # call connected blocks for the else condition 2
+    note_wipe_failed(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def note_wipe_failed(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_wipe_failed() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(
+          container=container,
+          title="Compliance drift - ERASE command NOT queued",
+          content=(
+              "The wipe action returned an error - the ERASE command was NOT queued. "
+              "The device is still quarantined + locked. Manual intervention required."
+          ),
+          note_type="general",
+      )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="note_wipe_failed_called", value="True")
 
     return
 

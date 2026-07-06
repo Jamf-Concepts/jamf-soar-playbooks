@@ -32,12 +32,14 @@ behind an analyst approval prompt whose text states the action is irreversible. 
 `compliance_state == NON_COMPLIANT`; a COMPLIANT / UNKNOWN / None / empty / failed (403) read
 all end the run safely at `note_no_drift` rather than escalating.
 
-Flow (v2, block names in order): `resolve_device` → `device_found?` → `redeploy_framework`
-→ `force_checkin` → `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device`
-→ `containment_ok?` → `approve_wipe` → `is_wipe_approved?` → `wipe_device`. Every terminal path
-writes a container note (`device_found` no → note; `is_compliant` else → `note_no_drift`;
+Flow (v3, block names in order): `has_serial?` → `resolve_device` → `device_found?` →
+`redeploy_framework` → `force_checkin` → `check_compliance` → `is_compliant?` →
+`quarantine_device` → `lock_device` → `containment_ok?` → `approve_wipe` → `is_wipe_approved?`
+→ `wipe_device` → `wipe_ok?`. Every terminal path writes a container note (`has_serial` no →
+`note_no_serial`; `device_found` no → `note_no_device`; `is_compliant` else → `note_no_drift`;
 `containment_ok` no → `note_containment_failed`; `is_wipe_approved` no → `note_wipe_declined`;
-after `wipe_device` → `note_wipe_queued`). Escalation is a **positive match**: `is_compliant`
+`wipe_ok` yes → `note_wipe_queued`, no → `note_wipe_failed`). `wipe_ok` gates the "ERASE queued"
+note on the wipe actually succeeding, so a failed erase never reports as queued. Escalation is a **positive match**: `is_compliant`
 routes to containment only on `status == success` AND `compliance_state == NON_COMPLIANT`;
 COMPLIANT / UNKNOWN / None / empty / failed reads all end at `note_no_drift`. The wipe prompt is
 shown only if `containment_ok` confirms quarantine AND lock both succeeded.
@@ -59,7 +61,7 @@ shown only if `containment_ok` confirms quarantine AND lock both succeeded.
 **Customer-config points** (replace the `<...>` placeholders on import):
 - Jamf asset — `assets=["<your-jamf-asset>"]` on every action block
 - Quarantine static group — `group_name` on `quarantine_device`
-- Lock/wipe PIN — `<your-6-digit-pin>` on `lock_device` and `wipe_device`
+- Lock PIN — `<your-6-digit-pin>` on `lock_device` (the `wipe_device` erase PIN was dropped — modern Macs don't use it)
 - Lock return message + callback number — on `lock_device`
 - Approver role — on `approve_wipe` (default `Administrator`)
 

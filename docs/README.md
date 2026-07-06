@@ -6,6 +6,26 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — v3: re-review fixes (false "wipe queued" note, no-serial guard, prompt wording)
+
+Ron's re-review confirmed every prior fix landed and flagged one real bug plus two cheap items;
+all fixed, re-imported, and re-run (green):
+
+- **No more false "device is being erased" note.** Previously the "ERASE queued" note posted even
+  if the wipe *failed* (e.g. an HTTP 500 on a user-enrolled Mac). Now a `wipe_ok` check only posts
+  it on success; a failed wipe writes a "NOT queued — device still quarantined + locked, manual
+  intervention required" note instead.
+- **No silent dead-end on a missing serial.** If the triggering event has no serial number, the
+  playbook now stops with a clear note instead of quietly doing nothing.
+- **Clearer approval wording.** The wipe prompt now says quarantine and lock were *queued* (a lock
+  is an async command — queued, not confirmed applied) rather than "completed successfully," so the
+  analyst isn't misled before authorizing an irreversible erase.
+- Dropped a stray erase PIN that modern Macs don't use.
+
+Re-imported to SOAR (validated clean) and re-run against the test device — same correct healthy
+path as before, with the new serial guard passing through as expected. The two new failure-path
+notes only fire on a failed wipe / missing serial, which the healthy test device doesn't produce.
+
 ## 2026-07-06 — Renamed the playbook to the standard `Jamf - <Scenario>` format
 
 Renamed the files from `jamf_compliance_drift_remediation.*` to

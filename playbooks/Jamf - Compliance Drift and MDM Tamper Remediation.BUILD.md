@@ -192,6 +192,17 @@ hand-edit the `.json`.
   containment-failed, wipe-declined, wipe-queued). Use the same note mechanism as PR #11 for
   consistency. Word the wipe note "queued", never "wiped".
 
+### v3 additions (PR #10 re-review — B3 + hardening)
+Four nodes added on top of the v2 design (now **23 nodes / 28 edges**):
+- **`wipe_ok`** (decision, B3) — after `wipe_device`, gate on `wipe_device:action_result.status
+  == success`: IF → `note_wipe_queued`; ELSE → **`note_wipe_failed`** (code note). Stops the false
+  "ERASE queued" note when the wipe errors.
+- **`has_serial`** (decision) — before `resolve_device`, gate on
+  `artifact:*.cef.serialNumber != ""`: IF → `resolve_device`; ELSE → **`note_no_serial`** (code).
+- `approve_wipe` message reworded: "quarantine and lock were QUEUED (lock is async — queued, not
+  confirmed applied)".
+- `wipe_device` `pin` param removed (echoed erase PIN; modern Macs don't use it).
+
 ### Status (2026-07-06) — built, validated, run green
 - **Built + imported clean:** `passed_validation: true`, no node warnings; the committed
   `.py`/`.json` are byte-for-byte identical to SOAR's canonical stored copy.

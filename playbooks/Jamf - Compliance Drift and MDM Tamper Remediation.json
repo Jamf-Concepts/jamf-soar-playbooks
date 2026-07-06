@@ -7,13 +7,6 @@
             "description": "Jamf - Compliance Drift and MDM Tamper Remediation (correct-first, gated wipe).",
             "edges": [
                 {
-                    "id": "port_0_to_port_2",
-                    "sourceNode": "0",
-                    "sourcePort": "0_out",
-                    "targetNode": "2",
-                    "targetPort": "2_in"
-                },
-                {
                     "id": "port_2_to_port_13",
                     "sourceNode": "2",
                     "sourcePort": "2_out",
@@ -195,16 +188,89 @@
                     "targetPort": "1_in"
                 },
                 {
-                    "id": "port_12_to_port_19",
+                    "id": "port_19_to_port_1",
+                    "sourceNode": "19",
+                    "sourcePort": "19_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_0_to_port_20",
+                    "sourceNode": "0",
+                    "sourcePort": "0_out",
+                    "targetNode": "20",
+                    "targetPort": "20_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_20_if",
+                            "index": 0
+                        }
+                    ],
+                    "id": "port_20_to_port_2",
+                    "sourceNode": "20",
+                    "sourcePort": "20_out",
+                    "targetNode": "2",
+                    "targetPort": "2_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_20_else",
+                            "index": 1
+                        }
+                    ],
+                    "id": "port_20_to_port_21",
+                    "sourceNode": "20",
+                    "sourcePort": "20_out",
+                    "targetNode": "21",
+                    "targetPort": "21_in"
+                },
+                {
+                    "id": "port_21_to_port_1",
+                    "sourceNode": "21",
+                    "sourcePort": "21_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_12_to_port_22",
                     "sourceNode": "12",
                     "sourcePort": "12_out",
+                    "targetNode": "22",
+                    "targetPort": "22_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_22_if",
+                            "index": 0
+                        }
+                    ],
+                    "id": "port_22_to_port_19",
+                    "sourceNode": "22",
+                    "sourcePort": "22_out",
                     "targetNode": "19",
                     "targetPort": "19_in"
                 },
                 {
-                    "id": "port_19_to_port_1",
-                    "sourceNode": "19",
-                    "sourcePort": "19_out",
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_22_else",
+                            "index": 1
+                        }
+                    ],
+                    "id": "port_22_to_port_23",
+                    "sourceNode": "22",
+                    "sourcePort": "22_out",
+                    "targetNode": "23",
+                    "targetPort": "23_in"
+                },
+                {
+                    "id": "port_23_to_port_1",
+                    "sourceNode": "23",
+                    "sourcePort": "23_out",
                     "targetNode": "1",
                     "targetPort": "1_in"
                 }
@@ -255,7 +321,7 @@
                         "functionId": 10,
                         "functionName": "approve_wipe",
                         "id": "10",
-                        "message": "Device is still reported NON_COMPLIANT after automated correction, and containment (quarantine + lock) completed successfully. Approve device WIPE? This ERASES the device and is IRREVERSIBLE.",
+                        "message": "Device is still reported NON_COMPLIANT after automated correction. Quarantine and lock were QUEUED (lock is an async MDM command \u2014 queued, not confirmed applied). Approve device WIPE? This ERASES the device and is IRREVERSIBLE.",
                         "parameters": [],
                         "responseTime": 30,
                         "responses": [
@@ -369,8 +435,7 @@
                         "parameters": {
                             "confirm": "resolve_device:action_result.data.*.id",
                             "device_id": "resolve_device:action_result.data.*.id",
-                            "device_type": "resolve_device:action_result.data.*.type",
-                            "pin": "<your-6-digit-pin>"
+                            "device_type": "resolve_device:action_result.data.*.type"
                         },
                         "requiredParameters": [
                             {
@@ -380,10 +445,6 @@
                             {
                                 "data_type": "string",
                                 "field": "confirm"
-                            },
-                            {
-                                "data_type": "string",
-                                "field": "pin"
                             }
                         ],
                         "tab": "byConnector",
@@ -655,6 +716,140 @@
                     "warnings": {},
                     "x": 1000,
                     "y": 250
+                },
+                "20": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_20_0",
+                                        "op": "!=",
+                                        "param": "artifact:*.cef.serialNumber",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_20_if",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_20_else",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_20_else",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 20,
+                        "functionName": "has_serial",
+                        "id": "20",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "20",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 175
+                },
+                "21": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 21,
+                        "functionName": "note_no_serial",
+                        "id": "21",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "21",
+                    "type": "code",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - no serial on artifact\",\n          content=(\n              \"The triggering artifact carried no serialNumber, so no device could be resolved. \"\n              \"Playbook stopped; nothing was attempted. Map the event's serial to cef.serialNumber. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 1320,
+                    "y": 175
+                },
+                "22": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_22_0",
+                                        "op": "==",
+                                        "param": "wipe_device:action_result.status",
+                                        "value": "success"
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_22_if",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_22_else",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_22_else",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 22,
+                        "functionName": "wipe_ok",
+                        "id": "22",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "22",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 500,
+                    "y": 1830
+                },
+                "23": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 23,
+                        "functionName": "note_wipe_failed",
+                        "id": "23",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "23",
+                    "type": "code",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - ERASE command NOT queued\",\n          content=(\n              \"The wipe action returned an error - the ERASE command was NOT queued. \"\n              \"The device is still quarantined + locked. Manual intervention required. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 800,
+                    "y": 1900
                 },
                 "3": {
                     "data": {
