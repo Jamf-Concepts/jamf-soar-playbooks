@@ -6,6 +6,25 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — FileVault Recovery Access: review fixes (leaked secret redacted, approval gate routing)
+
+Two fixes from the review of the FileVault Recovery Access playbook (PR #11), plus a re-sync
+with `main`:
+
+- **Removed a real secret left in the docs.** The maintainer notes (`CLAUDE.md`) still spelled out
+  a real recovery-lock password, a device serial, and other test values that had already been
+  swapped for placeholders everywhere else. They're now described without printing the values.
+  Because the password was also committed to git history, rotating it on the Jamf side is tracked
+  as a follow-up (**issue #14**) — the connector repo is confirmed clean, and for a private repo
+  rotating the credential is the accepted mitigation (no history rewrite needed).
+- **Fixed the approval-prompt routing.** The "approve the wipe?" prompt was pointed at a *user* slot
+  holding a placeholder, which wouldn't resolve to a real person on import — so the safety gate
+  could fail to reach anyone. It now routes by **role**, so on import you just point it at your
+  security-analyst role.
+
+Also merged in the Compliance Drift template (now landed on `main`) so the shared docs line up —
+that template is now **merged**, FileVault is **in review**.
+
 ## 2026-07-06 — v3: re-review fixes (false "wipe queued" note, no-serial guard, prompt wording)
 
 Ron's re-review confirmed every prior fix landed and flagged one real bug plus two cheap items;
@@ -305,6 +324,60 @@ Two things we learned and wrote down so nobody trips on them:
 
 The committed template keeps generic `<placeholders>` (no real asset names, group
 names, or PINs) so it's safe to share; real values live only in the SOAR instance.
+
+---
+
+---
+
+## 2026-07-03 — FileVault Recovery Access: serial now pulled from the event + distribution PR
+
+Two things:
+- **The Mac's serial is no longer hardcoded.** The resolve step now reads the
+  serial straight from the incoming SOAR event (`artifact:*.cef.serialNumber`),
+  the same pattern the sibling Compliance Drift / MDM Tamper playbook (issue #4)
+  uses — so the template works on whatever device the event is about, instead of
+  a fixed test serial.
+- **Distribution PR opened.** The generic, ready-to-share version (placeholder
+  asset/approver/passwords, no real values) goes to `main` via its own branch,
+  while the working copy stays runnable in SOAR for testing. This keeps the
+  live playbook and the shareable template from stepping on each other.
+
+Still to finish: the secure-notification step (still a placeholder note) and
+friendlier block names.
+
+---
+
+## 2026-07-02 — First playbook: Jamf - FileVault Recovery Access (macOS)
+
+The first real playbook is in (issue #7): **Jamf - FileVault Recovery Access
+(macOS)**. It gives IT/security secured recovery access to a Mac — after a
+compromise or during employee offboarding:
+
+1. **Resolve** the Mac by serial number; if none matches, it stops with a note.
+2. **Enrich** — pull the FileVault recovery key (sensitive!), local user
+   accounts, and compliance status.
+3. **Secure** — set a recovery lock, then lock the device.
+4. **Note / notify** — record what happened (today a note; meant to become a
+   restricted-channel Slack alert — see below).
+5. **Ask a human** — an analyst approval prompt before any wipe.
+6. **Only on "Yes"** — wipe the device (offboarding erase). A "No" just leaves a
+   note. It never wipes on its own.
+
+Cleanups done this session:
+- **Renamed** the playbook to drop a `/` in its title (the slash was accidentally
+  creating a folder inside the repo).
+- **Made it generic** — swapped one environment's specifics for clearly-marked
+  placeholders: the dev asset name, the approver, and a **real recovery-lock
+  password and test phone number** that had been left in. The wipe prompt now
+  spells out that the erase is permanent and irreversible.
+
+Still to finish (per issue #7):
+- **Build the real notify step.** Right now step 4 is just a note with a "replace
+  me" reminder; it needs to send to a restricted channel (the recovery key must
+  never go to a broad channel).
+- **Wire the serial to the event** instead of a fixed placeholder — waiting on a
+  shared decision about device-identifier fields (issue #8).
+- **Friendlier block names** (a tidy-up best done in the SOAR editor).
 
 ---
 

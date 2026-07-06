@@ -17,16 +17,31 @@ skip this step.
 ## Architecture
 
 ### Current state
-Two templates under `playbooks/` (each a `.py` + `.json` pair):
+Three templates now exist under `playbooks/` (each a `.py` + `.json` pair):
+
 - **Device Enrichment & Triage** (#5, **merged PR #9**) — read-only; a reusable
   **Input sub-playbook** (`Jamf - Device Enrichment (Input)`) plus an Automation
-  wrapper (`Jamf - Device Enrichment and Triage`).
-- **Compliance Drift & MDM Tamper Remediation** (#4, **in review PR #10**) —
-  correct-first with an analyst-gated wipe.
+  wrapper (`Jamf - Device Enrichment and Triage`). The shared enrichment engine
+  the other templates are meant to reuse. No destructive step.
+- **Compliance Drift & MDM Tamper Remediation** (#4, **merged PR #10**) —
+  correct-first backbone with an analyst-gated wipe.
+- **FileVault Recovery Access (macOS)** — **in review (PR #11)**, branch
+  `dist/filevault-recovery-access`. Secured recovery access to a Mac after a
+  compromise or during offboarding. Flow: resolve by serial (from
+  `artifact:*.cef.serialNumber`) → (device found?) → enrich (FileVault recovery
+  key [SENSITIVE], local users, compliance) → secure (recovery lock, lock) →
+  note/notify → analyst approval gate → wipe **only** on approval; decline /
+  no-device paths add a note. Authored in the VPE + export-scrubbed for
+  distribution. State: approval gate ✅ (`confirm` wired to `device_id`);
+  genericized (asset/approver/password/phone/message → placeholders); serial
+  un-hardcoded (`artifact:*.cef.serialNumber`); approval prompt routes by
+  `role`; **notify step still a note STUB**; lock PIN kept `000000`.
 
-Remaining templates (lost/stolen, compromised user, IdP breach, malicious file)
-are still to build. Templates are developed on feature branches and merged via
-PR — **never committed directly to `main`**.
+In-progress / planned: compromised user (#12, in review), lost/stolen (#1, in
+progress), IdP breach, malicious file.
+
+Templates are developed on feature branches and merged via PR — **never
+committed directly to `main`**.
 
 ### How it fits together
 - Each playbook is a **SOAR playbook synced via git**. SOAR clones this repo as
@@ -125,6 +140,24 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
+- **A playbook is a `.py` + `.json` pair; the `.json` (blockly/coa) is
+  canonical.** SOAR's VPE drives the `.json` and regenerates the `.py`.
+  Hand-editing risks drift — for value scrubs, edit BOTH in sync (asset/param
+  values live in `coa.data.nodes.*`; `blockly_xml` does NOT carry them).
+- **Genericizing the asset is an EXPORT scrub, not a VPE edit.** The VPE asset
+  field is a dropdown of *configured* assets — you can't type `<your-jamf-asset>`.
+  So the placeholder swap is done on the committed export files (git-side) as the
+  FINAL step before sharing. After scrubbing, do NOT re-open/Save in the VPE
+  (SOAR would push its real-asset store copy and clobber the scrub) — or re-scrub.
+- **A `/` in a SOAR playbook NAME becomes a directory separator on export.** #7
+  was first named `… Key / Recovery Access …`, which git stored as an accidental
+  `playbooks/… Key /…` subdirectory. Fixed by renaming in the VPE to drop the
+  slash. Avoid `/` in playbook names.
+- **The shared box pushes to the branch from other sessions — your local can be
+  badly stale.** #7's remote advanced 9 commits (VPE saves) while the local repo
+  sat at the old base, so a scrub done locally was on obsolete, wrongly-named
+  files. ALWAYS `git fetch` and reconcile before editing/scrubbing an
+  actively-synced playbook branch (ties to the per-dev-connection rule).
 - **Input sub-playbooks with paired inputs (e.g. `device_id` + `device_type`)
   must zip them, not cross them.** SOAR collects each `playbook_input:` datapath
   separately and auto-generates a *nested* loop (Cartesian product), so for a
@@ -189,6 +222,7 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
+| 2026-07-06 | `CLAUDE.md`, `playbooks/Jamf - FileVault Recovery Access (macOS).{py,json}` | **PR #11 review fixes (#7) + re-sync with `main`.** Ron's re-review left two items live. **B1 (blocking, security):** the change-history rows in `CLAUDE.md` still printed the real recovery-lock password, dev serial, approver, phone, and asset the scrub had replaced everywhere else — redacted them (describe the scrub without the literals; a repo-wide `git grep` for all five tokens is now clean). **The exposed recovery-lock password is in git history; rotating it on the tenant is tracked as an operational follow-up (#14)** — the connector repo is confirmed clean (no trace), and for a private repo rotating the credential is the accepted mitigation (git-history rewrite not warranted). Both prior `SetRecoveryLock` commands failed (`connection to service`), so it likely never applied; rotate once the test Mac is reachable. **I1 (safety gate):** the wipe-approval prompt set `user="<security-analyst-role>"` / `role=None`, so a placeholder in the `user=` slot won't resolve to a SOAR user and the analyst-in-the-loop gate can fail to route on import — flipped to `role="<security-analyst-role>"` / `user=None` (`.py`) and approver node `type:"user"→"role"` (`.json`), matching PR #10. I2 (wipe result note) / I3 (prompt names the target device) staged as follow-ups. Then **merged `origin/main` into `dist/filevault-recovery-access`** (PR #10 / #4 compliance-drift landed on `main`, touching the shared docs) — resolved doc conflicts in `CLAUDE.md` / `README.md` / `docs/README.md` (combined both sides; #10 now **merged**, #11 **in review**). `.py` `py_compile`-clean; `.json` valid. |
 | 2026-07-06 | `playbooks/` (merged from main, PR #9) | First playbook (#5, PR #9): **Device Enrichment & Triage** (read-only). Shipped as an **Input sub-playbook** (`Jamf - Device Enrichment (Input)`: get device + 6 enrich actions → format → `enrichment_summary` output) plus an **Automation wrapper** (`Jamf - Device Enrichment and Triage`: resolve by username → call sub-playbook → `add_note`). Asset scrubbed to `<your-jamf-asset>`. Adaptation points: sub-playbook repo reference (`jamf-soar-playbooks/…`) re-linked on import; resolver reads `artifact.*.cef.sourceUserName`; serial/name/MAC + mobile branches deferred. *(Row carried over during the rebase onto main.)* |
 | 2026-07-06 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,json}` | **v3 — re-review fixes (Ron's B3 blocker + 2 hardening items); validated + live-run green.** 19→**23 nodes / 28 edges**. (B3) new `wipe_ok` decision on `wipe_device:action_result.status == success` → `note_wipe_queued`; else → new `note_wipe_failed` — stops the false "ERASE queued" note when a wipe errors (HTTP 500 / no managementId / 403). (Hardening) new `has_serial` gate before `resolve_device` (empty serial → `note_no_serial`, no silent dead-end); approval-prompt reworded to "quarantine and lock were QUEUED (lock is async — queued, not confirmed applied)". Also dropped the echoed `pin` from `wipe_device`. Imported clean (`passed_validation: true`, no warnings) and ran green (run 61): `has_serial` correctly passed through (serial present), same compliant/empty path as v2. New failure/edge paths (no-serial, wipe-failed) not triggerable by a healthy device — verified by validation, not live. `.py` matches the 23-node graph 1:1. |
 | 2026-07-06 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,json,BUILD.md}` | **Renamed to the `Jamf - <Scenario>` standard (Ron's filename nit).** `git mv` from `jamf_compliance_drift_remediation.*` → `Jamf - Compliance Drift and MDM Tamper Remediation.*`, matching sibling templates (`Jamf - FileVault Recovery Access (macOS)`, `Jamf - Device Enrichment and Triage`) and the display name. The scenario's `/` ("Compliance Drift / MDM Tamper") was reworded to "and" so the filename carries no path separator. Dropped the earlier "snake_case is intentional" note. Internal title (`.py` docstring, `.json` description) aligned; all doc references updated. No logic/graph change. |
@@ -208,3 +242,5 @@ how blocks chain (one action's output datapath feeds the next action's input).
 | 2026-07-01 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.BUILD.md` | New: block-by-block VPE build sheet (the reliable authoring path — SOAR only accepts editor-built playbooks; API create/delete are blocked). |
 | 2026-07-02 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,BUILD.md}`, `playbooks/README.md`, `docs/README.md`, `CLAUDE.md` | **PR-review fixes (#4).** (1) **Leak scrubbed:** `BUILD.md` still named the real asset + test-device serial → `<...>` placeholders. (2) **Fail-safe compliance decision:** `is_compliant` now escalates only when `check_compliance` status==`success` AND `compliance_state != "COMPLIANT"`; a failed/403/empty read ends the run instead of silently escalating to contain→wipe (the live run's 403 had been doing exactly that). (3) **Block rename** to descriptive verbs per #8 (`resolve_device`, `redeploy_framework`, `force_checkin`, `check_compliance`, `is_compliant`, `quarantine_device`, `lock_device`, `approve_wipe`, `is_wipe_approved`, `wipe_device`); docs realigned (README/BUILD had ~6 stale/nonexistent block names, `WAIT_MINUTES`, `Approve`→`Yes`). (4) `BUILD.md` regenerated from the real 12-node graph (was describing an old 20-node design incl. dropped `update inventory`/flag EA). (5) `wipe_device` now sets the required 6-digit `pin`; prompt reworded to say containment was *queued*, not asserted. `.py` re-`py_compile`d. |
 | 2026-07-02 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.json` | **Regenerated the VPE graph in-place** (programmatic edit of the known-good export, not a hand-authored graph) so SOAR runs the fixed playbook without manual VPE rebuild. Safe because: node `id`/`functionId` and all edges are numeric, so the 10 block renames are pure string swaps that don't touch wiring; the `is_compliant` fail-safe is added as an **OR** on the existing IF→END branch (`compliance_state==COMPLIANT` OR `status!=success`), so no branch edges were rewired (avoids inverting a wipe playbook). Also added wipe `pin`, updated prompt text. `blockly:false` (graph lives only in `coa.data`, nothing to desync); `hash` was already `""` and `draft_mode` left `false` to match the proven-importable Jul-1 `.tgz`. Repackaged as `Jamf - Compliance Drift and MDM Tamper Remediation.tgz` (gzip tar of the `.py`+`.json` at root — the exact 2-file export layout) for manual import. **Residual:** must be opened once in the VPE + live-run to confirm it loads and to recompute the hash — a hand-edited graph is draft until proven, and the fail-safe wants one confirming run. |
+| 2026-07-02 | playbooks/Jamf - FileVault Recovery Access (macOS).{json,py}, CLAUDE.md, docs/README.md | **First playbook: renamed + genericized (#7).** (1) **Renamed in the SOAR VPE** `Jamf - FileVault Key / Recovery Access (macOS)` → `Jamf - FileVault Recovery Access (macOS)` to kill the `/` that had become an accidental `playbooks/… Key /…` subdirectory on export (SOAR re-pushed clean filenames; old slashed files gone). (2) **Export-scrubbed** the `.py` + `.json` in sync for template distribution: the dev asset name → `<your-jamf-asset>` (7 blocks), the approver username → `<security-analyst-role>`, and a **real recovery-lock password**, a test lock-message, and a test phone number → placeholders (`<your-recovery-lock-password>` / `<your-lock-screen-message>` / `<your-support-phone>`), wipe prompt reworded to state irreversibility (#8), docstring filled. `.json` re-validated; `.py` re-parsed; no dev values remain except the deliberately-kept serial + PIN. **Context:** local repo was 9 commits stale — the remote had advanced via SOAR VPE saves adding the resolve→(device-found?)→…→notify(note stub)→approval→wipe/decline/no-device branches; reset local to the remote tip (dropped an obsolete local scrub done on the pre-rename files) before re-scrubbing. **Still open:** notify step is a note STUB (build a restricted-channel Slack notify), serial hardcoding (blocked on #8), block renaming (VPE). |
+| 2026-07-03 | playbooks/Jamf - FileVault Recovery Access (macOS).{json,py}, CLAUDE.md, docs/README.md | **Un-hardcoded the serial + prepped distribution PR (#7).** (1) **Serial un-hardcoded in the VPE:** `serial_number` now binds the datapath `artifact:*.cef.serialNumber` (SOAR generates a `collect2`) instead of the previously-hardcoded dev serial — adopting #4's proven pattern (a code-block `collect2` sidesteps the VPE picker's literal-trap; verified in the pushed `.json`/`.py`). #8 "contract" is effectively settled by this pattern. (2) **Recovered a dropped playbook:** the earlier scrub push (`fd52b32`, placeholder asset) made SOAR drop the playbook when the non-persistent source-control connection re-synced; restored the runnable version (`18ce9f7`), re-created the connection, playbook reappeared. **Lesson:** the SOAR-synced dev branch must stay RUNNABLE — the scrubbed distribution template can't be its tip. (3) **Distribution split:** feature branch `playbook/filevault-recovery-access` stays runnable (SOAR-happy); scrubbed template lives on `dist/filevault-recovery-access` → PR to `main` (asset / recovery-lock password / phone / message / approver → placeholders, prompt irreversibility, docstring; serial datapath + PIN kept). **Still open:** notify step is a note STUB; block renaming (VPE). |
