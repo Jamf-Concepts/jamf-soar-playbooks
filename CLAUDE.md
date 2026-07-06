@@ -45,8 +45,8 @@ and merged via PR — **never committed directly to `main`**.
 | File | Issue | Purpose |
 |------|-------|---------|
 | `playbooks/README.md` | — | Index of templates; authoring note (`.py` is source of truth, `.json` is a VPE graph to re-save in the editor) |
-| `playbooks/jamf_compliance_drift_remediation.py` | #4 | Compliance drift / MDM tamper: correct-first remediation, check, contain-if-needed, gated wipe. **SOAR-generated** (exported from the VPE 2026-07-03), so per-block `collect2`/param loops + `Custom Code` stubs, no hand-written `_dev()` helper or comments. Fail-safe compliance decision preserved (as `OR(compliant, status!=success)→END; else quarantine`). |
-| `playbooks/jamf_compliance_drift_remediation.json` | #4 | Paired VPE graph (12 nodes / 13 edges), originally exported from SOAR (repo 2 `local`, playbook id 196) 2026-07-03, but **not import-clean** (PR #10 review I7): node 7 (`is_compliant`) carries `warnings:{config:["Reconfigure invalid datapath."]}` and a hand-minted comparison key (`comparison_key_a65ee7ac-…`) from patching in the case-(d) empty-read guard outside a clean editor round-trip — needs a VPE re-open/re-export before merge. Descriptive node names; fail-safe `is_compliant`; wipe `pin`. **Wipe `confirm:"true"` is WRONG (review B1)** — the connector requires `confirm == device_id`; must be rewired to the resolve-id datapath in the VPE. `draft_mode:false`. `hash:""` — a generic template's placeholder graph can never match a real instance's hash (SOAR recomputes on import), so hash is deliberately blank. |
+| `playbooks/jamf_compliance_drift_remediation.py` | #4 | **v2** (PR #10 review). Correct-first → device-found gate → compliance check → positive `NON_COMPLIANT` match → contain-if-needed → containment-success gate → analyst approval → gated wipe, with an `add_note` on every terminal path. Byte-for-byte identical to SOAR's canonical stored `.py` for the imported playbook (verified) and executed green in run 57. `confirm` wired to the resolved device id (B1). |
+| `playbooks/jamf_compliance_drift_remediation.json` | #4 | **v2 graph — 19 nodes / 22 edges** (PR #10 review rebuild). Imported to SOAR clean (`passed_validation: true`, **no node warnings** — the old node-7 "Reconfigure invalid datapath" is gone) and **live-run green** (run 57 / playbook 229). Adds `device_found` + `containment_ok` decisions and five terminal `code` notes (no-device, no-drift, containment-failed, wipe-declined, wipe-queued). `is_compliant` now positively matches `NON_COMPLIANT` (AND `status==success`). **Wipe `confirm` wired to `resolve_device:action_result.data.*.id`** (B1 — connector requires `confirm == device_id`). Generic placeholders throughout; `draft_mode:false`; `hash:""` (a placeholder graph can never match a real instance's hash — SOAR recomputes on import). |
 | `playbooks/jamf_compliance_drift_remediation.BUILD.md` | #4 | Block-by-block VPE build sheet (12 nodes; verified action names/datapaths/prereqs) + old→new rename map — the reliable authoring path |
 
 ### Playbook conventions (from issue #8 + benchmark research)
@@ -122,32 +122,34 @@ how blocks chain (one action's output datapath feeds the next action's input).
   asset name (mandatory) invalidates SOAR's exported hash, and SOAR recomputes the hash on
   import against the customer's own wired asset regardless. So commit `hash:""` (proven
   importable Jul-1) rather than a hash that won't match the placeholder graph.
-- **Wipe `confirm` is WIRED WRONG — the gated wipe can never fire (PR #10 review C1, VERIFIED).**
-  The connector's confirmation gate (`jamf_connector.py:1674-1680`) requires `confirm` to
-  **exactly equal the target `device_id` string** — `confirm = (param.get(...) or "").strip();
-  if confirm != device_id: return WIPE_NOT_CONFIRMED`. Our playbook sends a *truthy flag* instead:
-  the `.json` graph stores `confirm: "true"` (string) and SOAR's codegen emitted `confirm: True`
-  (boolean) in the `.py`. Neither equals the numeric device id, so every approved wipe is rejected
-  (`WIPE_NOT_CONFIRMED`), and the boolean case crashes on `(True).strip()`. The analyst clicks
-  "Yes" and nothing wipes. **Prior guidance in this file ("change the `.py` to string `\"true\"`")
-  was WRONG — a string `"true"` still ≠ device_id.** Correct fix (deferred to a VPE edit, not
-  hand-edited here): wire `confirm` to the resolved device-id datapath
-  `resolve_device:action_result.data.*.id`, exactly like the FileVault playbook. Still unverified
-  on a real erase (wipe has never fired — always denied at the gate; can't be proven until C1 is
-  fixed and a spare device is available).
-- **`get compliance status` needs a Jamf privilege.** It calls
-  `/api/v1/conditional-access/device-compliance-information/...`; the OAuth API role
-  must have the conditional-access / device-compliance read privilege (and the tenant
-  must have conditional access configured) or it returns HTTP 403 `INVALID_PRIVILEGE`.
-  Verified live 2026-07-01 — the compliance-drift template (#4) depends on this.
+- **Wipe `confirm` must equal `device_id` — FIXED in v2 (PR #10 review B1).** The connector's
+  confirmation gate (`jamf_connector.py:1674-1680`) requires `confirm` to **exactly equal the
+  target `device_id` string** (`if confirm != device_id: return WIPE_NOT_CONFIRMED`). The v1 graph
+  sent a truthy flag (`"true"` / boolean `True`), so an approved wipe was silently rejected. **v2
+  wires `confirm` to `resolve_device:action_result.data.*.id`** — the same datapath as `device_id`
+  — like the FileVault playbook. NOTE: still **not fired end-to-end on a real erase** — the test
+  tenant reports 0 compliance records for the test device (no compliance vendor), so runs never
+  reach a `NON_COMPLIANT` state → never quarantine → never reach the wipe prompt. B1 is verified
+  against the connector contract, not yet by a live erase. (Earlier guidance in this file to
+  "change it to string `\"true\"`" was wrong — a string still ≠ device_id.)
+- **`get compliance status` needs the `Read Device Compliance Information` privilege — now
+  RESOLVED and verified working.** It calls
+  `/api/v1/conditional-access/device-compliance-information/...`; the OAuth API role needs
+  **`Read Device Compliance Information`** (+ **`Read Computers`** for the connector's inventory
+  existence pre-check). Without it → HTTP 403 `INVALID_PRIVILEGE` (the block on every run through
+  2026-07-01). Granting it fixed the 403: run 57 (2026-07-06) returned `status: success`. Exact
+  privilege name confirmed via Jamf's endpoint→privilege table (developer.jamf.com).
 - **Verified connector datapaths:** resolvers return device id at `data.*.id` and type
   at `data.*.type` (NOT `jamf_device_id`/`device_type`); compliance is `data.*.compliance_state`.
-- **Compliance decision must be fail-safe.** A `get compliance status` 403/error/empty result
-  collects zero rows, so a decision that only tests `== "COMPLIANT"` treats a *failed read* as
-  "not compliant" and silently escalates to contain → toward wipe. Gate escalation on
-  `action_result.status == "success"` AND non-compliant, so a missing signal ends the run
-  instead of escalating. (#4's `is_compliant` block does this.) The exact non-compliant
-  `compliance_state` token is still unconfirmed — currently escalates on `!= "COMPLIANT"`.
+- **Compliance decision — positive `NON_COMPLIANT` match (v2).** `complianceState` enum is
+  `UNKNOWN / NON_COMPLIANT / COMPLIANT` (`jamf_client.py:340`). `is_compliant` escalates ONLY on
+  `status == "success"` AND `compliance_state == "NON_COMPLIANT"`; COMPLIANT, UNKNOWN, None, an
+  empty read, or a failed/403 read all fall to `note_no_drift` → END. This closes both a failed
+  read escalating (fail-open-on-posture) and `UNKNOWN` over-escalating. **Verified live 2026-07-06**
+  the empty-read case: run 57's compliance read succeeded with **0 records** and correctly routed
+  to `note_no_drift` (no containment). The literal `NON_COMPLIANT` token is source-confirmed but
+  **not yet observed on a live non-compliant device** — the test tenant reports 0 records (no
+  compliance vendor), so the escalation branch is still unexercised end-to-end.
 - **Playbooks must be authored in the VPE (Visual Playbook Editor), then exported to git.**
   Hand-authored `.json` graphs do NOT open — the utility/prompt/decision node schemas are
   intricate and decision branches are mapped by an edge-level `conditions:[{index,conditionKey}]`
@@ -168,6 +170,7 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
+| 2026-07-06 | `playbooks/jamf_compliance_drift_remediation.{py,json}` | **v2 rebuild — all flagged review logic; built, validated, and live-run green.** Rebuilt the graph (12→**19 nodes / 22 edges**) from the known-good export + FileVault's validated `code`/`decision` schemas. Fixes: **B1** wipe `confirm` → resolve-id datapath; **B2/I1** `is_compliant` positive `NON_COMPLIANT` match (AND `status==success`), else → manual-review note; **I3** new `containment_ok` gate (quarantine AND lock succeeded) before the wipe prompt; **I4** new `device_found` gate; **I2/I5** an `add_note` on every terminal path (no-device / no-drift / containment-failed / wipe-declined / wipe-queued); **I8** dropped undeclared `device_type` from redeploy, added it to quarantine (computer-only scope). Imported to SOAR clean (`passed_validation: true`, **no node warnings** — old node-7 warning gone) and **ran green end-to-end** (live run against the test device via the wired test asset): resolve → device_found → redeploy → blank push → **compliance read succeeded** (privilege now granted; 0 records) → `is_compliant` correctly routed to `note_no_drift` (no escalation on an empty read). Repo `.py`/`.json` are **byte-for-byte identical to SOAR's canonical stored copy** (verified). Not exercised: quarantine→lock→prompt→wipe (B1) — the tenant returns 0 compliance records for the test device, so no `NON_COMPLIANT` state is ever produced. `.py` `py_compile`-clean; committed files stay generic (placeholders); real test values (asset, group, PIN) live only in a local TEST `.tgz`, never committed. |
 | 2026-07-06 | `playbooks/{README.md,…BUILD.md}`, `CLAUDE.md`, `docs/README.md` | **PR #10 deep-pass review — more doc-only fixes; logic deferred.** Verified each finding against the connector source + the committed graph, fixed doc-only ones: (I6) `BUILD.md` block-11 row no longer teaches the broken wipe wiring — now wires `confirm` to the resolve-id datapath with a "still broken in the committed files, fix in VPE before merge" note; (I7) walked back the "canonical export" claim — confirmed node 7 (`is_compliant`) in the `.json` carries `warnings:{config:["Reconfigure invalid datapath."]}` + a hand-minted comparison key (`comparison_key_a65ee7ac-…`) from patching in the case-(d) guard outside a clean round-trip, so BUILD.md + the File Map now say it's not import-clean and needs a VPE re-open/re-export; (I8) surfaced the computer-only scope in the adopter-facing `playbooks/README.md`. **Deferred (logic, VPE + live re-verify):** B1 wire `confirm→device_id`, B2/I1 positive `NON_COMPLIANT` match + UNKNOWN/None→manual-review, I3 gate wipe on containment success, I4/I5 device-found + wipe-declined/timeout notes, I8 wiring, approver-role placeholder. |
 | 2026-07-06 | `CLAUDE.md`, `playbooks/README.md`, `docs/README.md` | **PR #10 second review (Sarah) — doc-only fixes; logic deferred.** Verified against the connector source, then fixed docs only: (1) **C1 wrong guidance** — `jamf_connector.py:1674-1680` requires wipe `confirm` to *exactly equal `device_id`*; our prior "change to string `\"true\"`" advice was wrong (still ≠ device_id, wipe can never fire). Recorded the real bug + correct fix (wire `confirm` to `resolve_device:...data.*.id`) as a pending VPE edit. (2) **I5 privilege table** — `lock`/`wipe`/`send blank push` queue via `/api/v2/mdm/commands`, so they need the v2 **Send MDM command information in Jamf Pro API** privilege, not Classic per-command ones (`jamf_connector.py:1576-1577`); added the blank-push row. (3) **I5 overclaim** — walked back "verified end-to-end / EVERY action green"; the live compliance read 403'd and only the wipe-deny path ran. **Deferred (logic, needs VPE + live re-verify):** C1 code fix, C2 (failed read → manual-review path, not silent END), I1 positive `NON_COMPLIANT` match, I2 terminal-path notes, I3 gate wipe on containment success, I4 `device_type` branching, approver-role placeholder. |
 | 2026-07-06 | `README.md`, `playbooks/README.md` | **PR #10 review fixes (docs only — no `.py`/`.json` change).** (1) **Blocking:** root `README.md` was stale — flipped the "no playbooks built yet" status note and added a **Compliance drift / MDM tamper — In review (PR #10)** row to the Planned-templates table (matches the pattern PR #9 set). (2) Noted the issue-#4 **enrichment stage as deferred** in `playbooks/README.md` (reuse PR #9's enrichment Input engine once it merges; `update inventory` stays permanently dropped for computers). (3) Documented the **`snake_case` filename** deviation as intentional (the `/` in `Jamf - <Scenario>` makes SOAR export it as a subdirectory; display name inside SOAR is unchanged). |

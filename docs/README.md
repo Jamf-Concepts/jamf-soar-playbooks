@@ -6,6 +6,38 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — v2 rebuild: all review logic fixed, validated, and run live (green)
+
+Rebuilt the playbook to fix every logic issue the reviews raised, imported it into SOAR, and
+**ran it live against the test device — it passed.**
+
+What changed in the playbook (now 19 steps, up from 12):
+- **The wipe can now actually fire.** The erase's safety `confirm` value is now wired to the
+  device's own ID (the connector demands they match) instead of a plain "true" that it always
+  rejected.
+- **It only escalates on a real "not compliant" answer.** Before, anything that wasn't a clean
+  "compliant" could push toward containment. Now it acts only when the device is *positively*
+  reported NON_COMPLIANT; compliant / unknown / no-data / failed-read all stop safely with a note.
+- **It won't ask to wipe an uncontained device.** A new check confirms quarantine *and* lock both
+  succeeded before the analyst is ever shown the wipe prompt.
+- **A "no device found" early exit** and **a note on every ending** (no device, no drift,
+  containment failed, wipe declined, wipe queued) so a run is never silent.
+- Scoped to computers (the correction step is computer-only), which is now stated for adopters.
+
+The live run (against the test Mac): looked up the device → redeployed management → sent a blank
+push → **read compliance successfully** (this had been failing with a permissions error every
+prior run; granting the *Read Device Compliance Information* privilege fixed it) → the device came
+back with no compliance records, so it correctly **stopped with a "no containment taken" note**
+instead of escalating. That exercises the device-found gate, the correction path, the now-working
+compliance read, and the safe "no drift" path.
+
+Still not exercised live: quarantine → lock → approval → wipe. The test tenant has no compliance
+partner reporting on the device, so it never returns a NON_COMPLIANT result to drive that path;
+the wipe fix is confirmed against the connector's rules but hasn't been fired on a real erase.
+
+The committed files stay generic (placeholders only); the real test values used for the run live
+only in a local test bundle that is never committed.
+
 ## 2026-07-06 — PR #10 deep-pass review: more doc-only fixes; logic still deferred
 
 A second reviewer's deep pass (at head `1632612`) re-confirmed the logic findings and added a

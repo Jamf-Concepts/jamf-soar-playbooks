@@ -5,8 +5,13 @@ parameters, and datapaths are **verified live** against the connector "Jamf Pro"
 Replace every `<...>` with your environment's value — no real asset names, group ids, PINs,
 or serials belong in this file.
 
-This sheet matches the committed `.py`/`.json` pair exactly: **12 nodes / 13 edges**. SOAR
-playbooks must be authored in the VPE — build here, and SOAR generates valid files.
+SOAR playbooks must be authored in the VPE — build here, and SOAR generates valid files.
+
+> ✅ **The committed graph is now v2 — 19 nodes / 22 edges** (PR #10 review rebuild). It imported
+> to SOAR clean (`passed_validation: true`, no node warnings) and **ran green live** (run 57).
+> **Build/read from ["Target rebuild (v2)"](#target-rebuild-v2--pr-10-review) below — that is the
+> shipped design.** Sections 0–7 that follow describe the superseded **v1 (12-node)** graph and
+> are kept only as history; do not build them.
 
 ---
 
@@ -86,9 +91,10 @@ behaviour, but build the OR/IF→END form to match the committed graph exactly.
 > `get compliance status`, so `== 0` reliably ends the run on an empty read. (Note: this branch
 > can't be live-exercised while `get compliance status` still 403s in the test env — a failed
 > read short-circuits at `status != success` first — but it's schema-sound.)
-> **Still to confirm:** the exact non-compliant `compliance_state` token against a real device
-> response. Once known, replace `!= COMPLIANT` with an explicit `==` on that value (e.g.
-> `NOT_COMPLIANT`) so only a positively non-compliant read escalates.
+> **Token now known from the connector source (was "still to confirm"):** `complianceState` is
+> the enum **`UNKNOWN / NON_COMPLIANT / COMPLIANT`** (`jamf_client.py:340`). The v2 rebuild below
+> positively matches `NON_COMPLIANT` instead of negating `COMPLIANT`. (Still can't be *live*-run
+> until the conditional-access privilege lands, but the match value is no longer a guess.)
 
 **Block 10 — "is_wipe_approved"**
 - **IF** (path → block 11, wipe): `approve_wipe:action_result.summary.responses.0` **==** `Yes`
@@ -124,6 +130,85 @@ HTTP 403 `INVALID_PRIVILEGE`. See the full per-action privilege table in `README
 2. **Run** on a container with a `serialNumber` artifact (use a spare/test device serial).
 3. Watch it execute block-by-block in the debugger. Destructive `wipe device` only fires
    after **Yes** at the prompt.
+
+---
+
+## Target rebuild (v2) — PR #10 review
+
+Build this in the VPE to resolve every flagged finding. It supersedes the 12-node graph above.
+Grows the graph to **~19 nodes** (adds two decisions + five terminal notes). Each item cites the
+review finding it closes. Datapaths/enum values are verified against the connector source
+(`jamf_connector.py`, `jamf_client.py`).
+
+### Why in the VPE (not a hand-edit)
+The current node-7 warning (I7) came from patching the graph outside the editor. Build v2 **in
+the VPE** so every node is editor-clean, then export → scrub asset → blank hash → commit. Do NOT
+hand-edit the `.json`.
+
+### v2 block list (in order)
+
+| # | Block name (type) | Action / config | Out-paths | Closes |
+|---|---|---|---|---|
+| — | on_start | — | → resolve_device | — |
+| 1 | resolve_device (action) | `get device by serial` — `serial_number` ← artifact `serialNumber` | → device_found | — |
+| 2 | **device_found** (decision) | IF `resolve_device:action_result.data.*.id` **!=** `""` | IF → redeploy_framework · ELSE → note_no_device | **I4** |
+| 3 | note_no_device (note) | "No Jamf device matched the serial — ending; nothing to remediate." | → on_finish | I4 |
+| 4 | redeploy_framework (action) | `redeploy management framework` — `device_id` ← resolve id · **DROP `device_type`** (undeclared; computer-only action) | → force_checkin | I8 |
+| 5 | force_checkin (action) | `send blank push` — `device_id` ← resolve id · `device_type` ← resolve type | → check_compliance | — |
+| 6 | check_compliance (action) | `get compliance status` — `device_id` ← resolve id · `device_type` ← resolve type | → is_compliant | — |
+| 7 | **is_compliant** (decision) | IF (`...status` **==** `success` **AND** `...data.*.compliance_state` **==** `NON_COMPLIANT`), `logical_operator = AND` | IF → quarantine_device · ELSE → note_no_drift | **B2 / I1** |
+| 8 | note_no_drift (note) | "Compliant / UNKNOWN / no compliance data / read failed — no containment taken. Manual review if drift is still suspected." | → on_finish | B2 / I2 |
+| 9 | quarantine_device (action) | `add to static group` — `device_id` ← resolve id · **ADD `device_type` ← resolve type** · `group_name` = `<your-quarantine-group>` | → lock_device | I8 |
+| 10 | lock_device (action) | `lock device` — `device_id` ← resolve id · `device_type` ← resolve type · `pin` = `<your-6-digit-pin>` · `message` · `phone_number` | → containment_ok | — |
+| 11 | **containment_ok** (decision) | IF (`quarantine_device:action_result.status` **==** `success` **AND** `lock_device:action_result.status` **==** `success`), `logical_operator = AND` | IF → approve_wipe · ELSE → note_containment_failed | **I3** |
+| 12 | note_containment_failed (note) | "Quarantine and/or lock did not succeed — device may be uncontained. Manual review required before any wipe." | → on_finish | I3 / I2 |
+| 13 | approve_wipe (prompt) | required Yes/No; 30-min; approver `<your-security-analyst-role>` (see note) | → is_wipe_approved | Sug |
+| 14 | is_wipe_approved (decision) | IF `approve_wipe:action_result.summary.responses.0` **==** `Yes` | IF → wipe_device · ELSE → note_wipe_declined | — |
+| 15 | note_wipe_declined (note) | "Wipe declined or prompt timed out — device left quarantined + locked; follow up manually." | → on_finish | I5 / I2 |
+| 16 | wipe_device (action) | `wipe device` — `device_id` ← resolve id · `device_type` ← resolve type · **`confirm` ← resolve id** (same datapath as device_id) · `pin` = `<your-6-digit-pin>` | → note_wipe_queued | **B1** |
+| 17 | note_wipe_queued (note) | "ERASE_DEVICE command QUEUED (not a confirmed erase) — device wipes on next check-in." | → on_finish | I2 / N2 |
+| — | on_finish | — | — | — |
+
+### Critical wiring details
+- **B1 — `wipe_device.confirm`:** set the `confirm` param via **Datapath** to
+  `resolve_device:action_result.data.*.id` (the *same* value bound to `device_id`). The connector
+  requires `confirm == device_id` (`jamf_connector.py:1674-1680`); a checkbox/boolean/`"true"`
+  yields `WIPE_NOT_CONFIRMED` and the approved wipe silently never fires.
+- **B2 / I1 — `is_compliant`:** positively match `NON_COMPLIANT` (enum from `jamf_client.py:340`:
+  `UNKNOWN / NON_COMPLIANT / COMPLIANT`). Escalate **only** on `status == success` AND
+  `compliance_state == NON_COMPLIANT`. Everything else — `COMPLIANT`, `UNKNOWN`, `None`, empty
+  read, or a failed/403 read — falls to `note_no_drift` → END. A failed/unknown read now goes to
+  a *visible manual-review note*, not a silent all-clear (fixes C2 fail-open-on-posture) and not
+  an over-escalation of `UNKNOWN` (fixes I1). The prompt text (block 13) can now truthfully say
+  "reported NON_COMPLIANT".
+- **I3 — `containment_ok`:** gate the wipe prompt on containment actually succeeding. Note `lock
+  device` only *queues* an MDM command on an offline device (connector reports queued, never
+  "locked"), so treat a non-`success` status as uncontained → manual review, not a wipe prompt.
+- **I8 — device_type:** drop the undeclared `device_type` from `redeploy_framework`; add
+  `device_type ← resolve type` to `quarantine_device`. `redeploy management framework` is
+  computer-only — this template is **scoped to computers** (documented in `README.md`); a mobile
+  branch is a later enhancement.
+- **Notes (I2):** every terminal path now writes a container note (no-device, no-drift,
+  containment-failed, wipe-declined, wipe-queued). Use the same note mechanism as PR #11 for
+  consistency. Word the wipe note "queued", never "wiped".
+
+### Status (2026-07-06) — built, validated, run green
+- **Built + imported clean:** `passed_validation: true`, no node warnings; the committed
+  `.py`/`.json` are byte-for-byte identical to SOAR's canonical stored copy.
+- **Live run 57 (green):** resolve → device_found → redeploy → blank push → **compliance read
+  succeeded** (privilege granted — see below) → 0 records → `is_compliant` correctly routed to
+  `note_no_drift`. Device-found gate, correction path, compliance read, and the safe no-drift path
+  all verified live.
+- **Privilege resolved:** granting **`Read Device Compliance Information`** (+ `Read Computers`)
+  cleared the long-standing 403. The read now returns `status: success`.
+
+### Still not exercised end-to-end
+- **B2/I1 escalation branch + B1 wipe:** the test tenant returns **0 compliance records** for the
+  test device (no compliance vendor), so nothing ever reports `NON_COMPLIANT` → the run never
+  reaches quarantine → lock → prompt → wipe. `NON_COMPLIANT` is source-confirmed and `confirm` is
+  wired to the device-id datapath (connector contract), but neither is fired on a live
+  non-compliant device / real erase. Needs a device a compliance partner (e.g. Intune) reports as
+  NON_COMPLIANT.
 
 ---
 

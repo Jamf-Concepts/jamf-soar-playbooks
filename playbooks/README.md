@@ -33,9 +33,15 @@ requires a *present, successful, non-compliant* signal: a failed/403 read (`stat
 **or** a successful-but-empty read (`summary.total == 0`) both end the run safely rather than
 escalating.
 
-Flow (block names, in order): `resolve_device` → `redeploy_framework` → `force_checkin`
-→ `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device` →
-`approve_wipe` → `is_wipe_approved?` → `wipe_device`.
+Flow (v2, block names in order): `resolve_device` → `device_found?` → `redeploy_framework`
+→ `force_checkin` → `check_compliance` → `is_compliant?` → `quarantine_device` → `lock_device`
+→ `containment_ok?` → `approve_wipe` → `is_wipe_approved?` → `wipe_device`. Every terminal path
+writes a container note (`device_found` no → note; `is_compliant` else → `note_no_drift`;
+`containment_ok` no → `note_containment_failed`; `is_wipe_approved` no → `note_wipe_declined`;
+after `wipe_device` → `note_wipe_queued`). Escalation is a **positive match**: `is_compliant`
+routes to containment only on `status == success` AND `compliance_state == NON_COMPLIANT`;
+COMPLIANT / UNKNOWN / None / empty / failed reads all end at `note_no_drift`. The wipe prompt is
+shown only if `containment_ok` confirms quarantine AND lock both succeeded.
 
 > **Deferred — enrichment stage.** Issue #4 also calls for an enrichment step
 > (`get configuration profiles`, `get extension attributes`) alongside the correction
@@ -61,12 +67,14 @@ Flow (block names, in order): `resolve_device` → `redeploy_framework` → `for
 **Datapaths (verified against the live connector "Jamf Pro" v1.0.0):** the resolver
 returns the device id at `action_result.data.*.id` and type at `action_result.data.*.type`;
 `get compliance status` returns `action_result.data.*.compliance_state` (a string).
-Confirm the exact `compliance_state` value ("COMPLIANT") against a real device response.
-**Known bug (PR #10 review C1):** the wipe `confirm` param is wired wrong. The connector
-requires `confirm` to *exactly equal the `device_id` string*; the template currently sends a
-truthy flag (`"true"` in the `.json`, boolean `True` in the `.py`), so an approved wipe is
-rejected (`WIPE_NOT_CONFIRMED`) and never fires. Fix pending a VPE edit: wire `confirm` to
-`resolve_device:action_result.data.*.id` (as the FileVault playbook does).
+`get compliance status` returns `action_result.data.*.compliance_state` — enum
+`UNKNOWN / NON_COMPLIANT / COMPLIANT`. **Verified live 2026-07-06:** with the *Read Device
+Compliance Information* privilege granted, the read succeeds (run 57 returned 0 records for a
+test device with no compliance vendor, which correctly routed to `note_no_drift`). The literal
+`NON_COMPLIANT` token is confirmed from the connector source but not yet observed on a live
+non-compliant device. **Wipe `confirm` (B1, fixed):** wired to `resolve_device:action_result.data.*.id`
+— the connector requires `confirm == device_id`, so a truthy flag would be rejected
+(`WIPE_NOT_CONFIRMED`). Not yet fired end-to-end (no non-compliant device in the test tenant).
 
 ### Prerequisites — Jamf API role privileges (set these BEFORE running)
 
@@ -77,7 +85,7 @@ hit surprise failures. Verified live against the connector 2026-07-01.
 
 | Action in this playbook | Required API-role privilege(s) |
 |-------------------------|--------------------------------|
-| `get compliance status` | Conditional-access / device-compliance **read** (tenant must have conditional access configured) |
+| `get compliance status` | **Read Device Compliance Information** + **Read Computers** (the connector does an inventory-detail existence pre-check before reading compliance; tenant must also have conditional access / a compliance partner configured) |
 | `redeploy management framework` | **Send Computer Remote Command to Install Package** + **Read Check-In** (the Check-In read is required and easy to miss — it's the usual cause of the 403) |
 | `send blank push` | **Send MDM command information in Jamf Pro API** (queued via `/api/v2/mdm/commands`) |
 | `lock device` | **Send MDM command information in Jamf Pro API** (queued via `/api/v2/mdm/commands`) |
