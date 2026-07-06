@@ -112,7 +112,7 @@
                     "targetPort": "7_in"
                 }
             ],
-            "hash": "b7036879efd8b1f724741a2fbf036c777f2f388a",
+            "hash": "7b18c054dcba175863e185ad2909ca65d35ec7e3",
             "nodes": {
                 "0": {
                     "data": {
@@ -154,20 +154,14 @@
                         "functionId": 1,
                         "functionName": "format_1",
                         "id": "10",
-                        "parameters": [
-                            "get_device_1:action_result.data.*.general.name",
-                            "get_device_1:action_result.data.*.serial_number",
-                            "get_device_1:action_result.data.*.username",
-                            "get_compliance_status_1:action_result.data.*.compliance_state",
-                            "get_group_membership_1:action_result.data.*.group_name",
-                            "get_installed_applications_1:action_result.summary.total"
-                        ],
-                        "template": "## Jamf Device Enrichment \u2014 {0}\n\n- **Serial:** {1}\n- **User:** {2}\n- **Compliance:** {3}\n- **Group memberships:** {4}\n- **Installed apps:** {5}",
+                        "parameters": [],
+                        "template": "",
                         "type": "format"
                     },
                     "errors": {},
                     "id": "10",
                     "type": "format",
+                    "userCode": "\n    def _first(dp, default=\"\u2014\"):\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        return vals[0] if vals else default\n\n    def _join(dp, default=\"none\"):\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        return \", \".join(vals) if vals else default\n\n    name       = _first(\"get_device_1:action_result.data.*.general.name\")\n    serial     = _first(\"get_device_1:action_result.data.*.serial_number\")\n    user       = _first(\"get_device_1:action_result.data.*.username\")\n    compliance = _first(\"get_compliance_status_1:action_result.data.*.compliance_state\")\n    apps       = _first(\"get_installed_applications_1:action_result.summary.total\", \"0\")\n    groups     = _join(\"get_group_membership_1:action_result.data.*.group_name\")\n    profiles   = _first(\"get_configuration_profiles_1:action_result.summary.total\", \"0\")\n    accounts   = _first(\"get_local_user_accounts_1:action_result.summary.total\", \"0\")\n    extattrs   = _first(\"get_extension_attributes_1:action_result.summary.total\", \"0\")\n\n    summary = (\n        \"## Jamf Device Enrichment \u2014 \" + name + \"\\n\\n\"\n        + \"- **Serial:** \" + serial + \"\\n\"\n        + \"- **User:** \" + user + \"\\n\"\n        + \"- **Compliance:** \" + compliance + \"\\n\"\n        + \"- **Group memberships:** \" + groups + \"\\n\"\n        + \"- **Installed apps:** \" + apps + \"\\n\"\n        + \"- **Configuration profiles:** \" + profiles + \"\\n\"\n        + \"- **Local user accounts:** \" + accounts + \"\\n\"\n        + \"- **Extension attributes:** \" + extattrs\n    )\n    template = summary.replace(\"{\", \"{{\").replace(\"}\", \"}}\")\n    parameters = []\n\n",
                     "warnings": {},
                     "x": 1000,
                     "y": 720
@@ -637,7 +631,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T09:12:15.537396+00:00",
+    "create_time": "2026-07-06T09:33:05.743286+00:00",
     "draft_mode": false,
     "labels": [
         "*"

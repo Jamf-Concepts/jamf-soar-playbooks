@@ -310,23 +310,48 @@ def join_format_1(action=None, success=None, container=None, results=None, handl
 def format_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("format_1() called")
 
-    template = """## Jamf Device Enrichment — {0}\n\n- **Serial:** {1}\n- **User:** {2}\n- **Compliance:** {3}\n- **Group memberships:** {4}\n- **Installed apps:** {5}"""
+    template = """"""
 
     # parameter list for template variable replacement
-    parameters = [
-        "get_device_1:action_result.data.*.general.name",
-        "get_device_1:action_result.data.*.serial_number",
-        "get_device_1:action_result.data.*.username",
-        "get_compliance_status_1:action_result.data.*.compliance_state",
-        "get_group_membership_1:action_result.data.*.group_name",
-        "get_installed_applications_1:action_result.summary.total"
-    ]
+    parameters = []
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    def _first(dp, default="—"):
+        rows = phantom.collect2(container=container, datapath=[dp])
+        vals = [str(r[0]) for r in rows if r and r[0] not in (None, "")]
+        return vals[0] if vals else default
+
+    def _join(dp, default="none"):
+        rows = phantom.collect2(container=container, datapath=[dp])
+        vals = [str(r[0]) for r in rows if r and r[0] not in (None, "")]
+        return ", ".join(vals) if vals else default
+
+    name       = _first("get_device_1:action_result.data.*.general.name")
+    serial     = _first("get_device_1:action_result.data.*.serial_number")
+    user       = _first("get_device_1:action_result.data.*.username")
+    compliance = _first("get_compliance_status_1:action_result.data.*.compliance_state")
+    apps       = _first("get_installed_applications_1:action_result.summary.total", "0")
+    groups     = _join("get_group_membership_1:action_result.data.*.group_name")
+    profiles   = _first("get_configuration_profiles_1:action_result.summary.total", "0")
+    accounts   = _first("get_local_user_accounts_1:action_result.summary.total", "0")
+    extattrs   = _first("get_extension_attributes_1:action_result.summary.total", "0")
+
+    summary = (
+        "## Jamf Device Enrichment — " + name + "\n\n"
+        + "- **Serial:** " + serial + "\n"
+        + "- **User:** " + user + "\n"
+        + "- **Compliance:** " + compliance + "\n"
+        + "- **Group memberships:** " + groups + "\n"
+        + "- **Installed apps:** " + apps + "\n"
+        + "- **Configuration profiles:** " + profiles + "\n"
+        + "- **Local user accounts:** " + accounts + "\n"
+        + "- **Extension attributes:** " + extattrs
+    )
+    template = summary.replace("{", "{{").replace("}", "}}")
+    parameters = []
 
     ################################################################################
     ## Custom Code End
