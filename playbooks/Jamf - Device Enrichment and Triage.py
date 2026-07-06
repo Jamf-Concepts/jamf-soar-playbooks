@@ -45,7 +45,7 @@ def get_device_by_username_1(action=None, success=None, container=None, results=
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by username", parameters=parameters, name="get_device_by_username_1", assets=["<your-jamf-asset>"], callback=playbook_jamf___device_enrichment__input__1)
+    phantom.act("get device by username", parameters=parameters, name="get_device_by_username_1", assets=["<your-jamf-asset>"], callback=decision_1)
 
     return
 
@@ -121,6 +121,61 @@ def playbook_jamf___device_enrichment__input__1(action=None, success=None, conta
 
     # call playbook "jamf-soar-playbooks/Jamf - Device Enrichment (Input)", returns the playbook_run_id
     playbook_run_id = phantom.playbook("jamf-soar-playbooks/Jamf - Device Enrichment (Input)", container=container, name="playbook_jamf___device_enrichment__input__1", callback=code_1, inputs=inputs)
+
+    return
+
+
+@phantom.playbook_block()
+def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_1() called")
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_username_1:action_result.summary.total", ">", 0]
+        ],
+        conditions_dps=[
+            ["get_device_by_username_1:action_result.summary.total", ">", 0]
+        ],
+        name="decision_1:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        playbook_jamf___device_enrichment__input__1(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # check for 'else' condition 2
+    code_2(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_2() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    rows = phantom.collect2(container=container, datapath=["artifact:*.cef.sourceUserName"])
+    user = rows[0][0] if rows and rows[0] and rows[0][0] else "unknown"
+
+    phantom.add_note(
+        container=container,
+        note_type="general",
+        title="Jamf Device Enrichment",
+        content="No Jamf device found for user **" + str(user) + "** — nothing to enrich.",
+        note_format="markdown",
+    )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_2_called", value="True")
 
     return
 
