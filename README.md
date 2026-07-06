@@ -9,8 +9,8 @@ This repo is **not** a connector. It holds reusable playbooks that *call* the
 Jamf SOAR app's actions. The companion connector app lives in
 [`Jamf-Concepts/jamf-splunk-soar`](https://github.com/Jamf-Concepts/jamf-splunk-soar).
 
-> Status: **Pre-release / private development.** The first playbook templates
-> are now in review via PRs — see the status column in the table below.
+> Status: **Pre-release / private development.** First playbook templates are
+> in review via PRs — see the status column in the table below.
 
 ---
 
@@ -71,13 +71,13 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
+| Device enrichment & triage (read-only) | Merged (PR #9) | Reusable enrichment building block: resolve device → enrich → write a summary note. Ships as an Input sub-playbook (`Jamf - Device Enrichment (Input)`) the other templates call, plus a triage wrapper. No destructive step, so no approval gate. |
 | FileVault key / recovery access (macOS) | In review (PR #11) | Resolve a Mac by serial, retrieve the FileVault recovery key + context, secure (recovery lock + lock), then erase behind an analyst approval gate. |
+| Compliance drift / MDM tamper | In review (PR #10) | Correct-first (redeploy framework, force check-in), then quarantine + lock, gate before wipe. |
+| Compromised user | In review (PR #12) | Contain the user's enrolled devices, enrich with identity context, gate before destructive action. |
 | Lost / stolen device | Planned | Resolve device, lock + contain, notify, hold for analyst approval, then erase as a last resort. |
-| Compromised user | In review | Contain the user's enrolled devices, enrich with identity context, gate before destructive action. |
 | Identity-provider (IdP) breach | Planned | Broad containment across affected accounts/devices; approval gate before any mass group change. |
 | Malicious file | Planned | Locate affected device(s), contain, enrich the file verdict, remediate behind a gate. |
-| Compliance drift / MDM tamper | In review | Correct-first (redeploy framework, force check-in), then quarantine + lock, gate before wipe. |
-| Device enrichment & triage | In review | Read-only enrichment sub-playbook the others reuse. |
 
 ---
 

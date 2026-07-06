@@ -1,1 +1,3 @@
-Playbook templates land here (committed by SOAR's source-control sync as .json + .py pairs).
+# Playbooks
+
+Splunk SOAR playbook templates (`.py` + `.json` pairs) sync into this directory from the Visual Playbook Editor via source control. See the repo root `README.md` and `CONTRIBUTING.md` for the workflow.
