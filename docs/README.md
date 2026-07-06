@@ -131,6 +131,36 @@ Ron's review approved-with-changes; addressed all three items (no playbook logic
 
 ---
 
+## 2026-07-06 — First playbook merged: Device Enrichment & Triage (PR #9)
+
+The first real playbook merged to `main` (PR #9, issue #5). It's **read-only** — it looks a
+device up and writes a tidy summary note onto the case; it doesn't change anything, so there's
+no approval gate needed.
+
+It's built in two pieces on purpose:
+
+- **`Jamf - Device Enrichment (Input)`** — the reusable "engine." Hand it a device and it gathers
+  everything (device details, compliance, groups, installed apps, config profiles, local
+  accounts, extension attributes), formats a summary, and hands it back. The other playbooks call
+  this instead of each rebuilding the same lookups.
+- **`Jamf - Device Enrichment and Triage`** — the entry point. It finds the device (by username),
+  calls the engine, and writes the summary as a note on the case.
+
+Things to know when adopting it:
+
+- Set your Jamf asset where it says `<your-jamf-asset>`.
+- After importing, re-point the wrapper's sub-playbook block to your copy of the engine (SOAR ties
+  sub-playbooks to a specific repo; naming your Source Control repo `jamf-soar-playbooks` makes the
+  built-in reference line up).
+- It finds devices by **username** (`sourceUserName`); serial / name / MAC and mobile-only steps
+  are planned next.
+- If you call the enrichment engine directly, pass `device_id` and `device_type` as **paired,
+  equal-length lists** — the engine assumes they line up and fails loudly if they don't.
+
+*(Carried over into this branch during the rebase onto main.)*
+
+---
+
 ## 2026-07-03 — Closed the "empty compliance read" edge case (#10)
 
 The review found one real logic gap: if the compliance check ever came back "successful but

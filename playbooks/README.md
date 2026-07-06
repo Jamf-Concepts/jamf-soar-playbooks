@@ -20,6 +20,7 @@ and `CONTRIBUTING.md` for the workflow and the non-negotiable safety rules.
 
 | Playbook | Issue | Scenario | Backbone |
 |----------|-------|----------|----------|
+| `Jamf - Device Enrichment (Input)` + `Jamf - Device Enrichment and Triage` | #5 (merged PR #9) | Read-only enrichment/triage | resolve → enrich (Input sub-playbook) → summary note (no destructive step) |
 | `Jamf - Compliance Drift and MDM Tamper Remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → **correct-first** → check → contain-if-needed → approval gate → wipe |
 
 ### `Jamf - Compliance Drift and MDM Tamper Remediation`
@@ -47,9 +48,10 @@ shown only if `containment_ok` confirms quarantine AND lock both succeeded.
 > **Deferred — enrichment stage.** Issue #4 also calls for an enrichment step
 > (`get configuration profiles`, `get extension attributes`) alongside the correction
 > steps. It's intentionally left out here: the reusable enrichment engine ships in the
-> Device Enrichment Input playbook (PR #9). Once #9 merges, wire that Input sub-playbook
-> in rather than re-implementing the lookups. The `update inventory` correction step is
-> permanently dropped — the connector rejects it for computers (macOS recon is policy-based).
+> `Jamf - Device Enrichment (Input)` sub-playbook (**PR #9, now merged to `main`**). A follow-up
+> can wire that Input sub-playbook in rather than re-implementing the lookups. The `update
+> inventory` correction step is permanently dropped — the connector rejects it for computers
+> (macOS recon is policy-based).
 
 > **Scope — computers (macOS) only, for now (PR #10 review I8).** The correction path
 > (`redeploy management framework`) is a computer-only action, and `quarantine_device` doesn't

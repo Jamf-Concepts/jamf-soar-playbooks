@@ -17,9 +17,16 @@ skip this step.
 ## Architecture
 
 ### Current state
-Governance skeleton plus the first templates landing under `playbooks/` (one
-`.py` + `.json` pair per template). Templates are developed on feature branches
-and merged via PR — **never committed directly to `main`**.
+Two templates under `playbooks/` (each a `.py` + `.json` pair):
+- **Device Enrichment & Triage** (#5, **merged PR #9**) — read-only; a reusable
+  **Input sub-playbook** (`Jamf - Device Enrichment (Input)`) plus an Automation
+  wrapper (`Jamf - Device Enrichment and Triage`).
+- **Compliance Drift & MDM Tamper Remediation** (#4, **in review PR #10**) —
+  correct-first with an analyst-gated wipe.
+
+Remaining templates (lost/stolen, compromised user, IdP breach, malicious file)
+are still to build. Templates are developed on feature branches and merged via
+PR — **never committed directly to `main`**.
 
 ### How it fits together
 - Each playbook is a **SOAR playbook synced via git**. SOAR clones this repo as
@@ -45,6 +52,8 @@ and merged via PR — **never committed directly to `main`**.
 | File | Issue | Purpose |
 |------|-------|---------|
 | `playbooks/README.md` | — | Index of templates; authoring note (`.py` is source of truth, `.json` is a VPE graph to re-save in the editor) |
+| `playbooks/Jamf - Device Enrichment (Input).{py,json}` | #5 (PR #9) | Reusable enrichment **Input sub-playbook**: get device + 6 enrich actions → format → `enrichment_summary` output. Callers pass `device_id`+`device_type` as paired equal-length lists (engine `zip`s them — see gotcha). |
+| `playbooks/Jamf - Device Enrichment and Triage.{py,json}` | #5 (PR #9) | Automation wrapper: resolve by username (`artifact.*.cef.sourceUserName`) → call the Input sub-playbook → `add_note` with the summary. Read-only, no approval gate. |
 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.py` | #4 | **v3** (PR #10 review + re-review). Serial-present gate → correct-first → device-found gate → compliance check → positive `NON_COMPLIANT` match → contain-if-needed → containment-success gate → analyst approval → gated wipe → **wipe-success gate** (B3), with an `add_note` on every terminal path. `confirm` wired to the resolved device id (B1); wipe `pin` dropped. `py_compile`-clean; block set matches the 23-node graph 1:1. Executed green (v3 run 61). |
 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.json` | #4 | **v3 graph — 23 nodes / 28 edges** (PR #10 review rebuild + re-review B3). Imported to SOAR clean (`passed_validation: true`, **no node warnings**) and **live-run green** (v2 run 57; v3 run 61). Decisions: `has_serial`, `device_found`, `is_compliant` (positive `NON_COMPLIANT` match, AND `status==success`), `containment_ok` (quarantine AND lock succeeded), `is_wipe_approved`, `wipe_ok` (B3 — gate the "ERASE queued" note on wipe `status==success`). Seven `code` notes on every terminal path (no-serial, no-device, no-drift, containment-failed, wipe-declined, wipe-queued, wipe-failed). **Wipe `confirm` wired to `resolve_device:action_result.data.*.id`** (B1); wipe `pin` dropped. Generic placeholders; `draft_mode:false`; `hash:""` (placeholder graph can never match a real instance — SOAR recomputes on import). |
 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.BUILD.md` | #4 | VPE build sheet — the **"Target rebuild (v2)"** section (19 nodes / 22 edges) is the shipped design (verified action names/datapaths/prereqs + live-run status); the v1 12-node sections are kept as history |
@@ -116,6 +125,16 @@ how blocks chain (one action's output datapath feeds the next action's input).
   sharing an export so a template doesn't leak one customer's config.
 - Keep all templates generic — use clearly-marked placeholders for any
   customer-specific value.
+- **Input sub-playbooks with paired inputs (e.g. `device_id` + `device_type`)
+  must zip them, not cross them.** SOAR collects each `playbook_input:` datapath
+  separately and auto-generates a *nested* loop (Cartesian product), so for a
+  multi-device user the wrong id/type pairs resolve to unrelated devices and the
+  action silently hits the wrong device. Fix: rebuild `parameters` by `zip`-ing
+  in each action's Custom Code. **Input contract:** callers must pass
+  `device_id` and `device_type` as paired, equal-length lists (the engine
+  asserts this). Flat Automation playbooks are immune — they read both from one
+  action-result `collect2`, which returns aligned tuples. (See the
+  `Jamf - Device Enrichment (Input)` engine; PR #9 C1.)
 - **A generic template's `.json` hash can never match a real instance.** SOAR stamps
   `coa.data.hash` over the graph on export, but the graph embeds the asset name — and a
   shareable template must carry `<your-jamf-asset>`, not a real asset. Scrubbing the real
@@ -170,6 +189,7 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
+| 2026-07-06 | `playbooks/` (merged from main, PR #9) | First playbook (#5, PR #9): **Device Enrichment & Triage** (read-only). Shipped as an **Input sub-playbook** (`Jamf - Device Enrichment (Input)`: get device + 6 enrich actions → format → `enrichment_summary` output) plus an **Automation wrapper** (`Jamf - Device Enrichment and Triage`: resolve by username → call sub-playbook → `add_note`). Asset scrubbed to `<your-jamf-asset>`. Adaptation points: sub-playbook repo reference (`jamf-soar-playbooks/…`) re-linked on import; resolver reads `artifact.*.cef.sourceUserName`; serial/name/MAC + mobile branches deferred. *(Row carried over during the rebase onto main.)* |
 | 2026-07-06 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,json}` | **v3 — re-review fixes (Ron's B3 blocker + 2 hardening items); validated + live-run green.** 19→**23 nodes / 28 edges**. (B3) new `wipe_ok` decision on `wipe_device:action_result.status == success` → `note_wipe_queued`; else → new `note_wipe_failed` — stops the false "ERASE queued" note when a wipe errors (HTTP 500 / no managementId / 403). (Hardening) new `has_serial` gate before `resolve_device` (empty serial → `note_no_serial`, no silent dead-end); approval-prompt reworded to "quarantine and lock were QUEUED (lock is async — queued, not confirmed applied)". Also dropped the echoed `pin` from `wipe_device`. Imported clean (`passed_validation: true`, no warnings) and ran green (run 61): `has_serial` correctly passed through (serial present), same compliant/empty path as v2. New failure/edge paths (no-serial, wipe-failed) not triggerable by a healthy device — verified by validation, not live. `.py` matches the 23-node graph 1:1. |
 | 2026-07-06 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,json,BUILD.md}` | **Renamed to the `Jamf - <Scenario>` standard (Ron's filename nit).** `git mv` from `jamf_compliance_drift_remediation.*` → `Jamf - Compliance Drift and MDM Tamper Remediation.*`, matching sibling templates (`Jamf - FileVault Recovery Access (macOS)`, `Jamf - Device Enrichment and Triage`) and the display name. The scenario's `/` ("Compliance Drift / MDM Tamper") was reworded to "and" so the filename carries no path separator. Dropped the earlier "snake_case is intentional" note. Internal title (`.py` docstring, `.json` description) aligned; all doc references updated. No logic/graph change. |
 | 2026-07-06 | `playbooks/Jamf - Compliance Drift and MDM Tamper Remediation.{py,json}` | **v2 rebuild — all flagged review logic; built, validated, and live-run green.** Rebuilt the graph (12→**19 nodes / 22 edges**) from the known-good export + FileVault's validated `code`/`decision` schemas. Fixes: **B1** wipe `confirm` → resolve-id datapath; **B2/I1** `is_compliant` positive `NON_COMPLIANT` match (AND `status==success`), else → manual-review note; **I3** new `containment_ok` gate (quarantine AND lock succeeded) before the wipe prompt; **I4** new `device_found` gate; **I2/I5** an `add_note` on every terminal path (no-device / no-drift / containment-failed / wipe-declined / wipe-queued); **I8** dropped undeclared `device_type` from redeploy, added it to quarantine (computer-only scope). Imported to SOAR clean (`passed_validation: true`, **no node warnings** — old node-7 warning gone) and **ran green end-to-end** (live run against the test device via the wired test asset): resolve → device_found → redeploy → blank push → **compliance read succeeded** (privilege now granted; 0 records) → `is_compliant` correctly routed to `note_no_drift` (no escalation on an empty read). Repo `.py`/`.json` are **byte-for-byte identical to SOAR's canonical stored copy** (verified). Not exercised: quarantine→lock→prompt→wipe (B1) — the tenant returns 0 compliance records for the test device, so no `NON_COMPLIANT` state is ever produced. `.py` `py_compile`-clean; committed files stay generic (placeholders); real test values (asset, group, PIN) live only in a local TEST `.tgz`, never committed. |
