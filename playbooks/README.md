@@ -44,6 +44,13 @@ Flow (block names, in order): `resolve_device` → `redeploy_framework` → `for
 > in rather than re-implementing the lookups. The `update inventory` correction step is
 > permanently dropped — the connector rejects it for computers (macOS recon is policy-based).
 
+> **Scope — computers (macOS) only, for now (PR #10 review I8).** The correction path
+> (`redeploy management framework`) is a computer-only action, and `quarantine_device` doesn't
+> set `device_type`, so it targets the computer namespace. Running this against a **mobile**
+> device gives half-applied containment. `device_type` branching (redeploy for computers only;
+> `device_type` on quarantine) is a planned enhancement — until then, scope this template to
+> computers.
+
 **Customer-config points** (replace the `<...>` placeholders on import):
 - Jamf asset — `assets=["<your-jamf-asset>"]` on every action block
 - Quarantine static group — `group_name` on `quarantine_device`

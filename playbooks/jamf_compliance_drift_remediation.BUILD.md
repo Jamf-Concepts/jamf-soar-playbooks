@@ -44,8 +44,16 @@ playbooks must be authored in the VPE — build here, and SOAR generates valid f
 | 8 | **lock_device** (action) | `lock device` | `device_id` ← resolve id · `device_type` ← resolve type · `pin` = `<your-6-digit-pin>` · `message` = `<your-return-message>` · `phone_number` = `<your-callback-number>` |
 | 9 | **approve_wipe** (prompt) | approval gate, config below | → 10 |
 | 10 | **is_wipe_approved** (decision) | conditions below | approved → 11; else → END |
-| 11 | **wipe_device** (action) | `wipe device` | `device_id` ← resolve id · `device_type` ← resolve type · `confirm` checkbox = on (exports as boolean `True`) · `pin` = `<your-6-digit-pin>` |
+| 11 | **wipe_device** (action) | `wipe device` | `device_id` ← resolve id · `device_type` ← resolve type · `confirm` ← **resolve id** (same datapath as `device_id`; see note) · `pin` = `<your-6-digit-pin>` |
 | 12 | **on_finish** (END) | — | — |
+
+> **Block 11 `confirm` — critical (PR #10 review B1):** do NOT set `confirm` to a checkbox /
+> boolean `True` / string `"true"`. The connector's wipe gate (`jamf_connector.py:1674-1680`)
+> rejects the erase unless `confirm` **exactly equals `device_id`** — so `confirm` must be wired
+> to the same resolved device-id datapath as `device_id` (`resolve_device:action_result.data.*.id`),
+> exactly like the FileVault playbook. Any truthy-flag value yields `WIPE_NOT_CONFIRMED` and the
+> approved wipe silently never fires. **The committed `.py`/`.json` still carry the broken
+> truthy value — this must be corrected in the VPE before merge.**
 
 > **Dropped vs. earlier drafts:** `update inventory` (connector rejects it for computers —
 > macOS recon is policy-based, not MDM), the baseline/re-check compliance pair (single
@@ -120,12 +128,18 @@ HTTP 403 `INVALID_PRIVILEGE`. See the full per-action privilege table in `README
 ---
 
 ## Re-sync note (for maintainers)
-**Done (2026-07-03):** the committed `.py`/`.json` pair is now **SOAR's own canonical export**
-(opened in the VPE → saved → exported from repo 2 `local`, playbook id 196), not a hand-edited
-graph. The `is_compliant` fail-safe survived the round-trip — SOAR renders it as
-`OR(compliance_state == COMPLIANT, status != success) → END; ELSE → contain`, the same truth
-table as the hand-authored form (a failed/403 read never escalates). The old→new rename map
-below is kept only as history.
+**Mostly-canonical, NOT import-clean (corrected per PR #10 review I7).** The pair began as
+SOAR's own VPE export (repo 2 `local`, playbook id 196), but the case-(d) empty-read guard on
+node 7 (`is_compliant`) was patched into the graph outside a clean editor round-trip. Evidence
+in the committed `.json`: node 7 carries `"warnings": {"config": ["Reconfigure invalid
+datapath."]}`, and its third comparison uses a hand-minted key
+`comparison_key_a65ee7ac-…` instead of the sibling `comparison_key_7_0/_7_1` pattern. The `.py`
+(what actually runs) is correct, but the graph is **not** the pristine canonical export earlier
+notes claimed — on the next VPE open the empty-read guard will likely need reconfiguring.
+**Before merge, re-open in the VPE → resolve the node-7 warning → re-export → re-scrub → blank
+the hash.** The `is_compliant` fail-safe truth table is otherwise intact — SOAR renders it as
+`OR(compliance_state == COMPLIANT, status != success, summary.total == 0) → END; ELSE → contain`
+(a failed/403/empty read never escalates). The old→new rename map below is kept only as history.
 
 Two things about the committed files that are intentional, not drift:
 - **`hash` is empty.** SOAR's export stamped a real hash, but it was computed over the graph

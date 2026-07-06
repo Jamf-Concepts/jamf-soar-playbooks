@@ -6,6 +6,29 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — PR #10 deep-pass review: more doc-only fixes; logic still deferred
+
+A second reviewer's deep pass (at head `1632612`) re-confirmed the logic findings and added a
+few doc/graph-integrity ones. Verified each against the files, fixed the doc-only ones, left all
+playbook-logic changes for the VPE session:
+
+- **BUILD.md no longer teaches the broken wipe wiring (I6).** The block-11 row previously said
+  `confirm` = "checkbox on / boolean True"; corrected it to wire `confirm` to the resolved
+  device-id datapath (the connector requires `confirm == device_id`), with a prominent note that
+  the committed files still carry the broken value and it must be fixed in the VPE before merge.
+- **Walked back the "canonical export" claim (I7).** Confirmed the committed `.json`'s
+  `is_compliant` node carries an editor warning (`"Reconfigure invalid datapath."`) and a
+  hand-minted comparison key — the case-(d) guard was patched in outside a clean editor
+  round-trip, so the graph is not import-clean. BUILD.md + CLAUDE.md now say so and call for a
+  VPE re-open/re-export before merge.
+- **Surfaced the computer-only scope for adopters (I8).** `playbooks/README.md` now warns that
+  the template targets computers (redeploy is computer-only; quarantine omits `device_type`), so
+  a mobile device gets half-applied containment until `device_type` branching is added.
+
+Still deferred to the VPE + live re-verify: B1 (wire `confirm` to device_id), B2/I1 (positively
+match NON_COMPLIANT; route UNKNOWN/None to manual review), I3 (gate wipe on containment success),
+I4/I5 (device-found + wipe-declined/timeout notes), I8 wiring, and the approver-role placeholder.
+
 ## 2026-07-06 — PR #10 second review (Sarah): doc-only fixes; logic deferred
 
 Sarah's review found two critical logic issues (C1 the wipe can't fire; C2 a failed compliance
