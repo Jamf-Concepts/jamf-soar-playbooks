@@ -17,9 +17,13 @@ skip this step.
 ## Architecture
 
 ### Current state
-This repo is currently a **governance skeleton only** — no playbooks yet. The
-first template (lost / stolen device) will drive the on-disk layout for exported
-playbooks.
+The first playbook has landed (in review, PR #9): **Device Enrichment & Triage**
+(read-only), built as a reusable **Input sub-playbook** (`Jamf - Device
+Enrichment (Input)`) plus a thin **Automation wrapper** (`Jamf - Device
+Enrichment and Triage`) that resolves the device, calls the sub-playbook, and
+writes a summary note. Playbooks live under `playbooks/` as `.py` + `.json`
+pairs. Remaining templates (lost/stolen, compromised user, IdP breach, malicious
+file, etc.) are still to build.
 
 ### How it fits together
 - Each playbook is a **SOAR playbook synced via git**. SOAR clones this repo as
@@ -103,4 +107,5 @@ how blocks chain (one action's output datapath feeds the next action's input).
 ## Change History
 | Date | File | What Changed |
 |------|------|--------------|
+| 2026-07-06 | `playbooks/` | First playbook (#5, PR #9): **Device Enrichment & Triage** (read-only). Shipped as an **Input sub-playbook** (`Jamf - Device Enrichment (Input)`: get device + 6 enrich actions → format → `enrichment_summary` output) plus an **Automation wrapper** (`Jamf - Device Enrichment and Triage`: resolve by username → call sub-playbook → `add_note`). Asset scrubbed to `<your-jamf-asset>`. Known adaptation points: sub-playbook repo reference (`jamf-soar-playbooks/…`) must be re-linked on import; resolver reads `artifact.*.cef.sourceUserName`; serial/name/MAC + mobile branches deferred. |
 | 2026-06-08 | All files | Initial governance skeleton created: README, CONTRIBUTING, CLAUDE.md, .gitignore, new-playbook issue template, docs/README.md. No actual playbooks yet. |

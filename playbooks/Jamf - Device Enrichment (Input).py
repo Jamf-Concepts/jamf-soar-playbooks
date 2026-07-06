@@ -24,8 +24,8 @@ def on_start(container):
     get_group_membership_1(container=container)
     # call 'get_compliance_status_1' block
     get_compliance_status_1(container=container)
-    # call 'decision_1' block
-    decision_1(container=container)
+    # call 'get_local_user_accounts_1' block
+    get_local_user_accounts_1(container=container)
 
     return
 
@@ -35,18 +35,18 @@ def get_device_1(action=None, success=None, container=None, results=None, handle
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_device_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -70,18 +70,18 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_installed_applications_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -105,18 +105,18 @@ def get_group_membership_1(action=None, success=None, container=None, results=No
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_group_membership_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -140,18 +140,18 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_compliance_status_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -175,18 +175,18 @@ def get_configuration_profiles_1(action=None, success=None, container=None, resu
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_configuration_profiles_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -242,18 +242,18 @@ def get_extension_attributes_1(action=None, success=None, container=None, result
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
     playbook_input_device_id = phantom.collect2(container=container, datapath=["playbook_input:device_id"])
+    playbook_input_device_type = phantom.collect2(container=container, datapath=["playbook_input:device_type"])
 
     parameters = []
 
     # build parameters list for 'get_extension_attributes_1' call
-    for playbook_input_device_type_item in playbook_input_device_type:
-        for playbook_input_device_id_item in playbook_input_device_id:
+    for playbook_input_device_id_item in playbook_input_device_id:
+        for playbook_input_device_type_item in playbook_input_device_type:
             if playbook_input_device_id_item[0] is not None:
                 parameters.append({
-                    "device_type": playbook_input_device_type_item[0],
                     "device_id": playbook_input_device_id_item[0],
+                    "device_type": playbook_input_device_type_item[0],
                 })
 
     ################################################################################
@@ -267,33 +267,6 @@ def get_extension_attributes_1(action=None, success=None, container=None, result
     ################################################################################
 
     phantom.act("get extension attributes", parameters=parameters, name="get_extension_attributes_1", assets=["<your-jamf-asset>"], callback=join_format_1)
-
-    return
-
-
-@phantom.playbook_block()
-def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_1() called")
-
-    # check for 'if' condition 1
-    found_match_1 = phantom.decision(
-        container=container,
-        conditions=[
-            ["playbook_input:device_type", "==", "computer"]
-        ],
-        conditions_dps=[
-            ["playbook_input:device_type", "==", "computer"]
-        ],
-        name="decision_1:condition_1",
-        delimiter=None)
-
-    # call connected blocks if condition 1 matched
-    if found_match_1:
-        get_local_user_accounts_1(action=action, success=success, container=container, results=results, handle=handle)
-        return
-
-    # check for 'else' condition 2
-    join_format_1(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 

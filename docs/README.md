@@ -6,6 +6,32 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-06 — First playbook: Device Enrichment & Triage (in review)
+
+The first real playbook landed (PR #9). It's **read-only** — it looks a device
+up and writes a tidy summary note onto the case; it doesn't change anything, so
+there's no approval gate needed.
+
+It's built in two pieces on purpose:
+
+- **`Jamf - Device Enrichment (Input)`** — the reusable "engine." Hand it a
+  device and it gathers everything (device details, compliance, groups, installed
+  apps, config profiles, local accounts, extension attributes), formats a
+  summary, and hands it back. The other playbooks we build will call this instead
+  of each rebuilding the same lookups.
+- **`Jamf - Device Enrichment and Triage`** — the entry point. It finds the
+  device (by username), calls the engine, and writes the summary as a note on the
+  case.
+
+Things to know when adopting it:
+
+- Set your Jamf asset where it says `<your-jamf-asset>`.
+- After importing, re-point the wrapper's sub-playbook block to your copy of the
+  engine (SOAR ties sub-playbooks to a specific repo; naming your Source Control
+  repo `jamf-soar-playbooks` makes the built-in reference line up).
+- It currently finds devices by **username** (from the event's `sourceUserName`
+  field). Finding by serial / name / MAC, and mobile-only steps, are planned next.
+
 ## 2026-06-08 — Repo skeleton created
 
 This is the very first version of the repo. Nothing here runs yet — it's a

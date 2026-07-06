@@ -1,646 +1,243 @@
 {
-    "blockly": false,
-    "blockly_xml": "<xml></xml>",
-    "category": "Uncategorized",
-    "coa": {
-        "data": {
-            "description": "",
-            "edges": [
-                {
-                    "id": "port_0_to_port_3",
-                    "sourceNode": "0",
-                    "sourcePort": "0_out",
-                    "targetNode": "3",
-                    "targetPort": "3_in"
-                },
-                {
-                    "id": "port_3_to_port_4",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "4",
-                    "targetPort": "4_in"
-                },
-                {
-                    "id": "port_3_to_port_6",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "6",
-                    "targetPort": "6_in"
-                },
-                {
-                    "id": "port_3_to_port_5",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "5",
-                    "targetPort": "5_in"
-                },
-                {
-                    "id": "port_3_to_port_7",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "7",
-                    "targetPort": "7_in"
-                },
-                {
-                    "id": "port_3_to_port_8",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "8",
-                    "targetPort": "8_in"
-                },
-                {
-                    "id": "port_3_to_port_9",
-                    "sourceNode": "3",
-                    "sourcePort": "3_out",
-                    "targetNode": "9",
-                    "targetPort": "9_in"
-                },
-                {
-                    "id": "port_4_to_port_10",
-                    "sourceNode": "4",
-                    "sourcePort": "4_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_7_to_port_10",
-                    "sourceNode": "7",
-                    "sourcePort": "7_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_5_to_port_10",
-                    "sourceNode": "5",
-                    "sourcePort": "5_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_6_to_port_10",
-                    "sourceNode": "6",
-                    "sourcePort": "6_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_8_to_port_10",
-                    "sourceNode": "8",
-                    "sourcePort": "8_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_9_to_port_10",
-                    "sourceNode": "9",
-                    "sourcePort": "9_out",
-                    "targetNode": "10",
-                    "targetPort": "10_in"
-                },
-                {
-                    "id": "port_10_to_port_13",
-                    "sourceNode": "10",
-                    "sourcePort": "10_out",
-                    "targetNode": "13",
-                    "targetPort": "13_in"
-                },
-                {
-                    "id": "port_13_to_port_1",
-                    "sourceNode": "13",
-                    "sourcePort": "13_out",
-                    "targetNode": "1",
-                    "targetPort": "1_in"
-                }
-            ],
-            "hash": "0db1824c979a7b0cb6214ce21d0b1530942ec4ec",
-            "nodes": {
-                "0": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionName": "on_start",
-                        "id": "0",
-                        "type": "start"
-                    },
-                    "errors": {},
-                    "id": "0",
-                    "type": "start",
-                    "warnings": {},
-                    "x": 1140,
-                    "y": 339.99999999999966
-                },
-                "1": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionName": "on_finish",
-                        "id": "1",
-                        "type": "end"
-                    },
-                    "errors": {},
-                    "id": "1",
-                    "type": "end",
-                    "warnings": {},
-                    "x": 1140,
-                    "y": 1100
-                },
-                "10": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionId": 1,
-                        "functionName": "format_1",
-                        "id": "10",
-                        "parameters": [
-                            "get_device_by_username_1:action_result.data.*.general.name",
-                            "get_device_by_username_1:action_result.data.*.serial_number",
-                            "get_device_by_username_1:action_result.parameter.username",
-                            "get_compliance_status_1:action_result.data.*.compliance_state",
-                            "get_group_membership_1:action_result.data.*.group_name",
-                            "get_installed_applications_1:action_result.summary.total"
-                        ],
-                        "template": "## Jamf Device Enrichment \u2014 {0}\n- **Serial:** {1}\n- **User:** {2}\n- **Compliance:** {3}\n- **Group memberships:** {4}\n- **Installed apps:** {5}",
-                        "type": "format"
-                    },
-                    "errors": {},
-                    "id": "10",
-                    "type": "format",
-                    "warnings": {},
-                    "x": 1120,
-                    "y": 840
-                },
-                "13": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionId": 1,
-                        "functionName": "code_1",
-                        "id": "13",
-                        "inputParameters": [
-                            "format_1:formatted_data",
-                            "container:id"
-                        ],
-                        "outputVariables": [],
-                        "type": "code"
-                    },
-                    "errors": {},
-                    "id": "13",
-                    "type": "code",
-                    "userCode": "\n    text = format_1\n    if isinstance(text, list):\n        text = \"\\n\".join(str(s) for s in text if s)\n\n    phantom.add_note(\n        container=container,\n        note_type=\"general\",\n        title=\"Jamf Device Enrichment and Triage\",\n        content=text,\n        note_format=\"markdown\",\n    )\n\n",
-                    "warnings": {},
-                    "x": 1120,
-                    "y": 960
-                },
-                "3": {
-                    "data": {
-                        "action": "get device by username",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_device_by_username_1",
-                        "id": "3",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "username": "artifact:*.cef.sourceUserName"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "username"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "3",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1120,
-                    "y": 500
-                },
-                "4": {
-                    "data": {
-                        "action": "get compliance status",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_compliance_status_1",
-                        "id": "4",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id",
-                            "device_type": "get_device_by_username_1:action_result.data.*.type"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "4",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1000,
-                    "y": 660
-                },
-                "5": {
-                    "data": {
-                        "action": "get installed applications",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_installed_applications_1",
-                        "id": "5",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id",
-                            "device_type": "get_device_by_username_1:action_result.data.*.type"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "5",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 700,
-                    "y": 660
-                },
-                "6": {
-                    "data": {
-                        "action": "get group membership",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_group_membership_1",
-                        "id": "6",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id",
-                            "device_type": "get_device_by_username_1:action_result.data.*.type"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "6",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 400,
-                    "y": 660
-                },
-                "7": {
-                    "data": {
-                        "action": "get configuration profiles",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_configuration_profiles_1",
-                        "id": "7",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id",
-                            "device_type": "get_device_by_username_1:action_result.data.*.type"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "7",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1280,
-                    "y": 660
-                },
-                "8": {
-                    "data": {
-                        "action": "get local user accounts",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_local_user_accounts_1",
-                        "id": "8",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "8",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1580,
-                    "y": 660
-                },
-                "9": {
-                    "data": {
-                        "action": "get extension attributes",
-                        "actionType": "investigate",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "get_extension_attributes_1",
-                        "id": "9",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_username_1:action_result.data.*.id",
-                            "device_type": "get_device_by_username_1:action_result.data.*.type"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "9",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1880,
-                    "y": 660
-                }
-            },
-            "notes": "",
-            "origin": {
-                "playbook_id": 192,
-                "playbook_name": "jamf_device_enrichment_triage",
-                "playbook_repo_id": 2,
-                "playbook_repo_name": "local"
-            }
+  "blockly": false,
+  "blockly_xml": "<xml></xml>",
+  "category": "Uncategorized",
+  "coa": {
+    "data": {
+      "description": "",
+      "edges": [
+        {
+          "id": "port_0_to_port_3",
+          "sourceNode": "0",
+          "sourcePort": "0_out",
+          "targetNode": "3",
+          "targetPort": "3_in"
         },
-        "input_spec": null,
-        "output_spec": null,
-        "playbook_trigger": "artifact_created",
-        "playbook_type": "automation",
-        "python_version": "3.13",
-        "schema": "5.0.24",
-        "version": "8.5.0.248"
+        {
+          "id": "port_13_to_port_1",
+          "sourceNode": "13",
+          "sourcePort": "13_out",
+          "targetNode": "1",
+          "targetPort": "1_in"
+        },
+        {
+          "id": "port_3_to_port_14",
+          "sourceNode": "3",
+          "sourcePort": "3_out",
+          "targetNode": "14",
+          "targetPort": "14_in"
+        },
+        {
+          "id": "port_14_to_port_13",
+          "sourceNode": "14",
+          "sourcePort": "14_out",
+          "targetNode": "13",
+          "targetPort": "13_in"
+        }
+      ],
+      "hash": "536de911b12cfab44136cef069213f2e84870a23",
+      "nodes": {
+        "0": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionName": "on_start",
+            "id": "0",
+            "type": "start"
+          },
+          "errors": {},
+          "id": "0",
+          "type": "start",
+          "warnings": {},
+          "x": 1140,
+          "y": 339.9999999999996
+        },
+        "1": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionName": "on_finish",
+            "id": "1",
+            "type": "end"
+          },
+          "errors": {},
+          "id": "1",
+          "type": "end",
+          "warnings": {},
+          "x": 1140,
+          "y": 840
+        },
+        "13": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionId": 1,
+            "functionName": "code_1",
+            "id": "13",
+            "inputParameters": [
+              "playbook_jamf___device_enrichment__input__1:playbook_output:enrichment_summary",
+              "container:id"
+            ],
+            "outputVariables": [],
+            "type": "code"
+          },
+          "errors": {},
+          "id": "13",
+          "type": "code",
+          "userCode": "\n     # flatten whatever nesting collect2 produced into one clean string\n    def _flat(x):\n        out = []\n        if isinstance(x, (list, tuple)):\n            for i in x:\n                out.extend(_flat(i))\n        elif x not in (None, \"\"):\n            out.append(str(x))\n        return out\n\n    text = \"\\n\".join(_flat(playbook_jamf___device_enrichment__input__1_output_enrichment_summary))\n\n    phantom.add_note(\n        container=container,\n        note_type=\"general\",\n        title=\"Jamf Device Enrichment and Triage\",\n        content=text,\n        note_format=\"markdown\",\n    )\n\n",
+          "warnings": {
+            "config": [
+              "Reconfigure invalid datapath."
+            ]
+          },
+          "x": 1120,
+          "y": 720
+        },
+        "14": {
+          "data": {
+            "advanced": {
+              "join": []
+            },
+            "functionId": 1,
+            "functionName": "playbook_Jamf___Device_Enrichment_(Input)_1",
+            "id": "14",
+            "inputs": {
+              "device_id": {
+                "datapaths": [
+                  "get_device_by_username_1:action_result.data.*.id"
+                ],
+                "deduplicate": false
+              },
+              "device_type": {
+                "datapaths": [
+                  "get_device_by_username_1:action_result.data.*.type"
+                ],
+                "deduplicate": false
+              }
+            },
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "playbookName": "Jamf - Device Enrichment (Input)",
+            "playbookRepo": 2,
+            "playbookRepoName": "jamf-soar-playbooks",
+            "playbookType": "data",
+            "synchronous": true,
+            "type": "playbook"
+          },
+          "errors": {},
+          "id": "14",
+          "type": "playbook",
+          "warnings": {},
+          "x": 1120,
+          "y": 580
+        },
+        "3": {
+          "data": {
+            "action": "get device by username",
+            "actionType": "investigate",
+            "advanced": {
+              "join": []
+            },
+            "connector": "Jamf Pro",
+            "connectorConfigs": [
+              "<your-jamf-asset>"
+            ],
+            "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+            "connectorVersion": "v1",
+            "functionId": 1,
+            "functionName": "get_device_by_username_1",
+            "id": "3",
+            "loop": {
+              "conditions": [
+                {
+                  "comparisons": [
+                    {
+                      "comparisonKey": "comparison_key_0",
+                      "op": "==",
+                      "param": "",
+                      "value": ""
+                    }
+                  ],
+                  "conditionIndex": 0,
+                  "conditionKey": "condition_key_0",
+                  "logic": "and",
+                  "type": "if"
+                }
+              ],
+              "enabled": false,
+              "exitAfterUnit": "m",
+              "exitAfterValue": 10,
+              "exitConditionEnabled": false,
+              "exitLoopAfter": 2,
+              "pauseUnit": "m",
+              "pauseValue": 2
+            },
+            "parameters": {
+              "username": "artifact:*.cef.sourceUserName"
+            },
+            "requiredParameters": [
+              {
+                "data_type": "string",
+                "field": "username"
+              }
+            ],
+            "tab": "byConnector",
+            "type": "action"
+          },
+          "errors": {},
+          "id": "3",
+          "type": "action",
+          "warnings": {},
+          "x": 1120,
+          "y": 460
+        }
+      },
+      "notes": "",
+      "origin": {
+        "playbook_id": 192,
+        "playbook_name": "jamf_device_enrichment_triage",
+        "playbook_repo_id": 2,
+        "playbook_repo_name": "jamf-soar-playbooks"
+      }
     },
-    "create_time": "2026-07-02T20:50:41.486739+00:00",
-    "draft_mode": false,
-    "labels": [
-        "*"
-    ],
-    "tags": []
+    "input_spec": null,
+    "output_spec": null,
+    "playbook_trigger": "artifact_created",
+    "playbook_type": "automation",
+    "python_version": "3.13",
+    "schema": "5.0.24",
+    "version": "8.5.0.248"
+  },
+  "create_time": "2026-07-06T00:36:41.548377+00:00",
+  "draft_mode": false,
+  "labels": [
+    "*"
+  ],
+  "tags": []
 }
