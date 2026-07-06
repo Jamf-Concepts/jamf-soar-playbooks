@@ -11,8 +11,9 @@ people who aren't deep in the playbooks.
 Two things:
 - **The Mac's serial is no longer hardcoded.** The resolve step now reads the
   serial straight from the incoming SOAR event (`artifact:*.cef.serialNumber`),
-  the same way the Compliance-drift playbook does it — so the template works on
-  whatever device the event is about, instead of a fixed test serial.
+  the same pattern the sibling Compliance Drift / MDM Tamper playbook (issue #4)
+  uses — so the template works on whatever device the event is about, instead of
+  a fixed test serial.
 - **Distribution PR opened.** The generic, ready-to-share version (placeholder
   asset/approver/passwords, no real values) goes to `main` via its own branch,
   while the working copy stays runnable in SOAR for testing. This keeps the
