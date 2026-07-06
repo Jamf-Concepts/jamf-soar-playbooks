@@ -192,20 +192,20 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    set_recovery_lock_1_result_data = phantom.collect2(container=container, datapath=["set_recovery_lock_1:action_result.data.*.device_id","set_recovery_lock_1:action_result.parameter.context.artifact_id"], action_results=results)
+    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id ","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
     # build parameters list for 'lock_device_1' call
-    for set_recovery_lock_1_result_item in set_recovery_lock_1_result_data:
-        if set_recovery_lock_1_result_item[0] is not None:
+    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
+        if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
                 "pin": "000000",
                 "message": "SOAR test lock ",
-                "device_id": set_recovery_lock_1_result_item[0],
+                "device_id": get_device_by_serial_1_result_item[0],
                 "device_type": "computer",
                 "phone_number": "555-0100",
-                "context": {'artifact_id': set_recovery_lock_1_result_item[1]},
+                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
             })
 
     ################################################################################
@@ -231,10 +231,14 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 
     user = "Sarah"
     role = None
-    message = """ Wipe this Mac? (offboarding erase)"""
+    message = """Approve device WIPE? This permanently ERASES the Mac and is IRREVERSIBLE.\n- FileVault recovery key escrowed in Jamf: {0}\n  - Set recovery lock queued: {1}\n  - Lock device queued: {2}{0}{1}{2}"""
 
     # parameter list for template variable replacement
-    parameters = []
+    parameters = [
+        "get_filevault_recovery_key_1:action_result.summary.key_present",
+        "set_recovery_lock_1:action_result.status",
+        "lock_device_1:action_result.status"
+    ]
 
     # responses
     response_types = [
@@ -326,17 +330,31 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code Start
     ################################################################################
 
-    phantom.add_note(
-          container=container,
-          title="FileVault recovery access - device secured",
-          content=(
-              "Recovery context retrieved and handled securely. "
-              "Recovery lock and device lock have been queued for the target Mac. "
-              "NOTE: the FileVault recovery key is sensitive and is intentionally NOT included here. "
-              "TODO: replace this note with a Slack notification to a restricted security channel."
-          ),
-          note_type="general",
-      )
+    fv = phantom.collect2(container=container, datapath=["get_filevault_recovery_key_1:action_result.status", "get_filevault_recovery_key_1:action_result.summary.key_present"], action_results=results)
+    rl = phantom.collect2(container=container, datapath=["set_recovery_lock_1:action_result.status"], action_results=results)
+    lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
+
+    fv_status = fv[0][0] if fv else None
+    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None
+    rl_status = rl[0][0] if rl else None
+    lock_status = lk[0][0] if lk else None
+
+    lines = []
+    if fv_status != "success" or key_present in (False, "False", None):
+          lines.append("WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.".format(fv_status,
+  key_present))
+    if rl_status != "success" or lock_status != "success":
+          lines.append("WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.".format(rl_status, lock_status))
+
+    lines.append("FileVault recovery access - step outcomes:")
+    lines.append("- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})".format(fv_status, key_present))
+    lines.append("- Set recovery lock (queued): {}".format(rl_status))
+    lines.append("- Lock device (queued): {}".format(lock_status))
+    lines.append("The FileVault recovery key is sensitive and is intentionally NOT included here.")
+    lines.append("TODO: replace this note with a notification to a restricted security channel.")
+
+    phantom.add_note(container=container, title="FileVault recovery access - step outcomes", content="\n".join(lines), note_type="general")
+
 
     ################################################################################
     ## Custom Code End
@@ -412,16 +430,22 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     ################################################################################
 
     
-    phantom.add_note(
-          container=container,
-          title="FileVault recovery - no device found",
-          content=(
-              "No Jamf device matched the provided serial number. "
-              "Recovery access playbook stopped; no actions were taken. "
-              "Verify the serial and re-run."
-          ),
-          note_type="general",
-      )   
+    rows = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.status"], action_results=results)
+    lookup_status = rows[0][0] if rows and rows[0] else None
+
+    if lookup_status == "success":
+        title = "FileVault recovery - no device matched"
+        content = ("No Jamf device matched the provided serial number. "
+                     "No actions were taken. Verify the serial is correct and re-run.")
+    else:
+          title = "FileVault recovery - device lookup FAILED"
+          content = ("The 'get device by serial' lookup did not succeed (status: {}). "
+                     "No device was resolved and no actions were taken. This usually means a "
+                     "Jamf asset / credential / privilege problem, NOT a wrong serial - check "
+                     "the asset config and API role, then re-run.".format(lookup_status))
+
+    phantom.add_note(container=container, title=title, content=content, note_type="general")
+
 
     ################################################################################
     ## Custom Code End
