@@ -53,6 +53,7 @@ def get_device_1(action=None, success=None, container=None, results=None, handle
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -92,6 +93,7 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -131,6 +133,7 @@ def get_group_membership_1(action=None, success=None, container=None, results=No
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -170,6 +173,7 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -209,6 +213,7 @@ def get_configuration_profiles_1(action=None, success=None, container=None, resu
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -280,6 +285,7 @@ def get_extension_attributes_1(action=None, success=None, container=None, result
     ## Custom Code Start
     ################################################################################
 
+    assert len(playbook_input_device_id) == len(playbook_input_device_type), "device_id/device_type must be paired, equal-length lists"
     parameters = [
         {"device_id": did[0], "device_type": dtype[0]}
         for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
@@ -319,28 +325,41 @@ def format_1(action=None, success=None, container=None, results=None, handle=Non
     ## Custom Code Start
     ################################################################################
 
-    def _first(dp, default="—"):
+    ACTS = ["get_device_1","get_compliance_status_1","get_group_membership_1",
+            "get_installed_applications_1","get_configuration_profiles_1",
+            "get_local_user_accounts_1","get_extension_attributes_1"]
+
+    def _ok(action):
+        rows = phantom.collect2(container=container, datapath=[action + ":action_result.status"])
+        vals = [str(r[0]).lower() for r in rows if r and r[0]]
+        return bool(vals) and all(v == "success" for v in vals)
+
+    st = {a: _ok(a) for a in ACTS}
+    FAIL = "⚠️ not retrieved"
+
+    def field(action, dp, join=False, empty="—"):
+        if not st[action]:
+            return FAIL
         rows = phantom.collect2(container=container, datapath=[dp])
         vals = [str(r[0]) for r in rows if r and r[0] not in (None, "")]
-        return vals[0] if vals else default
+        if not vals:
+            return "none" if join else empty
+        return ", ".join(vals) if join else vals[0]
 
-    def _join(dp, default="none"):
-        rows = phantom.collect2(container=container, datapath=[dp])
-        vals = [str(r[0]) for r in rows if r and r[0] not in (None, "")]
-        return ", ".join(vals) if vals else default
+    name       = field("get_device_1", "get_device_1:action_result.data.*.general.name")
+    serial     = field("get_device_1", "get_device_1:action_result.data.*.serial_number")
+    user       = field("get_device_1", "get_device_1:action_result.data.*.username")
+    compliance = field("get_compliance_status_1", "get_compliance_status_1:action_result.data.*.compliance_state")
+    apps       = field("get_installed_applications_1", "get_installed_applications_1:action_result.summary.total", empty="0")
+    groups     = field("get_group_membership_1", "get_group_membership_1:action_result.data.*.group_name", join=True)
+    profiles   = field("get_configuration_profiles_1", "get_configuration_profiles_1:action_result.summary.total", empty="0")
+    accounts   = field("get_local_user_accounts_1", "get_local_user_accounts_1:action_result.summary.total", empty="0")
+    extattrs   = field("get_extension_attributes_1", "get_extension_attributes_1:action_result.summary.total", empty="0")
 
-    name       = _first("get_device_1:action_result.data.*.general.name")
-    serial     = _first("get_device_1:action_result.data.*.serial_number")
-    user       = _first("get_device_1:action_result.data.*.username")
-    compliance = _first("get_compliance_status_1:action_result.data.*.compliance_state")
-    apps       = _first("get_installed_applications_1:action_result.summary.total", "0")
-    groups     = _join("get_group_membership_1:action_result.data.*.group_name")
-    profiles   = _first("get_configuration_profiles_1:action_result.summary.total", "0")
-    accounts   = _first("get_local_user_accounts_1:action_result.summary.total", "0")
-    extattrs   = _first("get_extension_attributes_1:action_result.summary.total", "0")
-
+    ok = sum(st.values())
     summary = (
         "## Jamf Device Enrichment — " + name + "\n\n"
+        + "_" + str(ok) + " of 7 lookups succeeded_\n\n"
         + "- **Serial:** " + serial + "\n"
         + "- **User:** " + user + "\n"
         + "- **Compliance:** " + compliance + "\n"

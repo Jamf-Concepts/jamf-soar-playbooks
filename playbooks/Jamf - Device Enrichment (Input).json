@@ -112,7 +112,7 @@
                     "targetPort": "7_in"
                 }
             ],
-            "hash": "7b18c054dcba175863e185ad2909ca65d35ec7e3",
+            "hash": "42b3929f47080d7f706683908117b97a1f37b02b",
             "nodes": {
                 "0": {
                     "data": {
@@ -128,7 +128,7 @@
                     "type": "start",
                     "warnings": {},
                     "x": 1020,
-                    "y": 419.99999999999994
+                    "y": 419.99999999999983
                 },
                 "1": {
                     "data": {
@@ -161,7 +161,7 @@
                     "errors": {},
                     "id": "10",
                     "type": "format",
-                    "userCode": "\n    def _first(dp, default=\"\u2014\"):\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        return vals[0] if vals else default\n\n    def _join(dp, default=\"none\"):\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        return \", \".join(vals) if vals else default\n\n    name       = _first(\"get_device_1:action_result.data.*.general.name\")\n    serial     = _first(\"get_device_1:action_result.data.*.serial_number\")\n    user       = _first(\"get_device_1:action_result.data.*.username\")\n    compliance = _first(\"get_compliance_status_1:action_result.data.*.compliance_state\")\n    apps       = _first(\"get_installed_applications_1:action_result.summary.total\", \"0\")\n    groups     = _join(\"get_group_membership_1:action_result.data.*.group_name\")\n    profiles   = _first(\"get_configuration_profiles_1:action_result.summary.total\", \"0\")\n    accounts   = _first(\"get_local_user_accounts_1:action_result.summary.total\", \"0\")\n    extattrs   = _first(\"get_extension_attributes_1:action_result.summary.total\", \"0\")\n\n    summary = (\n        \"## Jamf Device Enrichment \u2014 \" + name + \"\\n\\n\"\n        + \"- **Serial:** \" + serial + \"\\n\"\n        + \"- **User:** \" + user + \"\\n\"\n        + \"- **Compliance:** \" + compliance + \"\\n\"\n        + \"- **Group memberships:** \" + groups + \"\\n\"\n        + \"- **Installed apps:** \" + apps + \"\\n\"\n        + \"- **Configuration profiles:** \" + profiles + \"\\n\"\n        + \"- **Local user accounts:** \" + accounts + \"\\n\"\n        + \"- **Extension attributes:** \" + extattrs\n    )\n    template = summary.replace(\"{\", \"{{\").replace(\"}\", \"}}\")\n    parameters = []\n\n",
+                    "userCode": "\n    ACTS = [\"get_device_1\",\"get_compliance_status_1\",\"get_group_membership_1\",\n            \"get_installed_applications_1\",\"get_configuration_profiles_1\",\n            \"get_local_user_accounts_1\",\"get_extension_attributes_1\"]\n\n    def _ok(action):\n        rows = phantom.collect2(container=container, datapath=[action + \":action_result.status\"])\n        vals = [str(r[0]).lower() for r in rows if r and r[0]]\n        return bool(vals) and all(v == \"success\" for v in vals)\n\n    st = {a: _ok(a) for a in ACTS}\n    FAIL = \"\u26a0\ufe0f not retrieved\"\n\n    def field(action, dp, join=False, empty=\"\u2014\"):\n        if not st[action]:\n            return FAIL\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        if not vals:\n            return \"none\" if join else empty\n        return \", \".join(vals) if join else vals[0]\n\n    name       = field(\"get_device_1\", \"get_device_1:action_result.data.*.general.name\")\n    serial     = field(\"get_device_1\", \"get_device_1:action_result.data.*.serial_number\")\n    user       = field(\"get_device_1\", \"get_device_1:action_result.data.*.username\")\n    compliance = field(\"get_compliance_status_1\", \"get_compliance_status_1:action_result.data.*.compliance_state\")\n    apps       = field(\"get_installed_applications_1\", \"get_installed_applications_1:action_result.summary.total\", empty=\"0\")\n    groups     = field(\"get_group_membership_1\", \"get_group_membership_1:action_result.data.*.group_name\", join=True)\n    profiles   = field(\"get_configuration_profiles_1\", \"get_configuration_profiles_1:action_result.summary.total\", empty=\"0\")\n    accounts   = field(\"get_local_user_accounts_1\", \"get_local_user_accounts_1:action_result.summary.total\", empty=\"0\")\n    extattrs   = field(\"get_extension_attributes_1\", \"get_extension_attributes_1:action_result.summary.total\", empty=\"0\")\n\n    ok = sum(st.values())\n    summary = (\n        \"## Jamf Device Enrichment \u2014 \" + name + \"\\n\\n\"\n        + \"_\" + str(ok) + \" of 7 lookups succeeded_\\n\\n\"\n        + \"- **Serial:** \" + serial + \"\\n\"\n        + \"- **User:** \" + user + \"\\n\"\n        + \"- **Compliance:** \" + compliance + \"\\n\"\n        + \"- **Group memberships:** \" + groups + \"\\n\"\n        + \"- **Installed apps:** \" + apps + \"\\n\"\n        + \"- **Configuration profiles:** \" + profiles + \"\\n\"\n        + \"- **Local user accounts:** \" + accounts + \"\\n\"\n        + \"- **Extension attributes:** \" + extattrs\n    )\n    template = summary.replace(\"{\", \"{{\").replace(\"}\", \"}}\")\n    parameters = []\n\n",
                     "warnings": {},
                     "x": 1000,
                     "y": 720
@@ -223,7 +223,7 @@
                     "errors": {},
                     "id": "2",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1000,
                     "y": 540
@@ -285,7 +285,7 @@
                     "errors": {},
                     "id": "3",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 700,
                     "y": 540
@@ -347,7 +347,7 @@
                     "errors": {},
                     "id": "4",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n    \n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n    \n",
                     "warnings": {},
                     "x": 420,
                     "y": 540
@@ -409,7 +409,7 @@
                     "errors": {},
                     "id": "5",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 120,
                     "y": 540
@@ -471,7 +471,7 @@
                     "errors": {},
                     "id": "6",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1303.3333740234375,
                     "y": 539.8333740234375
@@ -593,7 +593,7 @@
                     "errors": {},
                     "id": "8",
                     "type": "action",
-                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
+                    "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1920,
                     "y": 540
@@ -631,7 +631,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T09:33:05.743286+00:00",
+    "create_time": "2026-07-06T10:47:42.810291+00:00",
     "draft_mode": false,
     "labels": [
         "*"
