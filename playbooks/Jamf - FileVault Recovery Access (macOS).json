@@ -129,7 +129,7 @@
                     "targetPort": "17_in"
                 }
             ],
-            "hash": "85d7b85e2734093ec201068659b8bfdd38db3bf1",
+            "hash": "f4fe63fefc89d4747eb1ee043417497a20d6d997",
             "nodes": {
                 "0": {
                     "data": {
@@ -291,7 +291,7 @@
                     "errors": {},
                     "id": "14",
                     "type": "code",
-                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n\n    lines = []\n    if fv_status != \"success\" or key_present not in (True, \"True\", \"true\"):\n          lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status,\n  key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n          lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n\n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
+                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n    cs = phantom.collect2(container=container, datapath=[\"get_compliance_status_1:action_result.status\", \"get_compliance_status_1:action_result.data.*.compliance_state\"], action_results=results)\n    lu = phantom.collect2(container=container, datapath=[\"get_local_user_accounts_1:action_result.status\", \"get_local_user_accounts_1:action_result.summary.total\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n    cs_status = cs[0][0] if cs else None\n    cs_state = cs[0][1] if cs and len(cs[0]) > 1 else None\n    lu_status = lu[0][0] if lu else None\n    lu_total = lu[0][1] if lu and len(lu[0]) > 1 else None\n       \n    lines = []\n    if fv_status != \"success\" or key_present not in (True, \"True\", \"true\"):\n         lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status, key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n         lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Compliance status: {} ({})\".format(cs_status, cs_state))\n    lines.append(\"- Local user accounts: {} (count: {})\".format(lu_status, lu_total))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n      \n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
                     "warnings": {},
                     "x": 960,
                     "y": 960
@@ -311,7 +311,7 @@
                     "errors": {},
                     "id": "15",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"FileVault recovery - wipe NOT approved\",\n          content=(\n              \"The analyst declined the wipe at the approval prompt. \"\n              \"The device remains secured (recovery lock + device lock queued); no erase was performed.\"\n          ),\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_1:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"FileVault recovery - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed. \"\n                     \"Re-run if a wipe is still required.\")\n    else:\n          title = \"FileVault recovery - wipe denied\"\n          content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n",
                     "warnings": {},
                     "x": 1300,
                     "y": 1220
@@ -807,7 +807,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T10:23:55.797475+00:00",
+    "create_time": "2026-07-06T10:50:23.248113+00:00",
     "draft_mode": false,
     "labels": [
         "*"
