@@ -53,7 +53,11 @@ def get_device_1(action=None, success=None, container=None, results=None, handle
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
 
     ################################################################################
     ## Custom Code End
@@ -88,7 +92,11 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
 
     ################################################################################
     ## Custom Code End
@@ -123,8 +131,12 @@ def get_group_membership_1(action=None, success=None, container=None, results=No
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
-
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
+    
     ################################################################################
     ## Custom Code End
     ################################################################################
@@ -158,7 +170,11 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
 
     ################################################################################
     ## Custom Code End
@@ -193,7 +209,11 @@ def get_configuration_profiles_1(action=None, success=None, container=None, resu
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
 
     ################################################################################
     ## Custom Code End
@@ -260,7 +280,11 @@ def get_extension_attributes_1(action=None, success=None, container=None, result
     ## Custom Code Start
     ################################################################################
 
-    # Write your custom code here...
+    parameters = [
+        {"device_id": did[0], "device_type": dtype[0]}
+        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)
+        if did[0] is not None
+    ]
 
     ################################################################################
     ## Custom Code End

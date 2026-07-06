@@ -112,7 +112,7 @@
                     "targetPort": "7_in"
                 }
             ],
-            "hash": "be3d1db5c15014f11308cf52197c2f0c3493a513",
+            "hash": "b7036879efd8b1f724741a2fbf036c777f2f388a",
             "nodes": {
                 "0": {
                     "data": {
@@ -128,7 +128,7 @@
                     "type": "start",
                     "warnings": {},
                     "x": 1020,
-                    "y": 420
+                    "y": 419.99999999999994
                 },
                 "1": {
                     "data": {
@@ -229,6 +229,7 @@
                     "errors": {},
                     "id": "2",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1000,
                     "y": 540
@@ -290,6 +291,7 @@
                     "errors": {},
                     "id": "3",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 700,
                     "y": 540
@@ -351,6 +353,7 @@
                     "errors": {},
                     "id": "4",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n    \n",
                     "warnings": {},
                     "x": 420,
                     "y": 540
@@ -412,6 +415,7 @@
                     "errors": {},
                     "id": "5",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 120,
                     "y": 540
@@ -473,6 +477,7 @@
                     "errors": {},
                     "id": "6",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1303.3333740234375,
                     "y": 539.8333740234375
@@ -594,6 +599,7 @@
                     "errors": {},
                     "id": "8",
                     "type": "action",
+                    "userCode": "\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
                     "x": 1920,
                     "y": 540
@@ -631,7 +637,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T00:26:17.637461+00:00",
+    "create_time": "2026-07-06T09:12:15.537396+00:00",
     "draft_mode": false,
     "labels": [
         "*"

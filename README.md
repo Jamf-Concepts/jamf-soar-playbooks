@@ -9,8 +9,8 @@ This repo is **not** a connector. It holds reusable playbooks that *call* the
 Jamf SOAR app's actions. The companion connector app lives in
 [`Jamf-Concepts/jamf-splunk-soar`](https://github.com/Jamf-Concepts/jamf-splunk-soar).
 
-> Status: **Pre-release / private development.** Governance skeleton only —
-> no playbooks have been built yet.
+> Status: **Pre-release / private development.** First playbook templates are
+> in review — see the table below.
 
 ---
 
@@ -81,8 +81,8 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 
 ## Installation & usage
 
-> Placeholder — step-by-step import/sync instructions will be added once the
-> first playbook (lost / stolen device) lands.
+> Placeholder — detailed step-by-step import/sync instructions will be
+> fleshed out as the first playbook templates land.
 
 High-level shape:
 
