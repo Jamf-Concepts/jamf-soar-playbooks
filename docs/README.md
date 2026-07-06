@@ -14,7 +14,9 @@ with `main`:
 - **Removed a real secret left in the docs.** The maintainer notes (`CLAUDE.md`) still spelled out
   a real recovery-lock password, a device serial, and other test values that had already been
   swapped for placeholders everywhere else. They're now described without printing the values.
-  Because the password was committed to git history, it's being **rotated on the Jamf side** too.
+  Because the password was also committed to git history, rotating it on the Jamf side is tracked
+  as a follow-up (**issue #14**) — the connector repo is confirmed clean, and for a private repo
+  rotating the credential is the accepted mitigation (no history rewrite needed).
 - **Fixed the approval-prompt routing.** The "approve the wipe?" prompt was pointed at a *user* slot
   holding a placeholder, which wouldn't resolve to a real person on import — so the safety gate
   could fail to reach anyone. It now routes by **role**, so on import you just point it at your
