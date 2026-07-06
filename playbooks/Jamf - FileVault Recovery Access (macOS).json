@@ -757,7 +757,7 @@
                             "join": []
                         },
                         "approver": {
-                            "type": "user",
+                            "type": "role",
                             "value": "<security-analyst-role>"
                         },
                         "functionId": 1,

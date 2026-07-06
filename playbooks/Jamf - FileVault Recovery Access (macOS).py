@@ -245,8 +245,8 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 
     # set approver and message variables for phantom.prompt call
 
-    user = "<security-analyst-role>"
-    role = None
+    user = None
+    role = "<security-analyst-role>"
     message = """Approve device WIPE? This permanently ERASES the Mac and is IRREVERSIBLE.\n- FileVault recovery key escrowed in Jamf: {0}\n  - Set recovery lock queued: {1}\n  - Lock device queued: {2}"""
 
     # parameter list for template variable replacement
