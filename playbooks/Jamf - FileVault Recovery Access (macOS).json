@@ -129,7 +129,7 @@
                     "targetPort": "17_in"
                 }
             ],
-            "hash": "f4d1792ad851f373c35d0454c69c8e2688a107bc",
+            "hash": "85d7b85e2734093ec201068659b8bfdd38db3bf1",
             "nodes": {
                 "0": {
                     "data": {
@@ -291,7 +291,7 @@
                     "errors": {},
                     "id": "14",
                     "type": "code",
-                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n\n    lines = []\n    if fv_status != \"success\" or key_present in (False, \"False\", None):\n          lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status,\n  key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n          lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n\n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
+                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n\n    lines = []\n    if fv_status != \"success\" or key_present not in (True, \"True\", \"true\"):\n          lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status,\n  key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n          lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n\n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
                     "warnings": {},
                     "x": 960,
                     "y": 960
@@ -729,7 +729,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id ",
+                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
                             "device_type": "computer",
                             "message": "SOAR test lock ",
                             "phone_number": "555-0100",
@@ -807,7 +807,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T09:37:42.565551+00:00",
+    "create_time": "2026-07-06T10:23:55.797475+00:00",
     "draft_mode": false,
     "labels": [
         "*"

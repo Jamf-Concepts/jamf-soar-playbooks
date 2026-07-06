@@ -192,7 +192,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id ","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
@@ -340,7 +340,7 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     lock_status = lk[0][0] if lk else None
 
     lines = []
-    if fv_status != "success" or key_present in (False, "False", None):
+    if fv_status != "success" or key_present not in (True, "True", "true"):
           lines.append("WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.".format(fv_status,
   key_present))
     if rl_status != "success" or lock_status != "success":
