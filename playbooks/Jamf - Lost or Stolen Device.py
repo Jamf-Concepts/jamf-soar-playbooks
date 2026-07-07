@@ -7,15 +7,18 @@ Responds to a device reported lost or stolen:
       computer -> lock device      -> note -> approval gate -> wipe on approval
 A decline / timeout / no-device path just writes a note. Never auto-wipes.
 
-Design note: the two device-type branches each carry their OWN note -> prompt ->
-wipe tail and do NOT reconverge. Merging them onto one shared downstream block
-makes SOAR insert a join that waits for BOTH branches; since only one branch
-runs per device, that join never completes and the note/prompt/wipe are skipped.
-Per-branch tails avoid the join entirely.
+Design notes:
+- The two device-type branches each carry their OWN note -> prompt -> wipe tail and
+  do NOT reconverge. Merging them onto one shared block makes SOAR insert a join that
+  waits for BOTH branches; only one runs per device, so that join never completes and
+  the note/prompt/wipe are skipped. Per-branch tails avoid the join.
+- Block names follow SOAR's <type>_<n> convention with a UNIQUE id per type
+  (decision_1..4, code_1..5, prompt_1..2, wipe_device_1..2); reusing an id within a
+  type makes SOAR generate two functions with the same name (function-redefined).
 
 Adaptation points (replace before use):
   - <your-jamf-asset>   : Jamf asset (this dev copy uses "test1").
-  - approver            : prompt routes to the "Sarah" user in this dev copy;
+  - approver            : prompts route to the "Sarah" user in this dev copy;
                           switch to a security-analyst ROLE for distribution.
   - lock PIN "000000"   : replace with your 6-digit unlock PIN (computer lock).
   - lock-screen message : the lost/stolen message shown on the device.
@@ -46,7 +49,6 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
 
     parameters = []
 
-    # build parameters list for 'get_device_by_serial_1' call
     for container_artifact_item in container_artifact_data:
         if container_artifact_item[0] is not None:
             parameters.append({
@@ -64,7 +66,32 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=decision_2)
+    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=decision_1)
+
+    return
+
+
+@phantom.playbook_block()
+def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_1() called")
+
+    # device found?
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        conditions_dps=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        name="decision_1:condition_1",
+        delimiter=None)
+
+    if found_match_1:
+        decision_2(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    code_5(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
@@ -73,42 +100,16 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
 def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("decision_2() called")
 
-    # 'if' condition 1 - device found
+    # device_type: mobile?
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
         ],
         conditions_dps=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
         ],
         name="decision_2:condition_1",
-        delimiter=None)
-
-    if found_match_1:
-        device_type(action=action, success=success, container=container, results=results, handle=handle)
-        return
-
-    # 'else' condition 2 - no device resolved
-    code_3(action=action, success=success, container=container, results=results, handle=handle)
-
-    return
-
-
-@phantom.playbook_block()
-def device_type(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("device_type() called")
-
-    # 'if' condition 1 - mobile device
-    found_match_1 = phantom.decision(
-        container=container,
-        conditions=[
-            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
-        ],
-        conditions_dps=[
-            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
-        ],
-        name="device_type:condition_1",
         delimiter=None)
 
     # mobile -> enable lost mode branch
@@ -123,7 +124,7 @@ def device_type(action=None, success=None, container=None, results=None, handle=
 
 
 # ---------------------------------------------------------------------------
-# MOBILE branch: enable lost mode -> note -> prompt -> wipe / declined
+# MOBILE branch: enable lost mode -> code_1 -> prompt_1 -> decision_3 -> wipe_device_1 / code_2
 # ---------------------------------------------------------------------------
 
 @phantom.playbook_block()
@@ -153,14 +154,14 @@ def enable_lost_mode_1(action=None, success=None, container=None, results=None, 
     ## Custom Code End
     ################################################################################
 
-    phantom.act("enable lost mode", parameters=parameters, name="enable_lost_mode_1", assets=["test1"], callback=code_1_mobile)
+    phantom.act("enable lost mode", parameters=parameters, name="enable_lost_mode_1", assets=["test1"], callback=code_1)
 
     return
 
 
 @phantom.playbook_block()
-def code_1_mobile(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1_mobile() called")
+def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_1() called")
 
     ################################################################################
     ## Custom Code Start
@@ -189,16 +190,16 @@ def code_1_mobile(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_1_mobile_called", value="True")
+    phantom.save_block_result(key="code_1_called", value="True")
 
-    prompt_mobile(container=container)
+    prompt_1(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def prompt_mobile(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("prompt_mobile() called")
+def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("prompt_1() called")
 
     # DEV: routes to the "Sarah" user; switch to a security-analyst ROLE for distribution.
     user = "Sarah"
@@ -234,38 +235,38 @@ Approve only if the device is confirmed unrecoverable and a wipe is authorized."
         }
     ]
 
-    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_mobile", parameters=parameters, response_types=response_types, callback=decision_mobile)
+    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_1", parameters=parameters, response_types=response_types, callback=decision_3)
 
     return
 
 
 @phantom.playbook_block()
-def decision_mobile(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_mobile() called")
+def decision_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_3() called")
 
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["prompt_mobile:action_result.summary.responses.0", "==", "Yes"]
+            ["prompt_1:action_result.summary.responses.0", "==", "Yes"]
         ],
         conditions_dps=[
-            ["prompt_mobile:action_result.summary.responses.0", "==", "Yes"]
+            ["prompt_1:action_result.summary.responses.0", "==", "Yes"]
         ],
-        name="decision_mobile:condition_1",
+        name="decision_3:condition_1",
         delimiter=None)
 
     if found_match_1:
-        wipe_mobile(action=action, success=success, container=container, results=results, handle=handle)
+        wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
         return
 
-    code_2_mobile(action=action, success=success, container=container, results=results, handle=handle)
+    code_2(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def wipe_mobile(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("wipe_mobile() called")
+def wipe_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_device_1() called")
 
     get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.data.*.type","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
@@ -291,20 +292,20 @@ def wipe_mobile(action=None, success=None, container=None, results=None, handle=
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_mobile", assets=["test1"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["test1"])
 
     return
 
 
 @phantom.playbook_block()
-def code_2_mobile(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_2_mobile() called")
+def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_2() called")
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    resp = phantom.collect2(container=container, datapath=["prompt_mobile:action_result.summary.responses.0"], action_results=results)
+    resp = phantom.collect2(container=container, datapath=["prompt_1:action_result.summary.responses.0"], action_results=results)
     answer = resp[0][0] if resp and resp[0] else None
 
     if answer in (None, ""):
@@ -323,13 +324,13 @@ def code_2_mobile(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_2_mobile_called", value="True")
+    phantom.save_block_result(key="code_2_called", value="True")
 
     return
 
 
 # ---------------------------------------------------------------------------
-# COMPUTER branch: lock device -> note -> prompt -> wipe / declined
+# COMPUTER branch: lock device -> code_3 -> prompt_2 -> decision_4 -> wipe_device_2 / code_4
 # ---------------------------------------------------------------------------
 
 @phantom.playbook_block()
@@ -360,14 +361,14 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=code_1_computer)
+    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=code_3)
 
     return
 
 
 @phantom.playbook_block()
-def code_1_computer(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1_computer() called")
+def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_3() called")
 
     ################################################################################
     ## Custom Code Start
@@ -396,16 +397,16 @@ def code_1_computer(action=None, success=None, container=None, results=None, han
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_1_computer_called", value="True")
+    phantom.save_block_result(key="code_3_called", value="True")
 
-    prompt_computer(container=container)
+    prompt_2(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def prompt_computer(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("prompt_computer() called")
+def prompt_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("prompt_2() called")
 
     # DEV: routes to the "Sarah" user; switch to a security-analyst ROLE for distribution.
     user = "Sarah"
@@ -441,38 +442,38 @@ Approve only if the device is confirmed unrecoverable and a wipe is authorized."
         }
     ]
 
-    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_computer", parameters=parameters, response_types=response_types, callback=decision_computer)
+    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_2", parameters=parameters, response_types=response_types, callback=decision_4)
 
     return
 
 
 @phantom.playbook_block()
-def decision_computer(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_computer() called")
+def decision_4(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_4() called")
 
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["prompt_computer:action_result.summary.responses.0", "==", "Yes"]
+            ["prompt_2:action_result.summary.responses.0", "==", "Yes"]
         ],
         conditions_dps=[
-            ["prompt_computer:action_result.summary.responses.0", "==", "Yes"]
+            ["prompt_2:action_result.summary.responses.0", "==", "Yes"]
         ],
-        name="decision_computer:condition_1",
+        name="decision_4:condition_1",
         delimiter=None)
 
     if found_match_1:
-        wipe_computer(action=action, success=success, container=container, results=results, handle=handle)
+        wipe_device_2(action=action, success=success, container=container, results=results, handle=handle)
         return
 
-    code_2_computer(action=action, success=success, container=container, results=results, handle=handle)
+    code_4(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def wipe_computer(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("wipe_computer() called")
+def wipe_device_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_device_2() called")
 
     get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.data.*.type","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
@@ -498,20 +499,20 @@ def wipe_computer(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_computer", assets=["test1"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_2", assets=["test1"])
 
     return
 
 
 @phantom.playbook_block()
-def code_2_computer(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_2_computer() called")
+def code_4(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_4() called")
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    resp = phantom.collect2(container=container, datapath=["prompt_computer:action_result.summary.responses.0"], action_results=results)
+    resp = phantom.collect2(container=container, datapath=["prompt_2:action_result.summary.responses.0"], action_results=results)
     answer = resp[0][0] if resp and resp[0] else None
 
     if answer in (None, ""):
@@ -530,7 +531,7 @@ def code_2_computer(action=None, success=None, container=None, results=None, han
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_2_computer_called", value="True")
+    phantom.save_block_result(key="code_4_called", value="True")
 
     return
 
@@ -540,8 +541,8 @@ def code_2_computer(action=None, success=None, container=None, results=None, han
 # ---------------------------------------------------------------------------
 
 @phantom.playbook_block()
-def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_3() called")
+def code_5(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_5() called")
 
     ################################################################################
     ## Custom Code Start
@@ -567,7 +568,7 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_3_called", value="True")
+    phantom.save_block_result(key="code_5_called", value="True")
 
     return
 

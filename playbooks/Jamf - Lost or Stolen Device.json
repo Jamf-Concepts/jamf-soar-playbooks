@@ -165,6 +165,41 @@
                     "sourcePort": "27_out",
                     "targetNode": "29",
                     "targetPort": "29_in"
+                },
+                {
+                    "id": "port_23_to_port_1",
+                    "sourceNode": "23",
+                    "sourcePort": "23_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_28_to_port_1",
+                    "sourceNode": "28",
+                    "sourcePort": "28_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_24_to_port_1",
+                    "sourceNode": "24",
+                    "sourcePort": "24_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_29_to_port_1",
+                    "sourceNode": "29",
+                    "sourcePort": "29_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_17_to_port_1",
+                    "sourceNode": "17",
+                    "sourcePort": "17_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
                 }
             ],
             "hash": "",
@@ -296,8 +331,8 @@
                                 "type": "else"
                             }
                         ],
-                        "functionId": 2,
-                        "functionName": "decision_2",
+                        "functionId": 1,
+                        "functionName": "decision_1",
                         "id": "16",
                         "type": "decision"
                     },
@@ -313,8 +348,8 @@
                         "advanced": {
                             "join": []
                         },
-                        "functionId": 3,
-                        "functionName": "code_3",
+                        "functionId": 5,
+                        "functionName": "code_5",
                         "id": "17",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -363,8 +398,8 @@
                                 "type": "else"
                             }
                         ],
-                        "functionId": 3,
-                        "functionName": "device_type",
+                        "functionId": 2,
+                        "functionName": "decision_2",
                         "id": "18",
                         "type": "decision"
                     },
@@ -505,8 +540,8 @@
                         "advanced": {
                             "join": []
                         },
-                        "functionId": 3,
-                        "functionName": "code_1_mobile",
+                        "functionId": 1,
+                        "functionName": "code_1",
                         "id": "20",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -529,8 +564,8 @@
                             "type": "user",
                             "value": "Sarah"
                         },
-                        "functionId": 2,
-                        "functionName": "prompt_mobile",
+                        "functionId": 1,
+                        "functionName": "prompt_1",
                         "id": "21",
                         "message": "A MOBILE device reported LOST or STOLEN has been placed in Lost Mode. Approve a REMOTE WIPE?\nThis permanently ERASES the device and is IRREVERSIBLE.\n\nDevice id: {0}\nSerial: {1}\nType: {2}\nEnable lost mode status: {3}\n\nApprove only if the device is confirmed unrecoverable and a wipe is authorized.",
                         "parameters": [
@@ -571,7 +606,7 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "==",
-                                        "param": "prompt_mobile:action_result.summary.responses.0",
+                                        "param": "prompt_1:action_result.summary.responses.0",
                                         "value": "Yes"
                                     }
                                 ],
@@ -595,8 +630,8 @@
                                 "type": "else"
                             }
                         ],
-                        "functionId": 2,
-                        "functionName": "decision_mobile",
+                        "functionId": 3,
+                        "functionName": "decision_3",
                         "id": "22",
                         "type": "decision"
                     },
@@ -620,8 +655,8 @@
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
-                        "functionId": 2,
-                        "functionName": "wipe_mobile",
+                        "functionId": 1,
+                        "functionName": "wipe_device_1",
                         "id": "23",
                         "loop": {
                             "conditions": [
@@ -678,8 +713,8 @@
                         "advanced": {
                             "join": []
                         },
-                        "functionId": 4,
-                        "functionName": "code_2_mobile",
+                        "functionId": 2,
+                        "functionName": "code_2",
                         "id": "24",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -688,7 +723,7 @@
                     "errors": {},
                     "id": "24",
                     "type": "code",
-                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_mobile:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains in Lost Mode (queued); no erase was performed. Re-run if a wipe is still required.\")\n    else:\n        title = \"Lost or Stolen Device - wipe denied\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains in Lost Mode (queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_1:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains in Lost Mode (queued); no erase was performed. Re-run if a wipe is still required.\")\n    else:\n        title = \"Lost or Stolen Device - wipe denied\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains in Lost Mode (queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
                     "warnings": {},
                     "x": 1560,
                     "y": 1080
@@ -698,8 +733,8 @@
                         "advanced": {
                             "join": []
                         },
-                        "functionId": 5,
-                        "functionName": "code_1_computer",
+                        "functionId": 3,
+                        "functionName": "code_3",
                         "id": "25",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -722,8 +757,8 @@
                             "type": "user",
                             "value": "Sarah"
                         },
-                        "functionId": 3,
-                        "functionName": "prompt_computer",
+                        "functionId": 2,
+                        "functionName": "prompt_2",
                         "id": "26",
                         "message": "A COMPUTER reported LOST or STOLEN has been locked. Approve a REMOTE WIPE?\nThis permanently ERASES the device and is IRREVERSIBLE.\n\nDevice id: {0}\nSerial: {1}\nType: {2}\nLock device status: {3}\n\nApprove only if the device is confirmed unrecoverable and a wipe is authorized.",
                         "parameters": [
@@ -764,7 +799,7 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "==",
-                                        "param": "prompt_computer:action_result.summary.responses.0",
+                                        "param": "prompt_2:action_result.summary.responses.0",
                                         "value": "Yes"
                                     }
                                 ],
@@ -788,8 +823,8 @@
                                 "type": "else"
                             }
                         ],
-                        "functionId": 3,
-                        "functionName": "decision_computer",
+                        "functionId": 4,
+                        "functionName": "decision_4",
                         "id": "27",
                         "type": "decision"
                     },
@@ -813,8 +848,8 @@
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
-                        "functionId": 3,
-                        "functionName": "wipe_computer",
+                        "functionId": 2,
+                        "functionName": "wipe_device_2",
                         "id": "28",
                         "loop": {
                             "conditions": [
@@ -871,8 +906,8 @@
                         "advanced": {
                             "join": []
                         },
-                        "functionId": 6,
-                        "functionName": "code_2_computer",
+                        "functionId": 4,
+                        "functionName": "code_4",
                         "id": "29",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -881,7 +916,7 @@
                     "errors": {},
                     "id": "29",
                     "type": "code",
-                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_computer:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains locked (queued); no erase was performed. Re-run if a wipe is still required.\")\n    else:\n        title = \"Lost or Stolen Device - wipe denied\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains locked (queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_2:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains locked (queued); no erase was performed. Re-run if a wipe is still required.\")\n    else:\n        title = \"Lost or Stolen Device - wipe denied\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains locked (queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
                     "warnings": {},
                     "x": 900,
                     "y": 1080
