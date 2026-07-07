@@ -23,9 +23,11 @@ breach. Because it acts at scale, the safety model is stricter than the others:
 - If no devices resolve, or the analyst declines, each path just writes a note — nothing else.
 
 Built on the compromised-user loop pattern (PR #12) and Sarah's review of it. Validated in SOAR
-(imports clean, no warnings). **Not yet live-run** — a bulk quarantine against real devices should
-be a deliberate, controlled test, not a casual one. Computer vs mobile use separate quarantine
-groups (they're different Jamf ID namespaces).
+and **verified end-to-end in a controlled 1-device test**: it resolved the user's Mac, showed the
+dry-run note, held for approval, and on "Yes" quarantined it (added to group + locked + blank
+push) — with the results note reporting the real per-action outcomes. The "no devices found" path
+was also confirmed (an unknown user ends safely with a note, no prompt, no containment). Computer
+vs mobile use separate quarantine groups (they're different Jamf ID namespaces).
 
 ## 2026-07-06 — FileVault Recovery Access: review fixes (leaked secret redacted, approval gate routing)
 
