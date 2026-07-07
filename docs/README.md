@@ -6,6 +6,27 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-07 — New playbook: IdP Breach Bulk Quarantine (in review, PR #15)
+
+The highest-risk template (#6): it mass-quarantines every device caught in an identity-provider
+breach. Because it acts at scale, the safety model is stricter than the others:
+
+- **One approval up front, before anything is touched** — the analyst first gets a note listing
+  every device that will be quarantined, then must approve the whole batch. (Scope shown = scope
+  executed.)
+- **A hard batch-size cap** — if the affected set is larger than the cap (default 25), the run
+  aborts with a note instead of mass-acting.
+- **Bulk wipe is excluded** — this playbook only quarantines (add to group + lock + blank push);
+  any erase is per-device and approved separately.
+- **Honest reporting** — the results note is built from the real per-action outcomes, so a failed
+  containment is never reported as done.
+- If no devices resolve, or the analyst declines, each path just writes a note — nothing else.
+
+Built on the compromised-user loop pattern (PR #12) and Sarah's review of it. Validated in SOAR
+(imports clean, no warnings). **Not yet live-run** — a bulk quarantine against real devices should
+be a deliberate, controlled test, not a casual one. Computer vs mobile use separate quarantine
+groups (they're different Jamf ID namespaces).
+
 ## 2026-07-06 — FileVault Recovery Access: review fixes (leaked secret redacted, approval gate routing)
 
 Two fixes from the review of the FileVault Recovery Access playbook (PR #11), plus a re-sync
