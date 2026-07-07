@@ -6,6 +6,24 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-07 — Lost or Stolen Device playbook (PR #16)
+
+New template (issue #1): responds to a device reported lost or stolen. It resolves the device by
+its serial (read from the event), branches on device type — a **mobile** device is placed in **Lost
+Mode**, a **computer** is **locked** — writes a containment note, then holds at an **analyst approval
+prompt**. It **wipes only if the analyst approves**; a decline, a timeout, or no-device-found just
+writes a note. It never auto-wipes.
+
+For adopters:
+- Set your Jamf asset (`<your-jamf-asset>`) and the approver role (`<security-analyst-role>`), and
+  replace the computer lock PIN `000000` with your own 6-digit unlock PIN.
+- The **computer path is live-verified end-to-end** (resolve → lock → note → approval → decline → no
+  wipe); the mobile path is structurally identical (worth a live pass with a mobile device).
+- Enrichment (reuse the #5 engine) and quarantine are planned as a v2.
+- Scope note: a serial should match one device; if it ever matches more than one, the note lists all
+  of them and a "Yes" wipes all — hard-gating to a single match is a tracked v2 hardening. A
+  privilege gap on one platform is reported distinctly from a genuine "no device matched."
+
 ## 2026-07-07 — Compromised User Device Sweep: review rework (PR #12)
 
 Reworked after review (Sarah + Amanda) to fix the destructive spine. When a user

@@ -15,6 +15,13 @@ Design notes:
 - Block names follow SOAR's <type>_<n> convention with a UNIQUE id per type
   (decision_1..4, code_1..5, prompt_1..2, wipe_device_1..2); reusing an id within a
   type makes SOAR generate two functions with the same name (function-redefined).
+- Single-match assumption: a serial should resolve to ONE device. The containment,
+  the wipe, and the disclosure note/prompt all act on EVERY matched row, so if a serial
+  ever matched >1 record the note warns and the wipe would erase all matches under one
+  approval. Hard-gating to exactly one match (route >1 to manual review) is a v2 item.
+- code_5 distinguishes a real "no device matched" from a PARTIAL lookup where one
+  platform (computer/mobile) was skipped for auth (get device by serial is best-effort
+  and returns success with summary.skipped) - so a privilege gap isn't read as a clean miss.
 
 Adaptation points (replace before use):
   - <your-jamf-asset>       : your configured Jamf asset (on all 5 action blocks).
@@ -169,15 +176,20 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     dev = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id", "get_device_by_serial_1:action_result.data.*.serial_number", "get_device_by_serial_1:action_result.data.*.type"], action_results=results)
     lm = phantom.collect2(container=container, datapath=["enable_lost_mode_1:action_result.status"], action_results=results)
 
-    device_id = dev[0][0] if dev and dev[0] else None
-    serial = dev[0][1] if dev and len(dev[0]) > 1 else None
-    dtype = dev[0][2] if dev and len(dev[0]) > 2 else None
+    matched = [d for d in dev if d and d[0] is not None]
     lost_status = lm[0][0] if lm and lm[0] else None
 
     lines = []
     lines.append("Lost or Stolen Device - containment outcomes (mobile):")
-    lines.append("- Device: id {} (serial {}, type {})".format(device_id, serial, dtype))
-    lines.append("- Enable Lost Mode (queued): {}".format(lost_status))
+    # scope truthfulness: a serial should match one device, but enumerate ALL matches so the
+    # analyst sees the full blast radius before approving (containment + wipe act on every match).
+    if len(matched) > 1:
+        lines.append("WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.".format(len(matched)))
+    for d in matched:
+        serial = d[1] if len(d) > 1 else None
+        dtype = d[2] if len(d) > 2 else None
+        lines.append("- device id {} (serial {}, type {})".format(d[0], serial, dtype))
+    lines.append("- Enable Lost Mode - MDM command status: {}".format(lost_status))
     if lost_status != "success":
         lines.append("WARNING: Enable Lost Mode did not succeed - review before approving a wipe.")
     lines.append("MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.")
@@ -376,15 +388,20 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     dev = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id", "get_device_by_serial_1:action_result.data.*.serial_number", "get_device_by_serial_1:action_result.data.*.type"], action_results=results)
     lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
 
-    device_id = dev[0][0] if dev and dev[0] else None
-    serial = dev[0][1] if dev and len(dev[0]) > 1 else None
-    dtype = dev[0][2] if dev and len(dev[0]) > 2 else None
+    matched = [d for d in dev if d and d[0] is not None]
     lock_status = lk[0][0] if lk and lk[0] else None
 
     lines = []
     lines.append("Lost or Stolen Device - containment outcomes (computer):")
-    lines.append("- Device: id {} (serial {}, type {})".format(device_id, serial, dtype))
-    lines.append("- Lock device (queued): {}".format(lock_status))
+    # scope truthfulness: enumerate ALL matches so the analyst sees the full blast radius
+    # before approving (containment + wipe act on every match).
+    if len(matched) > 1:
+        lines.append("WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.".format(len(matched)))
+    for d in matched:
+        serial = d[1] if len(d) > 1 else None
+        dtype = d[2] if len(d) > 2 else None
+        lines.append("- device id {} (serial {}, type {})".format(d[0], serial, dtype))
+    lines.append("- Lock device - MDM command status: {}".format(lock_status))
     if lock_status != "success":
         lines.append("WARNING: Lock device did not succeed - review before approving a wipe.")
     lines.append("MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.")
@@ -547,19 +564,30 @@ def code_5(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code Start
     ################################################################################
 
-    rows = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.status"], action_results=results)
+    rows = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.status", "get_device_by_serial_1:action_result.summary.skipped"], action_results=results)
     lookup_status = rows[0][0] if rows and rows[0] else None
+    skipped = rows[0][1] if rows and len(rows[0]) > 1 else None
 
-    if lookup_status == "success":
-        title = "Lost or Stolen Device - no device matched"
-        content = ("No Jamf device matched the provided serial number. "
-                     "No actions were taken. Verify the serial is correct and re-run.")
-    else:
+    if lookup_status != "success":
         title = "Lost or Stolen Device - device lookup FAILED"
         content = ("The 'get device by serial' lookup did not succeed (status: {}). "
                      "No device was resolved and no actions were taken. This usually means a "
                      "Jamf asset / credential / privilege problem, NOT a wrong serial - check "
                      "the asset config and API role, then re-run.".format(lookup_status))
+    elif skipped:
+        # get device by serial is best-effort across computer + mobile: it returns success even
+        # when one platform was SKIPPED for auth/privilege (recorded in summary.skipped). Do NOT
+        # report that as a clean "no device matched" - the lost/stolen device may be on the
+        # skipped platform and is NOT contained.
+        title = "Lost or Stolen Device - device lookup PARTIALLY failed (a platform was skipped)"
+        content = ("The lookup succeeded on one platform but SKIPPED another due to a read/privilege "
+                     "error ({}), and no device matched on the platform that WAS read. The lost/stolen "
+                     "device may be on the SKIPPED platform and is NOT contained. Grant the API role "
+                     "read access to the skipped platform, then re-run - do not assume the serial is wrong.".format(skipped))
+    else:
+        title = "Lost or Stolen Device - no device matched"
+        content = ("No Jamf device matched the provided serial number (both platforms were read). "
+                     "No actions were taken. Verify the serial is correct and re-run.")
 
     phantom.add_note(container=container, title=title, content=content, note_type="general")
 
