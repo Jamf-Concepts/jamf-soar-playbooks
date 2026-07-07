@@ -76,7 +76,7 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 | FileVault key / recovery access (macOS) | In review (PR #11) | Resolve a Mac by serial, retrieve the FileVault recovery key + context, secure (recovery lock + lock), then erase behind an analyst approval gate. |
 | Compromised user | In review (PR #12) | Resolve the user's device(s) by username; contain each (per-platform quarantine group + lock + blank push) with honest per-device status; then an analyst prompt that enumerates the whole fleet before a gated wipe. |
 | Lost / stolen device | Planned | Resolve device, lock + contain, notify, hold for analyst approval, then erase as a last resort. |
-| Identity-provider (IdP) breach | Planned | Broad containment across affected accounts/devices; approval gate before any mass group change. |
+| **Identity-provider (IdP) breach** | **In review (PR #15)** | Bulk quarantine (add to group + lock + blank push) across the affected device set, behind a single **up-front** batched approval that discloses the full scope; hard batch-size cap; **bulk wipe excluded**. |
 | Malicious file | Planned | Locate affected device(s), contain, enrich the file verdict, remediate behind a gate. |
 
 ---
