@@ -42,7 +42,33 @@ from datetime import datetime, timedelta
 def on_start(container):
     phantom.debug('on_start() called')
 
-    get_device_by_serial_1(container=container)
+    decision_5(container=container)
+
+    return
+
+
+@phantom.playbook_block()
+def decision_5(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_5() called")
+
+    # has_serial guard (B2): only resolve if the event actually carries a serial, else a
+    # serial-less artifact would run get-device with empty params and be misread as a lookup failure.
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["artifact:*.cef.serialNumber", "!=", ""]
+        ],
+        conditions_dps=[
+            ["artifact:*.cef.serialNumber", "!=", ""]
+        ],
+        name="decision_5:condition_1",
+        delimiter=None)
+
+    if found_match_1:
+        get_device_by_serial_1(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    code_6(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
@@ -303,7 +329,7 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"], callback=decision_6)
 
     return
 
@@ -317,17 +343,24 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
     ################################################################################
 
     resp = phantom.collect2(container=container, datapath=["prompt_1:action_result.summary.responses.0"], action_results=results)
+    lm = phantom.collect2(container=container, datapath=["enable_lost_mode_1:action_result.status"], action_results=results)
     answer = resp[0][0] if resp and resp[0] else None
+    lost_status = lm[0][0] if lm and lm[0] else None
+
+    # M1: only claim containment if enable-lost-mode actually succeeded; otherwise say so plainly.
+    if lost_status == "success":
+        contained = "the device remains in Lost Mode (queued)"
+    else:
+        contained = "WARNING: Lost Mode was NOT successfully enabled ({}) - the device may NOT be contained, follow up".format(lost_status)
 
     if answer in (None, ""):
         title = "Lost or Stolen Device - wipe prompt timed out (mobile)"
         content = ("The wipe approval prompt timed out with no response (treated as no-wipe). "
-                     "The device remains in Lost Mode (queued); no erase was performed. "
-                     "Re-run if a wipe is still required.")
+                     "No erase was performed; {}. Re-run if a wipe is still required.".format(contained))
     else:
         title = "Lost or Stolen Device - wipe denied (mobile)"
         content = ("The analyst declined the wipe at the approval prompt. "
-                     "The device remains in Lost Mode (queued); no erase was performed.")
+                     "No erase was performed; {}.".format(contained))
 
     phantom.add_note(container=container, title=title, content=content, note_type="general")
 
@@ -515,7 +548,7 @@ def wipe_device_2(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_2", assets=["<your-jamf-asset>"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_2", assets=["<your-jamf-asset>"], callback=decision_7)
 
     return
 
@@ -529,17 +562,24 @@ def code_4(action=None, success=None, container=None, results=None, handle=None,
     ################################################################################
 
     resp = phantom.collect2(container=container, datapath=["prompt_2:action_result.summary.responses.0"], action_results=results)
+    lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
     answer = resp[0][0] if resp and resp[0] else None
+    lock_status = lk[0][0] if lk and lk[0] else None
+
+    # M1: only claim containment if the lock actually succeeded; otherwise say so plainly.
+    if lock_status == "success":
+        contained = "the device remains locked (queued)"
+    else:
+        contained = "WARNING: the lock did NOT succeed ({}) - the device may NOT be contained, follow up".format(lock_status)
 
     if answer in (None, ""):
         title = "Lost or Stolen Device - wipe prompt timed out (computer)"
         content = ("The wipe approval prompt timed out with no response (treated as no-wipe). "
-                     "The device remains locked (queued); no erase was performed. "
-                     "Re-run if a wipe is still required.")
+                     "No erase was performed; {}. Re-run if a wipe is still required.".format(contained))
     else:
         title = "Lost or Stolen Device - wipe denied (computer)"
         content = ("The analyst declined the wipe at the approval prompt. "
-                     "The device remains locked (queued); no erase was performed.")
+                     "No erase was performed; {}.".format(contained))
 
     phantom.add_note(container=container, title=title, content=content, note_type="general")
 
@@ -596,6 +636,196 @@ def code_5(action=None, success=None, container=None, results=None, handle=None,
     ################################################################################
 
     phantom.save_block_result(key="code_5_called", value="True")
+
+    return
+
+
+# ---------------------------------------------------------------------------
+# B2: no-serial note
+# ---------------------------------------------------------------------------
+
+@phantom.playbook_block()
+def code_6(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_6() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(container=container,
+        title="Lost or Stolen Device - no serial on the event",
+        content=("The triggering event has no serial (artifact:*.cef.serialNumber is empty), so no device could be "
+                 "resolved and no actions were taken. Add the device serial to the event and re-run - this is a "
+                 "missing-input condition, NOT a Jamf asset / credential / privilege problem."),
+        note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_6_called", value="True")
+
+    return
+
+
+# ---------------------------------------------------------------------------
+# B1: wipe-result recording - mobile (wipe_device_1 -> decision_6 -> code_7/code_8)
+# ---------------------------------------------------------------------------
+
+@phantom.playbook_block()
+def decision_6(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_6() called")
+
+    # wipe_ok (mobile): did the erase actually queue?
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["wipe_device_1:action_result.status", "==", "success"]
+        ],
+        conditions_dps=[
+            ["wipe_device_1:action_result.status", "==", "success"]
+        ],
+        name="decision_6:condition_1",
+        delimiter=None)
+
+    if found_match_1:
+        code_7(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    code_8(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_7(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_7() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(container=container,
+        title="Lost or Stolen Device - wipe QUEUED (mobile)",
+        content=("The remote WIPE (erase) was approved and the command was accepted / QUEUED for the mobile device. "
+                 "MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. "
+                 "Track completion in the device's Jamf command history."),
+        note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_7_called", value="True")
+
+    return
+
+
+@phantom.playbook_block()
+def code_8(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_8() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    st = phantom.collect2(container=container, datapath=["wipe_device_1:action_result.status", "wipe_device_1:action_result.message"], action_results=results)
+    status = st[0][0] if st and st[0] else None
+    msg = st[0][1] if st and len(st[0]) > 1 else None
+
+    phantom.add_note(container=container,
+        title="Lost or Stolen Device - wipe FAILED / NOT queued (mobile)",
+        content=("The remote WIPE was approved but did NOT queue (status: {}). The device is NOT being erased and "
+                 "still holds data - investigate (enrollment / supervision / privilege / device state) and re-run. "
+                 "Detail: {}".format(status, msg)),
+        note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_8_called", value="True")
+
+    return
+
+
+# ---------------------------------------------------------------------------
+# B1: wipe-result recording - computer (wipe_device_2 -> decision_7 -> code_9/code_10)
+# ---------------------------------------------------------------------------
+
+@phantom.playbook_block()
+def decision_7(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_7() called")
+
+    # wipe_ok (computer): did the erase actually queue?
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["wipe_device_2:action_result.status", "==", "success"]
+        ],
+        conditions_dps=[
+            ["wipe_device_2:action_result.status", "==", "success"]
+        ],
+        name="decision_7:condition_1",
+        delimiter=None)
+
+    if found_match_1:
+        code_9(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    code_10(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_9(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_9() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    phantom.add_note(container=container,
+        title="Lost or Stolen Device - wipe QUEUED (computer)",
+        content=("The remote WIPE (erase) was approved and the command was accepted / QUEUED for the computer. "
+                 "MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. "
+                 "Track completion in the device's Jamf command history."),
+        note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_9_called", value="True")
+
+    return
+
+
+@phantom.playbook_block()
+def code_10(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_10() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    st = phantom.collect2(container=container, datapath=["wipe_device_2:action_result.status", "wipe_device_2:action_result.message"], action_results=results)
+    status = st[0][0] if st and st[0] else None
+    msg = st[0][1] if st and len(st[0]) > 1 else None
+
+    phantom.add_note(container=container,
+        title="Lost or Stolen Device - wipe FAILED / NOT queued (computer)",
+        content=("The remote WIPE was approved but did NOT queue (status: {}). The device is NOT being erased and "
+                 "still holds data - investigate (enrollment / privilege / device state) and re-run. "
+                 "Detail: {}".format(status, msg)),
+        note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_10_called", value="True")
 
     return
 

@@ -24,6 +24,14 @@ For adopters:
   of them and a "Yes" wipes all — hard-gating to a single match is a tracked v2 hardening. A
   privilege gap on one platform is reported distinctly from a genuine "no device matched."
 
+**Review fixes (Ron + Amanda):** every wipe now records its outcome (a "wipe queued" or "wipe
+FAILED/not-queued" note on each branch — so a failed erase can't vanish silently); a no-serial
+event is caught up front and noted as missing input (instead of being misread as a Jamf
+credential problem); and the decline/timeout notes only claim containment when the lock / lost-mode
+actually succeeded. Mobile branch exercised live end-to-end (params/datapaths + honest
+failure-handling); a clean device-side enable-lost-mode apply is pending a cooperative iPad
+(the same intermittent Jamf preflight the connector hit — not a playbook issue).
+
 ## 2026-07-07 — Compromised User Device Sweep: review rework (PR #12)
 
 Reworked after review (Sarah + Amanda) to fix the destructive spine. When a user
