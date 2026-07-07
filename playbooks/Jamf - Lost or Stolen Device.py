@@ -1,5 +1,21 @@
 """
+Jamf - Lost or Stolen Device (macOS + mobile)
 
+Responds to a device reported lost or stolen:
+  resolve by serial -> (device found?) -> device_type?
+      mobile   -> enable lost mode
+      computer -> lock device
+  -> containment note -> analyst approval gate -> wipe ONLY on approval.
+A decline / timeout / no-device path just writes a note. Never auto-wipes.
+
+Adaptation points (replace before use):
+  - <your-jamf-asset>   : Jamf asset (this dev copy uses "test1").
+  - approver            : prompt routes to the "Sarah" user in this dev copy;
+                          switch to a security-analyst ROLE for distribution.
+  - lock PIN "000000"   : replace with your 6-digit unlock PIN (computer lock).
+  - lock-screen message : the lost/stolen message shown on the device.
+Enrichment (#5 Device Enrichment Input) and quarantine (add to static group)
+are deferred to v2.
 """
 
 
@@ -20,8 +36,6 @@ def on_start(container):
 @phantom.playbook_block()
 def get_device_by_serial_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("get_device_by_serial_1() called")
-
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
     container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.serialNumber","artifact:*.id"])
 
@@ -51,20 +65,74 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
 
 
 @phantom.playbook_block()
-def get_filevault_recovery_key_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_filevault_recovery_key_1() called")
+def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_2() called")
 
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+    # check for 'if' condition 1 - device found
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        conditions_dps=[
+            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+        ],
+        name="decision_2:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        device_type(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # check for 'else' condition 2 - no device resolved
+    code_3(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def device_type(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("device_type() called")
+
+    # check for 'if' condition 1 - mobile device
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
+        ],
+        conditions_dps=[
+            ["get_device_by_serial_1:action_result.data.*.type", "==", "mobile"]
+        ],
+        name="device_type:condition_1",
+        delimiter=None)
+
+    # mobile -> enable lost mode
+    if found_match_1:
+        enable_lost_mode_1(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # else (computer) -> lock device
+    lock_device_1(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def enable_lost_mode_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("enable_lost_mode_1() called")
 
     get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'get_filevault_recovery_key_1' call
+    # build parameters list for 'enable_lost_mode_1' call (mobile branch)
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
                 "device_id": get_device_by_serial_1_result_item[0],
+                "device_type": "mobile",
+                "message": "This device has been reported lost or stolen. Please contact IT/Security.",
                 "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
             })
 
@@ -78,110 +146,7 @@ def get_filevault_recovery_key_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get filevault recovery key", parameters=parameters, name="get_filevault_recovery_key_1", assets=["test1"], callback=get_local_user_accounts_1)
-
-    return
-
-
-@phantom.playbook_block()
-def get_local_user_accounts_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_local_user_accounts_1() called")
-
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
-
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
-
-    parameters = []
-
-    # build parameters list for 'get_local_user_accounts_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
-            parameters.append({
-                "device_id": get_device_by_serial_1_result_item[0],
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
-            })
-
-    ################################################################################
-    ## Custom Code Start
-    ################################################################################
-
-    # Write your custom code here...
-
-    ################################################################################
-    ## Custom Code End
-    ################################################################################
-
-    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["test1"], callback=get_compliance_status_1)
-
-    return
-
-
-@phantom.playbook_block()
-def get_compliance_status_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_compliance_status_1() called")
-
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
-
-    get_local_user_accounts_1_result_data = phantom.collect2(container=container, datapath=["get_local_user_accounts_1:action_result.parameter.device_id","get_local_user_accounts_1:action_result.parameter.context.artifact_id"], action_results=results)
-
-    parameters = []
-
-    # build parameters list for 'get_compliance_status_1' call
-    for get_local_user_accounts_1_result_item in get_local_user_accounts_1_result_data:
-        if get_local_user_accounts_1_result_item[0] is not None:
-            parameters.append({
-                "device_id": get_local_user_accounts_1_result_item[0],
-                "device_type": "computer",
-                "context": {'artifact_id': get_local_user_accounts_1_result_item[1]},
-            })
-
-    ################################################################################
-    ## Custom Code Start
-    ################################################################################
-
-    # Write your custom code here...
-
-    ################################################################################
-    ## Custom Code End
-    ################################################################################
-
-    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["test1"], callback=set_recovery_lock_1)
-
-    return
-
-
-@phantom.playbook_block()
-def set_recovery_lock_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("set_recovery_lock_1() called")
-
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
-
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
-
-    parameters = []
-
-    # build parameters list for 'set_recovery_lock_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
-            parameters.append({
-                "password": "TestRecovery123",
-                "device_id": get_device_by_serial_1_result_item[0],
-                "operation": "set",
-                "device_type": "computer",
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
-            })
-
-    ################################################################################
-    ## Custom Code Start
-    ################################################################################
-
-    # Write your custom code here...
-
-    ################################################################################
-    ## Custom Code End
-    ################################################################################
-
-    phantom.act("set recovery lock", parameters=parameters, name="set_recovery_lock_1", assets=["test1"], callback=lock_device_1)
+    phantom.act("enable lost mode", parameters=parameters, name="enable_lost_mode_1", assets=["test1"], callback=code_1)
 
     return
 
@@ -190,21 +155,18 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
 def lock_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("lock_device_1() called")
 
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
-
     get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'lock_device_1' call
+    # build parameters list for 'lock_device_1' call (computer branch)
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
                 "pin": "000000",
-                "message": "SOAR test lock ",
+                "message": "This device has been reported lost or stolen. Please contact IT/Security.",
                 "device_id": get_device_by_serial_1_result_item[0],
                 "device_type": "computer",
-                "phone_number": "555-0100",
                 "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
             })
 
@@ -224,20 +186,76 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
 
 
 @phantom.playbook_block()
+def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_1() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    dev = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id", "get_device_by_serial_1:action_result.data.*.serial_number", "get_device_by_serial_1:action_result.data.*.type"], action_results=results)
+    lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
+    lm = phantom.collect2(container=container, datapath=["enable_lost_mode_1:action_result.status"], action_results=results)
+
+    device_id = dev[0][0] if dev and dev[0] else None
+    serial = dev[0][1] if dev and len(dev[0]) > 1 else None
+    dtype = dev[0][2] if dev and len(dev[0]) > 2 else None
+    lock_status = lk[0][0] if lk and lk[0] else None
+    lost_status = lm[0][0] if lm and lm[0] else None
+
+    lines = []
+    lines.append("Lost or Stolen Device - containment outcomes:")
+    lines.append("- Device: id {} (serial {}, type {})".format(device_id, serial, dtype))
+    if dtype == "mobile":
+        lines.append("- Enable Lost Mode (queued): {}".format(lost_status))
+        if lost_status != "success":
+            lines.append("WARNING: Enable Lost Mode did not succeed - review before approving a wipe.")
+    else:
+        lines.append("- Lock device (queued): {}".format(lock_status))
+        if lock_status != "success":
+            lines.append("WARNING: Lock device did not succeed - review before approving a wipe.")
+    lines.append("MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.")
+    lines.append("An analyst approval is required before any wipe (irreversible).")
+
+    phantom.add_note(container=container, title="Lost or Stolen Device - containment outcomes", content="\n".join(lines), note_type="general")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_1_called", value="True")
+
+    prompt_1(container=container)
+
+    return
+
+
+@phantom.playbook_block()
 def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("prompt_1() called")
 
     # set approver and message variables for phantom.prompt call
-
+    # DEV: routes to the "Sarah" user; switch to a security-analyst ROLE for distribution.
     user = "Sarah"
     role = None
-    message = """Approve device WIPE? This permanently ERASES the Mac and is IRREVERSIBLE.\n- FileVault recovery key escrowed in Jamf: {0}\n  - Set recovery lock queued: {1}\n  - Lock device queued: {2}{0}{1}{2}"""
+    message = """A device reported LOST or STOLEN has been contained. Approve a REMOTE WIPE?
+This permanently ERASES the device and is IRREVERSIBLE.
+
+Device id: {0}
+Serial: {1}
+Type: {2}
+Lock device (computer) status: {3}
+Enable lost mode (mobile) status: {4}
+
+Approve only if the device is confirmed unrecoverable and a wipe is authorized."""
 
     # parameter list for template variable replacement
     parameters = [
-        "get_filevault_recovery_key_1:action_result.summary.key_present",
-        "set_recovery_lock_1:action_result.status",
-        "lock_device_1:action_result.status"
+        "get_device_by_serial_1:action_result.data.*.id",
+        "get_device_by_serial_1:action_result.data.*.serial_number",
+        "get_device_by_serial_1:action_result.data.*.type",
+        "lock_device_1:action_result.status",
+        "enable_lost_mode_1:action_result.status"
     ]
 
     # responses
@@ -264,7 +282,7 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("decision_1() called")
 
-    # check for 'if' condition 1
+    # check for 'if' condition 1 - analyst approved
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
@@ -281,7 +299,7 @@ def decision_1(action=None, success=None, container=None, results=None, handle=N
         wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
         return
 
-    # check for 'else' condition 2
+    # check for 'else' condition 2 - declined / timed out
     code_2(action=action, success=success, container=container, results=results, handle=handle)
 
     return
@@ -291,20 +309,19 @@ def decision_1(action=None, success=None, container=None, results=None, handle=N
 def wipe_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("wipe_device_1() called")
 
-    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
-
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.data.*.type","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
     # build parameters list for 'wipe_device_1' call
+    # confirm MUST equal device_id (connector's anti-fat-finger gate); device_type from the resolved device.
     for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
         if get_device_by_serial_1_result_item[0] is not None:
             parameters.append({
                 "confirm": get_device_by_serial_1_result_item[0],
                 "device_id": get_device_by_serial_1_result_item[0],
-                "device_type": "computer",
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "device_type": get_device_by_serial_1_result_item[1],
+                "context": {'artifact_id': get_device_by_serial_1_result_item[2]},
             })
 
     ################################################################################
@@ -323,58 +340,6 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
 
 
 @phantom.playbook_block()
-def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1() called")
-
-    ################################################################################
-    ## Custom Code Start
-    ################################################################################
-
-    fv = phantom.collect2(container=container, datapath=["get_filevault_recovery_key_1:action_result.status", "get_filevault_recovery_key_1:action_result.summary.key_present"], action_results=results)
-    rl = phantom.collect2(container=container, datapath=["set_recovery_lock_1:action_result.status"], action_results=results)
-    lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
-    cs = phantom.collect2(container=container, datapath=["get_compliance_status_1:action_result.status", "get_compliance_status_1:action_result.data.*.compliance_state"], action_results=results)
-    lu = phantom.collect2(container=container, datapath=["get_local_user_accounts_1:action_result.status", "get_local_user_accounts_1:action_result.summary.total"], action_results=results)
-
-    fv_status = fv[0][0] if fv else None
-    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None
-    rl_status = rl[0][0] if rl else None
-    lock_status = lk[0][0] if lk else None
-    cs_status = cs[0][0] if cs else None
-    cs_state = cs[0][1] if cs and len(cs[0]) > 1 else None
-    lu_status = lu[0][0] if lu else None
-    lu_total = lu[0][1] if lu and len(lu[0]) > 1 else None
-       
-    lines = []
-    if fv_status != "success" or key_present not in (True, "True", "true"):
-         lines.append("WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.".format(fv_status, key_present))
-    if rl_status != "success" or lock_status != "success":
-         lines.append("WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.".format(rl_status, lock_status))
-
-    lines.append("FileVault recovery access - step outcomes:")
-    lines.append("- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})".format(fv_status, key_present))
-    lines.append("- Compliance status: {} ({})".format(cs_status, cs_state))
-    lines.append("- Local user accounts: {} (count: {})".format(lu_status, lu_total))
-    lines.append("- Set recovery lock (queued): {}".format(rl_status))
-    lines.append("- Lock device (queued): {}".format(lock_status))
-    lines.append("The FileVault recovery key is sensitive and is intentionally NOT included here.")
-    lines.append("TODO: replace this note with a notification to a restricted security channel.")
-      
-    phantom.add_note(container=container, title="FileVault recovery access - step outcomes", content="\n".join(lines), note_type="general")
-
-
-    ################################################################################
-    ## Custom Code End
-    ################################################################################
-
-    phantom.save_block_result(key="code_1_called", value="True")
-
-    prompt_1(container=container)
-
-    return
-
-
-@phantom.playbook_block()
 def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("code_2() called")
 
@@ -386,14 +351,14 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
     answer = resp[0][0] if resp and resp[0] else None
 
     if answer in (None, ""):
-        title = "FileVault recovery - wipe prompt timed out"
+        title = "Lost or Stolen Device - wipe prompt timed out"
         content = ("The wipe approval prompt timed out with no response (treated as no-wipe). "
-                     "The device remains contained (recovery lock + device lock queued); no erase was performed. "
+                     "The device remains under the containment that was queued (lock or lost mode); no erase was performed. "
                      "Re-run if a wipe is still required.")
     else:
-          title = "FileVault recovery - wipe denied"
-          content = ("The analyst declined the wipe at the approval prompt. "
-                     "The device remains contained (recovery lock + device lock queued); no erase was performed.")
+        title = "Lost or Stolen Device - wipe denied"
+        content = ("The analyst declined the wipe at the approval prompt. "
+                     "The device remains under the containment that was queued (lock or lost mode); no erase was performed.")
 
     phantom.add_note(container=container, title=title, content=content, note_type="general")
 
@@ -407,33 +372,6 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
 
 
 @phantom.playbook_block()
-def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_2() called")
-
-    # check for 'if' condition 1
-    found_match_1 = phantom.decision(
-        container=container,
-        conditions=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
-        ],
-        conditions_dps=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
-        ],
-        name="decision_2:condition_1",
-        delimiter=None)
-
-    # call connected blocks if condition 1 matched
-    if found_match_1:
-        get_filevault_recovery_key_1(action=action, success=success, container=container, results=results, handle=handle)
-        return
-
-    # check for 'else' condition 2
-    code_3(action=action, success=success, container=container, results=results, handle=handle)
-
-    return
-
-
-@phantom.playbook_block()
 def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("code_3() called")
 
@@ -441,23 +379,21 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code Start
     ################################################################################
 
-    
     rows = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.status"], action_results=results)
     lookup_status = rows[0][0] if rows and rows[0] else None
 
     if lookup_status == "success":
-        title = "FileVault recovery - no device matched"
+        title = "Lost or Stolen Device - no device matched"
         content = ("No Jamf device matched the provided serial number. "
                      "No actions were taken. Verify the serial is correct and re-run.")
     else:
-          title = "FileVault recovery - device lookup FAILED"
-          content = ("The 'get device by serial' lookup did not succeed (status: {}). "
+        title = "Lost or Stolen Device - device lookup FAILED"
+        content = ("The 'get device by serial' lookup did not succeed (status: {}). "
                      "No device was resolved and no actions were taken. This usually means a "
                      "Jamf asset / credential / privilege problem, NOT a wrong serial - check "
                      "the asset config and API role, then re-run.".format(lookup_status))
 
     phantom.add_note(container=container, title=title, content=content, note_type="general")
-
 
     ################################################################################
     ## Custom Code End
