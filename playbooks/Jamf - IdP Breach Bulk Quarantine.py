@@ -177,8 +177,15 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
                   "resolve_devices:action_result.status",
                   "resolve_devices:action_result.summary.total"],
         action_results=results)
-    usernames_in = sum(1 for r in user_rows if r[0] is not None)
-    users_ok = sum(1 for r in user_rows if r[0] is not None and r[1] == "success" and _int(r[2]) > 0)
+    # dedup by DISTINCT username (same user across 2 artifacts shouldn't double-count); a
+    # username is "resolved" if ANY of its runs returned >=1 device.
+    seen = {}
+    for r in user_rows:
+        if r[0] is None:
+            continue
+        seen[r[0]] = seen.get(r[0], False) or (r[1] == "success" and _int(r[2]) > 0)
+    usernames_in = len(seen)
+    users_ok = sum(1 for v in seen.values() if v)
     users_failed = usernames_in - users_ok
 
     lines, count, skipped = [], 0, 0
@@ -416,8 +423,14 @@ def report_results(action=None, success=None, container=None, results=None, hand
                   "resolve_devices:action_result.status",
                   "resolve_devices:action_result.summary.total"],
         action_results=results)
-    usernames_in = sum(1 for r in user_rows if r[0] is not None)
-    users_ok = sum(1 for r in user_rows if r[0] is not None and r[1] == "success" and _int(r[2]) > 0)
+    # dedup by DISTINCT username; resolved if ANY of that user's runs returned >=1 device.
+    seen = {}
+    for r in user_rows:
+        if r[0] is None:
+            continue
+        seen[r[0]] = seen.get(r[0], False) or (r[1] == "success" and _int(r[2]) > 0)
+    usernames_in = len(seen)
+    users_ok = sum(1 for v in seen.values() if v)
     users_failed = usernames_in - users_ok
     acct = "Accounts: {0} username(s) in, {1} resolved, {2} failed/zero-match.".format(usernames_in, users_ok, users_failed)
     if users_failed:

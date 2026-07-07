@@ -19,9 +19,10 @@ Addressed Sarah's review of the IdP breach playbook:
   (what SOAR runs), while the `.json` is a best-effort stub graph.
 - Small fixes: the two read actions are now marked `investigate` (not `contain`); the approval
   prompt references the exact preview-note title.
+- Also deduped duplicate usernames (a user appearing in two artifacts now counts once).
 
-Re-validation and a re-run to see the new reconciliation live are **pending the SOAR tunnel**
-coming back up (it dropped mid-change).
+**Verified live:** the approve run rendered the account reconciliation in both the preview and the
+results notes (`1 in / 1 resolved / 0 failed`) alongside the honest per-action counts.
 
 ## 2026-07-07 — New playbook: IdP Breach Bulk Quarantine (in review, PR #15)
 
