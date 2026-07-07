@@ -465,7 +465,7 @@
                 "2": {
                     "data": {
                         "action": "get device by username",
-                        "actionType": "contain",
+                        "actionType": "investigate",
                         "advanced": {
                             "join": []
                         },
@@ -598,7 +598,7 @@
                 "5": {
                     "data": {
                         "action": "get compliance status",
-                        "actionType": "contain",
+                        "actionType": "investigate",
                         "advanced": {
                             "join": []
                         },
@@ -708,7 +708,7 @@
                         "functionId": 9,
                         "functionName": "approve_bulk_quarantine",
                         "id": "9",
-                        "message": "IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note \"IdP breach - proposed quarantine\". Bulk wipe is NOT part of this action. Approve bulk quarantine?",
+                        "message": "IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note titled \"IdP breach - proposed quarantine (review before approving)\" - read it for the exact device list and account reconciliation. Bulk wipe is NOT part of this action. Approve bulk quarantine?",
                         "parameters": [],
                         "responseTime": 30,
                         "responses": [

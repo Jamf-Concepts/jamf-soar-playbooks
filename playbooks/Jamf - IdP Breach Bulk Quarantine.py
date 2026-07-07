@@ -164,6 +164,23 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
         action_results=results)
     compliance = {str(c[0]): c[1] for c in comp_rows if c[0] is not None}
 
+    # PR #15 review #1: reconcile INPUT usernames vs resolved, so a partial resolve failure
+    # (some accounts 403 / zero-match in a multi-user breach) is surfaced, not silently dropped.
+    # resolve runs once per username, so parameter.username + status + summary.total are per-user.
+    def _int(v):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
+    user_rows = phantom.collect2(container=container,
+        datapath=["resolve_devices:action_result.parameter.username",
+                  "resolve_devices:action_result.status",
+                  "resolve_devices:action_result.summary.total"],
+        action_results=results)
+    usernames_in = sum(1 for r in user_rows if r[0] is not None)
+    users_ok = sum(1 for r in user_rows if r[0] is not None and r[1] == "success" and _int(r[2]) > 0)
+    users_failed = usernames_in - users_ok
+
     lines, count, skipped = [], 0, 0
     for d in devices:
         if d[0] is None:
@@ -175,6 +192,9 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
         lines.append("- {0} | device_id {1} | {2} | compliance {3}".format(name, d[0], d[1] or "?", cstate))
 
     preview = "IdP breach - proposed bulk quarantine of {0} device(s):\n{1}".format(count, "\n".join(lines))
+    preview += "\nAccounts: {0} username(s) in, {1} resolved to device(s), {2} failed/zero-match.".format(usernames_in, users_ok, users_failed)
+    if users_failed:
+        preview += "\nWARNING: {0} breached account(s) resolved to NO device and will NOT be contained - investigate manually.".format(users_failed)
     if skipped:
         preview += "\n({0} resolved record(s) had no device id and CANNOT be quarantined - investigate manually.)".format(skipped)
     phantom.add_note(
@@ -228,7 +248,7 @@ def approve_bulk_quarantine(action=None, success=None, container=None, results=N
 
     user = None
     role = "<your-security-analyst-role>"
-    message = """IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note "IdP breach - proposed quarantine". This is a bulk containment action across every listed device. Bulk wipe is NOT part of this action. Approve bulk quarantine?"""
+    message = """IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note titled "IdP breach - proposed quarantine (review before approving)" — read it for the exact device list and account reconciliation. This is a bulk containment action across every listed device. Bulk wipe is NOT part of this action. Approve bulk quarantine?"""
 
     parameters = []
 
@@ -385,6 +405,24 @@ def report_results(action=None, success=None, container=None, results=None, hand
     approved_rows = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id"], action_results=results)
     approved = sum(1 for r in approved_rows if r[0] is not None)
 
+    # PR #15 review #1: also reconcile at the ACCOUNT level (input usernames vs resolved)
+    def _int(v):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
+    user_rows = phantom.collect2(container=container,
+        datapath=["resolve_devices:action_result.parameter.username",
+                  "resolve_devices:action_result.status",
+                  "resolve_devices:action_result.summary.total"],
+        action_results=results)
+    usernames_in = sum(1 for r in user_rows if r[0] is not None)
+    users_ok = sum(1 for r in user_rows if r[0] is not None and r[1] == "success" and _int(r[2]) > 0)
+    users_failed = usernames_in - users_ok
+    acct = "Accounts: {0} username(s) in, {1} resolved, {2} failed/zero-match.".format(usernames_in, users_ok, users_failed)
+    if users_failed:
+        acct += " WARNING: {0} breached account(s) resolved to NO device and were NOT contained - investigate.".format(users_failed)
+
     add_ok, add_bad, add_n = _counts("quarantine_add_group")
     lock_ok, lock_bad, lock_n = _counts("quarantine_lock")
     push_ok, push_bad, push_n = _counts("quarantine_push")
@@ -397,6 +435,7 @@ def report_results(action=None, success=None, container=None, results=None, hand
 
     content = (
         "IdP breach bulk quarantine - results (from actual action statuses; {0} device(s) approved):\n"
+        "{8}\n"
         "- add to static group (effective immediately): {1} ok, {2} failed/unknown\n"
         "- lock device (MDM command QUEUED - applies on next check-in, NOT confirmed on device): {3} queued-ok, {4} failed/unknown\n"
         "- send blank push (MDM command QUEUED): {5} queued-ok, {6} failed/unknown\n"
@@ -404,7 +443,7 @@ def report_results(action=None, success=None, container=None, results=None, hand
         "\nAny failed/unknown count — or a queued command to an offline device — means those devices "
         "are NOT confirmed contained; review and remediate manually. (No Slack app in SOAR; this note "
         "is the notification.)"
-    ).format(approved, add_ok, add_bad, lock_ok, lock_bad, push_ok, push_bad, recon)
+    ).format(approved, add_ok, add_bad, lock_ok, lock_bad, push_ok, push_bad, recon, acct)
 
     phantom.add_note(
         container=container,
