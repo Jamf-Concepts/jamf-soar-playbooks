@@ -61,35 +61,16 @@
                     "targetPort": "6_in"
                 },
                 {
-                    "id": "port_6_to_port_7",
+                    "id": "port_6_to_port_9",
                     "sourceNode": "6",
                     "sourcePort": "6_out",
-                    "targetNode": "7",
-                    "targetPort": "7_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_7_if",
-                            "index": 0
-                        }
-                    ],
-                    "id": "port_7_to_port_9",
-                    "sourceNode": "7",
-                    "sourcePort": "7_out",
                     "targetNode": "9",
                     "targetPort": "9_in"
                 },
                 {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_7_else",
-                            "index": 1
-                        }
-                    ],
-                    "id": "port_7_to_port_8",
-                    "sourceNode": "7",
-                    "sourcePort": "7_out",
+                    "id": "port_6_to_port_8",
+                    "sourceNode": "6",
+                    "sourcePort": "6_out",
                     "targetNode": "8",
                     "targetPort": "8_in"
                 },
@@ -551,6 +532,12 @@
                                 "comparisons": [
                                     {
                                         "comparisonKey": "comparison_key_3_0",
+                                        "op": "==",
+                                        "param": "resolve_devices:action_result.status",
+                                        "value": "success"
+                                    },
+                                    {
+                                        "comparisonKey": "comparison_key_3_1",
                                         "op": "!=",
                                         "param": "resolve_devices:action_result.data.*.id",
                                         "value": ""
@@ -684,57 +671,10 @@
                     "errors": {},
                     "id": "6",
                     "type": "code",
-                    "userCode": "\n    # Build the dry-run device list and post it as a note BEFORE approval (scope disclosure).\n    # Full logic in the .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - proposed quarantine (review before approving)\",\n          content=\"See the resolved device set; a Yes at the prompt quarantines ALL listed devices.\",\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    # Post a dry-run note listing every device (scope disclosure) and enforce the AGGREGATE\n    # batch cap (count > MAX_DEVICES -> note_batch_too_large, else -> approve). Full logic in the\n    # .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - proposed quarantine (review before approving)\",\n          content=\"Lists every resolved device + compliance; a Yes quarantines ALL listed. Aborts if over the batch cap.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
                     "x": 1000,
                     "y": 650
-                },
-                "7": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_7_0",
-                                        "op": "<=",
-                                        "param": "resolve_devices:action_result.summary.total",
-                                        "value": 25
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_7_if",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_7_else",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_7_else",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 7,
-                        "functionName": "within_batch_cap",
-                        "id": "7",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "7",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 1000,
-                    "y": 780
                 },
                 "8": {
                     "data": {

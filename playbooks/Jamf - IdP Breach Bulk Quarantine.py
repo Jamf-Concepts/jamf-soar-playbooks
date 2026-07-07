@@ -73,14 +73,18 @@ def resolve_devices(action=None, success=None, container=None, results=None, han
 def devices_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("devices_found() called")
 
-    # C3: only proceed if the resolve actually returned devices. A failed read (e.g. can't read
-    # mobile) or an unknown user returns no id -> end with a note, never reach containment.
+    # C3: only proceed if the resolve SUCCEEDED and actually returned a device id. Gating on
+    # status=="success" AND id present matches the project fail-safe standard, so a failed read
+    # (e.g. can't read mobile) or an unknown user never reaches the prompt or containment.
     found_match_1 = phantom.decision(
         container=container,
+        logical_operator="and",
         conditions=[
+            ["resolve_devices:action_result.status", "==", "success"],
             ["resolve_devices:action_result.data.*.id", "!=", ""]
         ],
         conditions_dps=[
+            ["resolve_devices:action_result.status", "==", "success"],
             ["resolve_devices:action_result.data.*.id", "!=", ""]
         ],
         name="devices_found:condition_1",
@@ -145,23 +149,34 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
     ################################################################################
 
     # Build the dry-run list (scope disclosure) BEFORE any approval, and post it as a note so the
-    # analyst sees exactly which devices a "Yes" will quarantine (PR #12 C2 — scope shown).
+    # analyst sees exactly which devices a "Yes" will quarantine (PR #12 C2 — scope shown). Surface
+    # compliance state per device so the enrichment is actually visible to the approver.
     devices = phantom.collect2(
         container=container,
         datapath=["resolve_devices:action_result.data.*.id",
                   "resolve_devices:action_result.data.*.type",
                   "resolve_devices:action_result.data.*.general.name"],
         action_results=results)
+    comp_rows = phantom.collect2(
+        container=container,
+        datapath=["check_compliance:action_result.data.*.device_id",
+                  "check_compliance:action_result.data.*.compliance_state"],
+        action_results=results)
+    compliance = {str(c[0]): c[1] for c in comp_rows if c[0] is not None}
 
-    lines, count = [], 0
+    lines, count, skipped = [], 0, 0
     for d in devices:
         if d[0] is None:
+            skipped += 1
             continue
         count += 1
         name = d[2] or "(unknown)"
-        lines.append("- {0} | device_id {1} | {2}".format(name, d[0], d[1] or "?"))
+        cstate = compliance.get(str(d[0]), "n/a")
+        lines.append("- {0} | device_id {1} | {2} | compliance {3}".format(name, d[0], d[1] or "?", cstate))
 
-    preview = "IdP breach — proposed bulk quarantine of {0} device(s):\n{1}".format(count, "\n".join(lines))
+    preview = "IdP breach - proposed bulk quarantine of {0} device(s):\n{1}".format(count, "\n".join(lines))
+    if skipped:
+        preview += "\n({0} resolved record(s) had no device id and CANNOT be quarantined - investigate manually.)".format(skipped)
     phantom.add_note(
         container=container,
         title="IdP breach - proposed quarantine (review before approving)",
@@ -171,39 +186,18 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
     )
     phantom.save_block_result(key="device_count", value=str(count))
 
+    # Hard safety cap on the AGGREGATE device count (PR-review C1). resolve runs once per username,
+    # so the resolver's per-run summary.total does NOT bound a multi-user breach — gate the real
+    # total instead, and fail safe (abort with a note) when it's exceeded.
+    if count > MAX_DEVICES:
+        note_batch_too_large(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
     ################################################################################
     ## Custom Code End
     ################################################################################
 
-    within_batch_cap(action=action, success=success, container=container, results=results, handle=handle)
-
-    return
-
-
-@phantom.playbook_block()
-def within_batch_cap(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("within_batch_cap() called")
-
-    # Hard safety cap: do not present a bulk-quarantine approval for a set larger than MAX_DEVICES.
-    # Gates on the resolver's reported device total. For a single target (one username or one group)
-    # this is the exact blast radius; for a multi-username set, scope the trigger to a pre-vetted
-    # group (list group members) or tighten MAX_DEVICES deliberately.
-    found_match_1 = phantom.decision(
-        container=container,
-        conditions=[
-            ["resolve_devices:action_result.summary.total", "<=", MAX_DEVICES]
-        ],
-        conditions_dps=[
-            ["resolve_devices:action_result.summary.total", "<=", MAX_DEVICES]
-        ],
-        name="within_batch_cap:condition_1",
-        delimiter=None)
-
-    if found_match_1:
-        approve_bulk_quarantine(action=action, success=success, container=container, results=results, handle=handle)
-        return
-
-    note_batch_too_large(action=action, success=success, container=container, results=results, handle=handle)
+    approve_bulk_quarantine(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
@@ -379,24 +373,38 @@ def report_results(action=None, success=None, container=None, results=None, hand
     ################################################################################
 
     # C1: build the outcome from REAL per-action statuses — never assert containment that failed.
+    # Anything not exactly "success" (incl. None/unknown/missing) counts as not-ok, so a failed or
+    # absent status can't be silently swallowed.
     def _counts(name):
         rows = phantom.collect2(container=container, datapath=[name + ":action_result.status"], action_results=results)
         ok = sum(1 for r in rows if r[0] == "success")
-        fail = sum(1 for r in rows if r[0] not in ("success", None))
-        return ok, fail
+        not_ok = sum(1 for r in rows if r[0] != "success")
+        return ok, not_ok, ok + not_ok
 
-    add_ok, add_fail = _counts("quarantine_add_group")
-    lock_ok, lock_fail = _counts("quarantine_lock")
-    push_ok, push_fail = _counts("quarantine_push")
+    # approved scope = devices the run intended to contain (non-null resolved ids)
+    approved_rows = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id"], action_results=results)
+    approved = sum(1 for r in approved_rows if r[0] is not None)
+
+    add_ok, add_bad, add_n = _counts("quarantine_add_group")
+    lock_ok, lock_bad, lock_n = _counts("quarantine_lock")
+    push_ok, push_bad, push_n = _counts("quarantine_push")
+
+    # reconcile: if any action touched fewer devices than were approved, surface the gap
+    gaps = [nm for nm, n in (("add to static group", add_n), ("lock device", lock_n), ("send blank push", push_n)) if n < approved]
+    recon = ""
+    if gaps:
+        recon = "\nWARNING: {0} device(s) were approved but these actions ran on fewer: {1} — the rest were dropped/not run; investigate.".format(approved, ", ".join(gaps))
 
     content = (
-        "IdP breach bulk quarantine — results (from actual action statuses):\n"
-        "- add to static group: {0} succeeded, {1} failed\n"
-        "- lock device: {2} succeeded, {3} failed\n"
-        "- send blank push: {4} succeeded, {5} failed\n"
-        "Any non-zero failure count means those devices are NOT fully contained — review and "
-        "remediate manually. (No Slack app configured in SOAR; this note is the notification.)"
-    ).format(add_ok, add_fail, lock_ok, lock_fail, push_ok, push_fail)
+        "IdP breach bulk quarantine - results (from actual action statuses; {0} device(s) approved):\n"
+        "- add to static group (effective immediately): {1} ok, {2} failed/unknown\n"
+        "- lock device (MDM command QUEUED - applies on next check-in, NOT confirmed on device): {3} queued-ok, {4} failed/unknown\n"
+        "- send blank push (MDM command QUEUED): {5} queued-ok, {6} failed/unknown\n"
+        "{7}"
+        "\nAny failed/unknown count — or a queued command to an offline device — means those devices "
+        "are NOT confirmed contained; review and remediate manually. (No Slack app in SOAR; this note "
+        "is the notification.)"
+    ).format(approved, add_ok, add_bad, lock_ok, lock_bad, push_ok, push_bad, recon)
 
     phantom.add_note(
         container=container,

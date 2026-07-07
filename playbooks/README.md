@@ -36,17 +36,19 @@ note built from the **real per-action statuses** (a failed contain is never repo
 **Bulk wipe is excluded**; any erase is per-device and separately approved. Failed/empty resolve
 and a declined approval each end with a note.
 
-Flow: `resolve_devices` → `devices_found?` → `check_compliance` → `build_quarantine_preview` →
-`within_batch_cap?` → `approve_bulk_quarantine` → `is_quarantine_approved?` → `quarantine_add_group`
-→ `quarantine_lock` → `quarantine_push` → `report_results`.
+Flow: `resolve_devices` → `devices_found?` → `check_compliance` → `build_quarantine_preview`
+(posts the dry-run note **and** enforces the aggregate batch cap: over-cap → `note_batch_too_large`)
+→ `approve_bulk_quarantine` → `is_quarantine_approved?` → `quarantine_add_group` →
+`quarantine_lock` → `quarantine_push` → `report_results`.
 
 **Customer-config:** `<your-jamf-asset>`; computer + mobile quarantine groups
 (`<your-computer-quarantine-group>` / `<your-mobile-quarantine-group>`); lock PIN
 (`<your-6-digit-pin>`); approver role (`<your-security-analyst-role>`); batch cap (`MAX_DEVICES`).
 
-> **`.py`/`.json` note:** the per-`device_type` group choice, the real-status results summary, and
-> the batch-cap count live in the hand-authored `.py` (the reviewable source of truth). The `.json`
-> graph carries single-value placeholders — if rebuilding in the VPE, re-add that custom code.
+> **`.py`/`.json` note:** the per-`device_type` group choice, the real-status results summary,
+> the aggregate batch-cap check, and the compliance-in-preview live in the hand-authored `.py`
+> (the reviewable source of truth). The `.json` graph carries single-value placeholders and stub
+> code nodes — if rebuilding in the VPE, re-add that custom code.
 
 ### `Jamf - Compliance Drift and MDM Tamper Remediation`
 Apple/MDM-unique template (no shipped SOAR equivalent). Leads with **non-destructive
