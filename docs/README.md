@@ -6,6 +6,54 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-07 — IdP breach (#6): PR #15 review fixes
+
+Addressed Sarah's review of the IdP breach playbook:
+
+- **Partial-resolve under-count (the gating item).** In a multi-account breach, resolve runs once
+  per username; if some accounts don't match / 403, they contributed nothing and were dropped
+  silently. The preview and results notes now **reconcile input usernames vs how many resolved to
+  a device** (`X in / Y resolved / Z failed-or-zero-match`) and warn when any breached account
+  resolved to no device — so under-coverage is visible, not hidden.
+- **"Verified" wording squared up** — made explicit that the live runs cover the committed `.py`
+  (what SOAR runs), while the `.json` is a best-effort stub graph.
+- Small fixes: the two read actions are now marked `investigate` (not `contain`); the approval
+  prompt references the exact preview-note title.
+- Also deduped duplicate usernames (a user appearing in two artifacts now counts once).
+
+**Verified live:** the approve run rendered the account reconciliation in both the preview and the
+results notes (`1 in / 1 resolved / 0 failed`) alongside the honest per-action counts.
+
+## 2026-07-07 — New playbook: IdP Breach Bulk Quarantine (in review, PR #15)
+
+The highest-risk template (#6): it mass-quarantines every device caught in an identity-provider
+breach. Because it acts at scale, the safety model is stricter than the others:
+
+- **One approval up front, before anything is touched** — the analyst first gets a note listing
+  every device that will be quarantined, then must approve the whole batch. (Scope shown = scope
+  executed.)
+- **A hard batch-size cap** — if the affected set is larger than the cap (default 25), the run
+  aborts with a note instead of mass-acting.
+- **Bulk wipe is excluded** — this playbook only quarantines (add to group + lock + blank push);
+  any erase is per-device and approved separately.
+- **Honest reporting** — the results note is built from the real per-action outcomes, so a failed
+  containment is never reported as done.
+- If no devices resolve, or the analyst declines, each path just writes a note — nothing else.
+
+Built on the compromised-user loop pattern (PR #12) and Sarah's review of it. Validated in SOAR
+and **verified end-to-end in a controlled 1-device test**: it resolved the user's Mac, showed the
+dry-run note, held for approval, and on "Yes" quarantined it (added to group + locked + blank
+push) — with the results note reporting the real per-action outcomes. The "no devices found" path
+and the over-cap abort were also confirmed. Computer vs mobile use separate quarantine groups
+(they're different Jamf ID namespaces).
+
+> **What "verified" covers:** the runs exercised the committed **`.py`** (which is what SOAR
+> executes on import) — the aggregate batch cap, per-`device_type` group choice, real-status
+> results note, and compliance-in-preview all live there. The committed **`.json`** is a
+> best-effort VPE graph with **stub code nodes** for those parts (single-value placeholders), so
+> "verified end-to-end" refers to the `.py`, **not** the committed graph. Re-saving the `.json` in
+> the VPE would need that custom code re-added (same `.py`-is-source-of-truth caveat as #4).
+
 ## 2026-07-06 — FileVault Recovery Access: review fixes (leaked secret redacted, approval gate routing)
 
 Two fixes from the review of the FileVault Recovery Access playbook (PR #11), plus a re-sync

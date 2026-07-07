@@ -1,0 +1,751 @@
+{
+    "blockly": false,
+    "blockly_xml": "<xml></xml>",
+    "category": "Jamf Incident Response",
+    "coa": {
+        "data": {
+            "description": "Jamf - IdP Breach Bulk Quarantine (batched up-front approval, no bulk wipe).",
+            "edges": [
+                {
+                    "id": "port_0_to_port_2",
+                    "sourceNode": "0",
+                    "sourcePort": "0_out",
+                    "targetNode": "2",
+                    "targetPort": "2_in"
+                },
+                {
+                    "id": "port_2_to_port_3",
+                    "sourceNode": "2",
+                    "sourcePort": "2_out",
+                    "targetNode": "3",
+                    "targetPort": "3_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_3_if",
+                            "index": 0
+                        }
+                    ],
+                    "id": "port_3_to_port_5",
+                    "sourceNode": "3",
+                    "sourcePort": "3_out",
+                    "targetNode": "5",
+                    "targetPort": "5_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_3_else",
+                            "index": 1
+                        }
+                    ],
+                    "id": "port_3_to_port_4",
+                    "sourceNode": "3",
+                    "sourcePort": "3_out",
+                    "targetNode": "4",
+                    "targetPort": "4_in"
+                },
+                {
+                    "id": "port_4_to_port_1",
+                    "sourceNode": "4",
+                    "sourcePort": "4_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_5_to_port_6",
+                    "sourceNode": "5",
+                    "sourcePort": "5_out",
+                    "targetNode": "6",
+                    "targetPort": "6_in"
+                },
+                {
+                    "id": "port_6_to_port_9",
+                    "sourceNode": "6",
+                    "sourcePort": "6_out",
+                    "targetNode": "9",
+                    "targetPort": "9_in"
+                },
+                {
+                    "id": "port_6_to_port_8",
+                    "sourceNode": "6",
+                    "sourcePort": "6_out",
+                    "targetNode": "8",
+                    "targetPort": "8_in"
+                },
+                {
+                    "id": "port_8_to_port_1",
+                    "sourceNode": "8",
+                    "sourcePort": "8_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_9_to_port_10",
+                    "sourceNode": "9",
+                    "sourcePort": "9_out",
+                    "targetNode": "10",
+                    "targetPort": "10_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_10_if",
+                            "index": 0
+                        }
+                    ],
+                    "id": "port_10_to_port_12",
+                    "sourceNode": "10",
+                    "sourcePort": "10_out",
+                    "targetNode": "12",
+                    "targetPort": "12_in"
+                },
+                {
+                    "conditions": [
+                        {
+                            "conditionKey": "condition_key_10_else",
+                            "index": 1
+                        }
+                    ],
+                    "id": "port_10_to_port_11",
+                    "sourceNode": "10",
+                    "sourcePort": "10_out",
+                    "targetNode": "11",
+                    "targetPort": "11_in"
+                },
+                {
+                    "id": "port_11_to_port_1",
+                    "sourceNode": "11",
+                    "sourcePort": "11_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                },
+                {
+                    "id": "port_12_to_port_13",
+                    "sourceNode": "12",
+                    "sourcePort": "12_out",
+                    "targetNode": "13",
+                    "targetPort": "13_in"
+                },
+                {
+                    "id": "port_13_to_port_14",
+                    "sourceNode": "13",
+                    "sourcePort": "13_out",
+                    "targetNode": "14",
+                    "targetPort": "14_in"
+                },
+                {
+                    "id": "port_14_to_port_15",
+                    "sourceNode": "14",
+                    "sourcePort": "14_out",
+                    "targetNode": "15",
+                    "targetPort": "15_in"
+                },
+                {
+                    "id": "port_15_to_port_1",
+                    "sourceNode": "15",
+                    "sourcePort": "15_out",
+                    "targetNode": "1",
+                    "targetPort": "1_in"
+                }
+            ],
+            "hash": "",
+            "nodes": {
+                "0": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionName": "on_start",
+                        "id": "0",
+                        "type": "start"
+                    },
+                    "errors": {},
+                    "id": "0",
+                    "type": "start",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 100
+                },
+                "1": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionName": "on_finish",
+                        "id": "1",
+                        "type": "end"
+                    },
+                    "errors": {},
+                    "id": "1",
+                    "type": "end",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 1700
+                },
+                "10": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_10_0",
+                                        "op": "==",
+                                        "param": "approve_bulk_quarantine:action_result.summary.responses.0",
+                                        "value": "Yes"
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_10_if",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_10_else",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_10_else",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 10,
+                        "functionName": "is_quarantine_approved",
+                        "id": "10",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "10",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 1050
+                },
+                "11": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 11,
+                        "functionName": "note_not_approved",
+                        "id": "11",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "11",
+                    "type": "code",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - bulk quarantine NOT approved\",\n          content=\"The analyst declined the bulk quarantine, or the prompt timed out. No containment was performed.\",\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 1020,
+                    "y": 1050
+                },
+                "12": {
+                    "data": {
+                        "action": "add to static group",
+                        "actionType": "contain",
+                        "advanced": {
+                            "join": []
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "<your-jamf-asset>"
+                        ],
+                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorVersion": "v1",
+                        "functionId": 12,
+                        "functionName": "quarantine_add_group",
+                        "id": "12",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "resolve_devices:action_result.data.*.id",
+                            "device_type": "resolve_devices:action_result.data.*.type",
+                            "group_id": "<your-computer-quarantine-group>"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            },
+                            {
+                                "data_type": "string",
+                                "field": "group_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "12",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 1180
+                },
+                "13": {
+                    "data": {
+                        "action": "lock device",
+                        "actionType": "contain",
+                        "advanced": {
+                            "join": []
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "<your-jamf-asset>"
+                        ],
+                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorVersion": "v1",
+                        "functionId": 13,
+                        "functionName": "quarantine_lock",
+                        "id": "13",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "resolve_devices:action_result.data.*.id",
+                            "device_type": "resolve_devices:action_result.data.*.type",
+                            "message": "<your-return-message>",
+                            "phone_number": "<your-callback-number>",
+                            "pin": "<your-6-digit-pin>"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "13",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 1320
+                },
+                "14": {
+                    "data": {
+                        "action": "send blank push",
+                        "actionType": "contain",
+                        "advanced": {
+                            "join": []
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "<your-jamf-asset>"
+                        ],
+                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorVersion": "v1",
+                        "functionId": 14,
+                        "functionName": "quarantine_push",
+                        "id": "14",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "resolve_devices:action_result.data.*.id",
+                            "device_type": "resolve_devices:action_result.data.*.type"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "14",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 1460
+                },
+                "15": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 15,
+                        "functionName": "report_results",
+                        "id": "15",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "15",
+                    "type": "code",
+                    "userCode": "\n    # Build results from REAL per-action statuses (never report a failed contain as success).\n    # Full logic in the .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - bulk quarantine results\",\n          content=\"Per-action success/failure counts for add-to-group, lock, and blank push.\",\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 1580
+                },
+                "2": {
+                    "data": {
+                        "action": "get device by username",
+                        "actionType": "investigate",
+                        "advanced": {
+                            "join": []
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "<your-jamf-asset>"
+                        ],
+                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorVersion": "v1",
+                        "functionId": 2,
+                        "functionName": "resolve_devices",
+                        "id": "2",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "username": "artifact:*.cef.sourceUserName"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "username"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "2",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 250
+                },
+                "3": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_3_0",
+                                        "op": "==",
+                                        "param": "resolve_devices:action_result.status",
+                                        "value": "success"
+                                    },
+                                    {
+                                        "comparisonKey": "comparison_key_3_1",
+                                        "op": "!=",
+                                        "param": "resolve_devices:action_result.data.*.id",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_3_if",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_3_else",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_3_else",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 3,
+                        "functionName": "devices_found",
+                        "id": "3",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "3",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 380
+                },
+                "4": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 4,
+                        "functionName": "note_no_devices",
+                        "id": "4",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "4",
+                    "type": "code",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - no devices resolved\",\n          content=\"No Jamf devices resolved for the affected username(s), or the lookup failed. No containment was attempted.\",\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 1320,
+                    "y": 380
+                },
+                "5": {
+                    "data": {
+                        "action": "get compliance status",
+                        "actionType": "investigate",
+                        "advanced": {
+                            "join": []
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "<your-jamf-asset>"
+                        ],
+                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorVersion": "v1",
+                        "functionId": 5,
+                        "functionName": "check_compliance",
+                        "id": "5",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "resolve_devices:action_result.data.*.id",
+                            "device_type": "resolve_devices:action_result.data.*.type"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "5",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 520
+                },
+                "6": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 6,
+                        "functionName": "build_quarantine_preview",
+                        "id": "6",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "6",
+                    "type": "code",
+                    "userCode": "\n    # Post a dry-run note listing every device (scope disclosure) and enforce the AGGREGATE\n    # batch cap (count > MAX_DEVICES -> note_batch_too_large, else -> approve). Full logic in the\n    # .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - proposed quarantine (review before approving)\",\n          content=\"Lists every resolved device + compliance; a Yes quarantines ALL listed. Aborts if over the batch cap.\",\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 1000,
+                    "y": 650
+                },
+                "8": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "functionId": 8,
+                        "functionName": "note_batch_too_large",
+                        "id": "8",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "8",
+                    "type": "code",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - batch too large, aborted\",\n          content=\"The affected device set exceeds the batch-size cap. Bulk quarantine was ABORTED; no containment attempted.\",\n          note_type=\"general\",\n      )\n\n",
+                    "warnings": {},
+                    "x": 1320,
+                    "y": 780
+                },
+                "9": {
+                    "data": {
+                        "advanced": {
+                            "join": []
+                        },
+                        "approver": {
+                            "type": "role",
+                            "value": "<your-security-analyst-role>"
+                        },
+                        "functionId": 9,
+                        "functionName": "approve_bulk_quarantine",
+                        "id": "9",
+                        "message": "IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note titled \"IdP breach - proposed quarantine (review before approving)\" - read it for the exact device list and account reconciliation. Bulk wipe is NOT part of this action. Approve bulk quarantine?",
+                        "parameters": [],
+                        "responseTime": 30,
+                        "responses": [
+                            {
+                                "required": true,
+                                "responseOptions": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "responsePrompt": "Approve bulk quarantine of ALL listed devices?",
+                                "responseType": "yes/no"
+                            }
+                        ],
+                        "type": "prompt"
+                    },
+                    "errors": {},
+                    "id": "9",
+                    "type": "prompt",
+                    "warnings": {},
+                    "x": 700,
+                    "y": 920
+                }
+            },
+            "notes": ""
+        },
+        "input_spec": null,
+        "output_spec": null,
+        "playbook_trigger": "artifact_created",
+        "playbook_type": "automation",
+        "python_version": "3.13",
+        "schema": "5.0.24",
+        "version": "8.5.0.248"
+    },
+    "create_time": "2026-07-07T00:00:00.000000+00:00",
+    "draft_mode": false,
+    "labels": [
+        "*"
+    ],
+    "tags": []
+}

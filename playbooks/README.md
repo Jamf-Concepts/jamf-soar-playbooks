@@ -22,6 +22,33 @@ and `CONTRIBUTING.md` for the workflow and the non-negotiable safety rules.
 |----------|-------|----------|----------|
 | `Jamf - Device Enrichment (Input)` + `Jamf - Device Enrichment and Triage` | #5 (merged PR #9) | Read-only enrichment/triage | resolve → enrich (Input sub-playbook) → summary note (no destructive step) |
 | `Jamf - Compliance Drift and MDM Tamper Remediation` | #4 | Device flagged non-compliant / MDM-tampered | resolve → **correct-first** → check → contain-if-needed → approval gate → wipe |
+| `Jamf - IdP Breach Bulk Quarantine` | #6 (in review PR #15) | IdP breach — mass affected device set | resolve set → devices-found gate → enrich → **up-front batched approval (full scope) + batch cap** → contain loop (add group / lock / blank push) → results note. **No bulk wipe.** |
+
+### `Jamf - IdP Breach Bulk Quarantine`
+The **highest-risk** template: it mass-quarantines every device caught in an IdP breach, so the
+gate is stricter than the others. Resolves the affected set (`get device by username` over the
+container's `cef.sourceUserName` values), enriches with compliance, posts a **dry-run note listing
+every device**, then a **single up-front approval** authorizes the whole batch (scope shown =
+scope executed). A **hard batch-size cap** (`MAX_DEVICES`, default 25) aborts a runaway set. On
+approval it loops containment — add to a quarantine static group (chosen per `device_type`, since
+computer vs mobile groups are separate ID namespaces), lock, blank push — then writes a results
+note built from the **real per-action statuses** (a failed contain is never reported as success).
+**Bulk wipe is excluded**; any erase is per-device and separately approved. Failed/empty resolve
+and a declined approval each end with a note.
+
+Flow: `resolve_devices` → `devices_found?` → `check_compliance` → `build_quarantine_preview`
+(posts the dry-run note **and** enforces the aggregate batch cap: over-cap → `note_batch_too_large`)
+→ `approve_bulk_quarantine` → `is_quarantine_approved?` → `quarantine_add_group` →
+`quarantine_lock` → `quarantine_push` → `report_results`.
+
+**Customer-config:** `<your-jamf-asset>`; computer + mobile quarantine groups
+(`<your-computer-quarantine-group>` / `<your-mobile-quarantine-group>`); lock PIN
+(`<your-6-digit-pin>`); approver role (`<your-security-analyst-role>`); batch cap (`MAX_DEVICES`).
+
+> **`.py`/`.json` note:** the per-`device_type` group choice, the real-status results summary,
+> the aggregate batch-cap check, and the compliance-in-preview live in the hand-authored `.py`
+> (the reviewable source of truth). The `.json` graph carries single-value placeholders and stub
+> code nodes — if rebuilding in the VPE, re-add that custom code.
 
 ### `Jamf - Compliance Drift and MDM Tamper Remediation`
 Apple/MDM-unique template (no shipped SOAR equivalent). Leads with **non-destructive
