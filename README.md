@@ -74,7 +74,7 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 | Device enrichment & triage (read-only) | Merged (PR #9) | Reusable enrichment building block: resolve device → enrich → write a summary note. Ships as an Input sub-playbook (`Jamf - Device Enrichment (Input)`) the other templates call, plus a triage wrapper. No destructive step, so no approval gate. |
 | Compliance drift / MDM tamper | Merged (PR #10) | Correct-first: redeploy the management framework + force a check-in, re-check compliance, and only contain (quarantine + lock) if still non-compliant. Wipe is gated behind an analyst approval prompt. |
 | FileVault key / recovery access (macOS) | In review (PR #11) | Resolve a Mac by serial, retrieve the FileVault recovery key + context, secure (recovery lock + lock), then erase behind an analyst approval gate. |
-| Compromised user | In review (PR #12) | Contain the user's enrolled devices, enrich with identity context, gate before destructive action. |
+| Compromised user | In review (PR #12) | Resolve the user's device(s) by username; contain each (per-platform quarantine group + lock + blank push) with honest per-device status; then an analyst prompt that enumerates the whole fleet before a gated wipe. |
 | Lost / stolen device | Planned | Resolve device, lock + contain, notify, hold for analyst approval, then erase as a last resort. |
 | **Identity-provider (IdP) breach** | **In review (PR #15)** | Bulk quarantine (add to group + lock + blank push) across the affected device set, behind a single **up-front** batched approval that discloses the full scope; hard batch-size cap; **bulk wipe excluded**. |
 | Malicious file | Planned | Locate affected device(s), contain, enrich the file verdict, remediate behind a gate. |

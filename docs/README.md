@@ -6,6 +6,27 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-07 — Compromised User Device Sweep: review rework (PR #12)
+
+Reworked after review (Sarah + Amanda) to fix the destructive spine. When a user
+is flagged compromised, it finds their device(s) and contains each — adds it to a
+**per-platform** quarantine group, locks it (Macs get a unique 6-digit PIN, shown
+in the note), and sends a blank push. The containment note now reports the **real
+per-device outcome** (✅ / failed) instead of claiming success unconditionally.
+
+Before any wipe it pauses for an analyst, and the prompt now **enumerates every
+device that would be erased** ("Wipe ALL N devices"), flagging any that failed
+containment — so the approval scope matches what actually executes. Nothing wipes
+without that explicit approval; a denial *or a timeout* routes to a clear note and
+never wipes. (The wipe was previously inert — it sent `confirm: true`, which the
+connector rejects; it's now wired to `confirm == device_id`, so it works — which
+is exactly why the fleet-scope prompt had to land in the same change.)
+
+Adopt it — set: `<your-jamf-asset>`, the per-platform quarantine groups
+(`<your-computer-suspended-group-id>` / `<your-mobile-suspended-group-id>`), the
+lock callback number (`<your-callback-number>`), and the approver role
+(`<your-approver-role>`). It reads the username from `sourceUserName`.
+
 ## 2026-07-07 — IdP breach (#6): PR #15 review fixes
 
 Addressed Sarah's review of the IdP breach playbook:
