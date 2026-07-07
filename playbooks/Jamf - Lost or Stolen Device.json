@@ -245,7 +245,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -419,7 +419,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -482,7 +482,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -561,8 +561,8 @@
                             "join": []
                         },
                         "approver": {
-                            "type": "user",
-                            "value": "Sarah"
+                            "type": "role",
+                            "value": "<security-analyst-role>"
                         },
                         "functionId": 1,
                         "functionName": "prompt_1",
@@ -651,7 +651,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",
@@ -754,8 +754,8 @@
                             "join": []
                         },
                         "approver": {
-                            "type": "user",
-                            "value": "Sarah"
+                            "type": "role",
+                            "value": "<security-analyst-role>"
                         },
                         "functionId": 2,
                         "functionName": "prompt_2",
@@ -844,7 +844,7 @@
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "test1"
+                            "<your-jamf-asset>"
                         ],
                         "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
                         "connectorVersion": "v1",

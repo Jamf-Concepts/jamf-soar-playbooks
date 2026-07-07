@@ -17,9 +17,8 @@ Design notes:
   type makes SOAR generate two functions with the same name (function-redefined).
 
 Adaptation points (replace before use):
-  - <your-jamf-asset>   : Jamf asset (this dev copy uses "test1").
-  - approver            : prompts route to the "Sarah" user in this dev copy;
-                          switch to a security-analyst ROLE for distribution.
+  - <your-jamf-asset>       : your configured Jamf asset (on all 5 action blocks).
+  - <security-analyst-role> : the SOAR role the wipe-approval prompts route to.
   - lock PIN "000000"   : replace with your 6-digit unlock PIN (computer lock).
   - lock-screen message : the lost/stolen message shown on the device.
 Enrichment (#5 Device Enrichment Input) and quarantine (add to static group)
@@ -66,7 +65,7 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["test1"], callback=decision_1)
+    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["<your-jamf-asset>"], callback=decision_1)
 
     return
 
@@ -154,7 +153,7 @@ def enable_lost_mode_1(action=None, success=None, container=None, results=None, 
     ## Custom Code End
     ################################################################################
 
-    phantom.act("enable lost mode", parameters=parameters, name="enable_lost_mode_1", assets=["test1"], callback=code_1)
+    phantom.act("enable lost mode", parameters=parameters, name="enable_lost_mode_1", assets=["<your-jamf-asset>"], callback=code_1)
 
     return
 
@@ -201,9 +200,9 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
 def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("prompt_1() called")
 
-    # DEV: routes to the "Sarah" user; switch to a security-analyst ROLE for distribution.
-    user = "Sarah"
-    role = None
+    # Wipe-approval routes to a SOAR role; set <security-analyst-role> to your analyst role.
+    user = None
+    role = "<security-analyst-role>"
     message = """A MOBILE device reported LOST or STOLEN has been placed in Lost Mode. Approve a REMOTE WIPE?
 This permanently ERASES the device and is IRREVERSIBLE.
 
@@ -292,7 +291,7 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["test1"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"])
 
     return
 
@@ -361,7 +360,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["test1"], callback=code_3)
+    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["<your-jamf-asset>"], callback=code_3)
 
     return
 
@@ -408,9 +407,9 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
 def prompt_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("prompt_2() called")
 
-    # DEV: routes to the "Sarah" user; switch to a security-analyst ROLE for distribution.
-    user = "Sarah"
-    role = None
+    # Wipe-approval routes to a SOAR role; set <security-analyst-role> to your analyst role.
+    user = None
+    role = "<security-analyst-role>"
     message = """A COMPUTER reported LOST or STOLEN has been locked. Approve a REMOTE WIPE?
 This permanently ERASES the device and is IRREVERSIBLE.
 
@@ -499,7 +498,7 @@ def wipe_device_2(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_2", assets=["test1"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_device_2", assets=["<your-jamf-asset>"])
 
     return
 
