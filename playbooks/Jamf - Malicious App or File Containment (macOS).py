@@ -211,7 +211,7 @@ def add_to_static_group_1(action=None, success=None, container=None, results=Non
             parameters.append({
                 "device_type": get_device_by_name_1_result_item[0],
                 "device_id": get_device_by_name_1_result_item[1],
-                "group_id": 3,
+                "group_id": "<your-isolation-group-id>",
                 "context": {'artifact_id': get_device_by_name_1_result_item[2]},
             })
 
