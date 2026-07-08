@@ -6,6 +6,25 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-07 — Malicious App / File Containment (macOS) (in review, #3)
+
+New template. When a detection flags a malicious app on a Mac, this looks the
+device up **by name**, pulls its installed apps, and **confirms the flagged app
+is actually there** before doing anything — a clean device gets a "not found"
+note and nothing else. If confirmed, it isolates the device (quarantine static
+group), locks it (with a per-device 6-digit unlock PIN shown in the note), and
+sends a blank push, reporting the **real per-action outcome**. Then it pauses for
+an analyst before any wipe.
+
+It's built for **one detection per container** (how detection tools create
+containers): if a container somehow carries multiple devices/files, the note
+flags it and the **wipe is blocked** for manual review. macOS-only.
+
+Adopt it — set: `<your-jamf-asset>`, the isolation group
+(`<your-isolation-group-id>`), the lock callback number
+(`<your-callback-number>`), and the approver role (`<your-approver-role>`). It
+reads the host from `deviceHostname` and the flagged file from `fileName`.
+
 ## 2026-07-07 — Lost or Stolen Device playbook (PR #16)
 
 New template (issue #1): responds to a device reported lost or stolen. It resolves the device by

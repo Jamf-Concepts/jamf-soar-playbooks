@@ -77,7 +77,7 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 | Compromised user | In review (PR #12) | Resolve the user's device(s) by username; contain each (per-platform quarantine group + lock + blank push) with honest per-device status; then an analyst prompt that enumerates the whole fleet before a gated wipe. |
 | Lost / stolen device | In review (PR #16) | Resolve a device by serial, branch on device type (mobile → enable lost mode / computer → lock device), write a containment note, hold at an analyst approval gate, then wipe **only** on approval. Decline / timeout / no-device paths just add a note. |
 | **Identity-provider (IdP) breach** | **In review (PR #15)** | Bulk quarantine (add to group + lock + blank push) across the affected device set, behind a single **up-front** batched approval that discloses the full scope; hard batch-size cap; **bulk wipe excluded**. |
-| Malicious file | Planned | Locate affected device(s), contain, enrich the file verdict, remediate behind a gate. |
+| Malicious app / file (macOS) | In review (#3) | Resolve by device name, confirm the flagged app is actually installed, isolate (static group) + lock + blank push with honest per-action status, then an analyst gate before wipe. One detection per container (guarded). |
 
 ---
 
