@@ -6,8 +6,8 @@ contain it, enrich, notify, gate on an analyst, and — only then — take a
 destructive step) into ready-to-adapt incident-response flows.
 
 This repo is **not** a connector. It holds reusable playbooks that *call* the
-Jamf SOAR app's actions. The companion connector app lives in
-[`Jamf-Concepts/jamf-splunk-soar`](https://github.com/Jamf-Concepts/jamf-splunk-soar).
+Jamf SOAR app's actions. The companion connector app is documented at
+[Jamf-Concepts/jamf-splunk-soar](https://github.com/Jamf-Concepts/jamf-splunk-soar).
 
 > Status: **Pre-release / private development.** Early template PRs are merged
 > or in review — see the status column in the table below.
@@ -34,7 +34,7 @@ These playbooks do nothing on their own. To use them you need:
 | Requirement | Detail |
 |-------------|--------|
 | **Splunk SOAR** | Cloud or On-prem. Playbooks run inside SOAR. |
-| **Jamf SOAR connector app** | Installed in SOAR from [`Jamf-Concepts/jamf-splunk-soar`](https://github.com/Jamf-Concepts/jamf-splunk-soar). The playbooks reference its actions by app + action name. |
+| **Jamf SOAR connector app** | Installed in SOAR — see the [connector docs](https://github.com/Jamf-Concepts/jamf-splunk-soar) (coming to Splunkbase at release). The playbooks reference its actions by app + action name. |
 | **A configured Jamf asset** | An asset wired to the app with your Jamf Pro base URL + OAuth credentials. Without a working asset the actions have nothing to call. |
 
 If the app isn't installed or the asset isn't configured, the playbooks will
@@ -88,8 +88,9 @@ enrich / notify → (timer) → analyst approval gate → destructive step.**
 
 High-level shape:
 
-1. Install and configure the [Jamf SOAR connector app](https://github.com/Jamf-Concepts/jamf-splunk-soar)
-   in SOAR, including a working Jamf asset.
+1. Install and configure the Jamf SOAR connector app in SOAR (see the
+   [connector docs](https://github.com/Jamf-Concepts/jamf-splunk-soar); coming to
+   Splunkbase at release), including a working Jamf asset.
 2. Add this repo under **Administration → Source Control** (or import a
    playbook `.tgz`).
 3. Point each playbook's action blocks at your configured Jamf asset.
@@ -100,7 +101,7 @@ High-level shape:
 
 ## Links
 
-- **Companion connector app** — <https://github.com/Jamf-Concepts/jamf-splunk-soar>
+- **Companion connector app (docs)** — <https://github.com/Jamf-Concepts/jamf-splunk-soar>
 - **Splunk SOAR playbooks & source control** — <https://docs.splunk.com/Documentation/SOARonprem/current/Playbook/Overview>
 - **Jamf Developer docs** — <https://developer.jamf.com/jamf-pro/docs>
 
