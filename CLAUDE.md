@@ -5,8 +5,7 @@ A collection of **Splunk SOAR playbook templates** for the Jamf SOAR connector
 app. These playbooks orchestrate the connector's actions into incident-response
 flows (resolve device → contain → enrich/notify → timer → analyst approval gate
 → destructive step). This repo is NOT a connector — it holds reusable playbooks
-that *call* the app's actions. The companion app lives in `jamf-splunk-soar`
-(GitHub: `Jamf-Concepts/jamf-splunk-soar`).
+that *call* the app's actions. The companion app lives in `jamf-splunk-soar`.
 
 ## Documentation Rule
 After every code or doc change, update `docs/README.md` and this file. Do not

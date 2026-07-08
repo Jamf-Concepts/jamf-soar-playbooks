@@ -6,6 +6,16 @@ people who aren't deep in the playbooks.
 
 ---
 
+## 2026-07-08 — Point connector references at the public docs repo
+
+After the connector's code repo moved into the `jamf` org, the public-facing
+references here now point customers at the connector's **documentation** repo
+(`Jamf-Concepts/jamf-splunk-soar`) instead of the internal code repo — with a
+note that the connector is coming to Splunkbase at release. The internal GitHub
+link in `CLAUDE.md` was removed.
+
+---
+
 ## 2026-07-07 — Malicious App / File Containment (macOS) (in review, #3)
 
 New template. When a detection flags a malicious app on a Mac, this looks the
