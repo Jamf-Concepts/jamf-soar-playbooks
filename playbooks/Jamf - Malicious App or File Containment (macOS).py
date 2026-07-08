@@ -57,11 +57,14 @@ def decision_1(action=None, success=None, container=None, results=None, handle=N
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
+        logical_operator="and",
         conditions=[
-            ["get_device_by_name_1:action_result.summary.total", ">", 0]
+            ["get_device_by_name_1:action_result.summary.total", ">", 0],
+            ["get_device_by_name_1:action_result.status", "==", "success"]
         ],
         conditions_dps=[
-            ["get_device_by_name_1:action_result.summary.total", ">", 0]
+            ["get_device_by_name_1:action_result.summary.total", ">", 0],
+            ["get_device_by_name_1:action_result.status", "==", "success"]
         ],
         name="decision_1:condition_1",
         delimiter=None)
@@ -131,7 +134,7 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get installed applications", parameters=parameters, name="get_installed_applications_1", assets=["<your-jamf-asset>"], callback=decision_2)
+    phantom.act("get installed applications", parameters=parameters, name="get_installed_applications_1", assets=["<your-jamf-asset>"], callback=decision_4)
 
     return
 
@@ -143,11 +146,14 @@ def decision_2(action=None, success=None, container=None, results=None, handle=N
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
+        logical_operator="or",
         conditions=[
-            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"]
+            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"],
+            ["get_installed_applications_1:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
         ],
         conditions_dps=[
-            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"]
+            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"],
+            ["get_installed_applications_1:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
         ],
         name="decision_2:condition_1",
         delimiter=None)
@@ -221,7 +227,7 @@ def add_to_static_group_1(action=None, success=None, container=None, results=Non
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
-        if did is None or str(did) in seen:
+        if did is None or str(did) in seen or str(dtype) != "computer":
             continue
         seen.add(str(did))
         parameters.append({"device_type": dtype, "device_id": did,
@@ -267,7 +273,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
-        if did is None or str(did) in seen:
+        if did is None or str(did) in seen or str(dtype) != "computer":
             continue
         seen.add(str(did))
         parameters.append({"device_type": dtype, "device_id": did,
@@ -314,7 +320,7 @@ def send_blank_push_1(action=None, success=None, container=None, results=None, h
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
-        if did is None or str(did) in seen:
+        if did is None or str(did) in seen or str(dtype) != "computer":
             continue
         seen.add(str(did))
         parameters.append({"device_type": dtype, "device_id": did, "context": {"artifact_id": aid}})
@@ -440,7 +446,7 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
 
     phantom.save_block_result(key="code_3_called", value="True")
 
-    format_2(container=container)
+    decision_5(container=container)
 
     return
 
@@ -571,22 +577,17 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code Start
     ################################################################################
 
-    hosts = {str(r[0]) for r in phantom.collect2(container=container, datapath=["artifact:*.cef.deviceHostname"]) if r and r[0]}
-    files = {str(r[0]) for r in phantom.collect2(container=container, datapath=["artifact:*.cef.fileName"]) if r and r[0]}
-    parameters = []
-    if len(hosts) <= 1 and len(files) <= 1:          # one-detection guard — no wipe if multiple
-        rows = phantom.collect2(container=container, datapath=[
-            "get_device_by_name_1:action_result.data.*.id",
-            "get_device_by_name_1:action_result.data.*.type",
-            "get_device_by_name_1:action_result.parameter.context.artifact_id"])
-        seen = set()
-        for r in rows:
-            did, dtype, aid = r[0], r[1], r[2]
-            if did is None or str(did) in seen:
-                continue
-            seen.add(str(did))
-            parameters.append({"device_type": dtype, "device_id": did,
-                "confirm": str(did), "context": {"artifact_id": aid}})
+    rows = phantom.collect2(container=container, datapath=[
+        "get_device_by_name_1:action_result.data.*.id",
+        "get_device_by_name_1:action_result.data.*.type",
+        "get_device_by_name_1:action_result.parameter.context.artifact_id"])
+    seen, parameters = set(), []
+    for r in rows:
+        did, dtype, aid = r[0], r[1], r[2]
+        if did is None or str(did) in seen or str(dtype) != "computer":   # macOS-only
+            continue
+        seen.add(str(did))
+        parameters.append({"device_type": dtype, "device_id": did, "confirm": str(did), "context": {"artifact_id": aid}})
 
     ################################################################################
     ## Custom Code End
@@ -651,6 +652,108 @@ def code_5(action=None, success=None, container=None, results=None, handle=None,
     ################################################################################
 
     phantom.save_block_result(key="code_5_called", value="True")
+
+    return
+
+
+@phantom.playbook_block()
+def decision_4(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_4() called")
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_installed_applications_1:action_result.status", "==", "success"]
+        ],
+        conditions_dps=[
+            ["get_installed_applications_1:action_result.status", "==", "success"]
+        ],
+        name="decision_4:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        decision_2(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # check for 'else' condition 2
+    code_6(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_6(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_6() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    rows = phantom.collect2(container=container, datapath=["artifact:*.cef.fileName"])
+    fn = rows[0][0] if rows and rows[0] and rows[0][0] else "the flagged file"
+    phantom.add_note(container=container, note_type="general",
+        title="Malicious App Containment — Detection Inconclusive",
+        content="Could not confirm whether **" + str(fn) + "** is present — device app enumeration failed. **Device NOT contained.** Review manually.",
+        note_format="markdown")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_6_called", value="True")
+
+    return
+
+
+@phantom.playbook_block()
+def decision_5(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("decision_5() called")
+
+    # check for 'if' condition 1
+    found_match_1 = phantom.decision(
+        container=container,
+        conditions=[
+            ["get_device_by_name_1:action_result.summary.total", "<=", 1]
+        ],
+        conditions_dps=[
+            ["get_device_by_name_1:action_result.summary.total", "<=", 1]
+        ],
+        name="decision_5:condition_1",
+        delimiter=None)
+
+    # call connected blocks if condition 1 matched
+    if found_match_1:
+        format_2(action=action, success=success, container=container, results=results, handle=handle)
+        return
+
+    # check for 'else' condition 2
+    code_7(action=action, success=success, container=container, results=results, handle=handle)
+
+    return
+
+
+@phantom.playbook_block()
+def code_7(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("code_7() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    rows = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.summary.total"])
+    n = rows[0][0] if rows and rows[0] else "multiple"
+    phantom.add_note(container=container, note_type="general",
+        title="Malicious App Containment — Wipe Blocked",
+        content="The hostname matched **" + str(n) + " devices** — too broad to safely offer an irreversible wipe. Device(s) remain contained (isolated + locked). Review and re-run against a specific device.",
+        note_format="markdown")
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.save_block_result(key="code_7_called", value="True")
 
     return
 
