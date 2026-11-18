@@ -1,0 +1,16 @@
+title = "gitleaks config for jamf-soar-playbooks"
+
+[extend]
+useDefault = true
+
+# SOAR's Visual Playbook Editor stamps every decision/condition block with a
+# UUID-shaped identifier (comparison_key_*, condition_key_*) in the exported
+# .json graph. These are internal graph wiring IDs, not secrets, but their
+# entropy trips the default generic-api-key rule. New playbooks will keep
+# generating more of them, so allowlist the pattern rather than individual
+# fingerprints.
+[allowlist]
+regexes = [
+  '''comparison_key_[A-Za-z0-9_-]+''',
+  '''condition_key_[A-Za-z0-9_-]+''',
+]
