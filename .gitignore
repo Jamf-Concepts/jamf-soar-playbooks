@@ -73,6 +73,11 @@ logs/
 personal/
 
 # ---------------------------------------------------------------------------
-# Local AI assistant state (per-machine, never shared)
+# Claude Code: personal/local-only files. .claude/settings.json (if ever
+# added) would stay tracked and shared — only these are per-machine.
 # ---------------------------------------------------------------------------
-.claude/
+.claude/settings.local.json
+.claude/token-efficiency/
+
+# Playwright MCP tool scratch output
+.playwright-mcp/
