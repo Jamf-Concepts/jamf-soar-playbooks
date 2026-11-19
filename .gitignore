@@ -73,8 +73,7 @@ logs/
 personal/
 
 # ---------------------------------------------------------------------------
-# Claude Code: personal/local-only files. .claude/settings.json (if ever
-# added) would stay tracked and shared — only these are per-machine.
+# Claude Code: personal/local-only files.
 # ---------------------------------------------------------------------------
 .claude/settings.local.json
 .claude/token-efficiency/
