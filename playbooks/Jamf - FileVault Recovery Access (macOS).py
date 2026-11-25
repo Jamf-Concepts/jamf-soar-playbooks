@@ -1,21 +1,5 @@
-"""Jamf - FileVault Recovery Access (macOS) - playbook #7.
-
-Secured recovery access to a Mac after a compromise or during offboarding.
-Flow: resolve by serial (from the event artifact) -> (device found?) -> retrieve
-recovery context (FileVault personal recovery key [SENSITIVE], local user
-accounts, compliance status) -> secure (set recovery lock, lock device) ->
-note/notify -> analyst approval gate -> wipe device ONLY on approval; a decline
-or no-device path just adds a note.
-
-Template notes (replace before use):
-- Jamf asset on every action block         -> <your-jamf-asset>
-- Approval-prompt approver (user or role)   -> <security-analyst-role>
-- Recovery-lock password (prefer a secret)  -> <your-recovery-lock-password>
-- Lock-screen message / support phone       -> <your-lock-screen-message> / <your-support-phone>
-- Lock PIN defaults to 000000               -> replace with a chosen 6-digit unlock PIN
-- The FileVault recovery key is SENSITIVE   -> never route it to a broad channel/note.
-- Resolve reads the serial from artifact:*.cef.serialNumber.
-- code_1 is the notify step (a note) -> replace with a restricted-channel notifier.
+"""
+Accepts a Mac serial number from the event and retrieves its FileVault recovery key, local user accounts and compliance status, then sets a recovery lock and locks the device. An analyst must approve before the device is wiped; a decline, a timeout or a serial with no matching device only adds a note. Use to secure access to a Mac after a compromise or during offboarding.
 """
 
 
