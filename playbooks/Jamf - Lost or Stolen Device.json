@@ -4,7 +4,7 @@
     "category": "Uncategorized",
     "coa": {
         "data": {
-            "description": "",
+            "description": "Accepts a device serial number from the event. Mobile devices are put into Lost Mode and computers are locked, and a note records the result. An analyst must then approve before the device is wiped; a decline, a timeout or a serial with no matching device only adds a note.",
             "edges": [
                 {
                     "id": "port_0_to_port_30",
@@ -1276,7 +1276,7 @@
                     "y": 1320
                 }
             },
-            "notes": "",
+            "notes": "Inputs: device serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, enable lost mode (mobile), lock device (computer), wipe device (after analyst approval)\nOutputs: notes on the event\nBefore use, replace: <your-jamf-asset> on all 5 action blocks; <security-analyst-role> on the wipe-approval prompts; the computer lock PIN 000000 with your own 6-digit PIN; the lost or stolen lock-screen message.",
             "origin": {
                 "playbook_id": 234,
                 "playbook_name": "Jamf - Lost or Stolen Device",
