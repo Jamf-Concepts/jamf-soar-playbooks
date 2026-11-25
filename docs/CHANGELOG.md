@@ -1,5 +1,6 @@
 # Changelog — jamf-soar-playbooks
 
+- 2026-11-25 — Lost or Stolen Device: added a description and setup notes in SOAR's format; design notes moved to docs/design-notes/.
 - 2026-07-08 — Docs now point to the connector's public documentation instead of its internal repo.
 - 2026-07-07 — Added playbook: Malicious App or File Containment (macOS). Isolates and locks a Mac confirmed to have a flagged app installed; wipe requires analyst approval.
 - 2026-07-07 — Added playbook: Lost or Stolen Device. Locks computers / enables Lost Mode on mobile devices; wipe requires analyst approval.

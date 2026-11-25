@@ -1,35 +1,5 @@
 """
-Jamf - Lost or Stolen Device (macOS + mobile)
-
-Responds to a device reported lost or stolen:
-  resolve by serial -> (device found?) -> device_type?
-      mobile   -> enable lost mode -> note -> approval gate -> wipe on approval
-      computer -> lock device      -> note -> approval gate -> wipe on approval
-A decline / timeout / no-device path just writes a note. Never auto-wipes.
-
-Design notes:
-- The two device-type branches each carry their OWN note -> prompt -> wipe tail and
-  do NOT reconverge. Merging them onto one shared block makes SOAR insert a join that
-  waits for BOTH branches; only one runs per device, so that join never completes and
-  the note/prompt/wipe are skipped. Per-branch tails avoid the join.
-- Block names follow SOAR's <type>_<n> convention with a UNIQUE id per type
-  (decision_1..4, code_1..5, prompt_1..2, wipe_device_1..2); reusing an id within a
-  type makes SOAR generate two functions with the same name (function-redefined).
-- Single-match assumption: a serial should resolve to ONE device. The containment,
-  the wipe, and the disclosure note/prompt all act on EVERY matched row, so if a serial
-  ever matched >1 record the note warns and the wipe would erase all matches under one
-  approval. Hard-gating to exactly one match (route >1 to manual review) is a v2 item.
-- code_5 distinguishes a real "no device matched" from a PARTIAL lookup where one
-  platform (computer/mobile) was skipped for auth (get device by serial is best-effort
-  and returns success with summary.skipped) - so a privilege gap isn't read as a clean miss.
-
-Adaptation points (replace before use):
-  - <your-jamf-asset>       : your configured Jamf asset (on all 5 action blocks).
-  - <security-analyst-role> : the SOAR role the wipe-approval prompts route to.
-  - lock PIN "000000"   : replace with your 6-digit unlock PIN (computer lock).
-  - lock-screen message : the lost/stolen message shown on the device.
-Enrichment (#5 Device Enrichment Input) and quarantine (add to static group)
-are deferred to v2.
+Accepts a device serial number from the event. Mobile devices are put into Lost Mode and computers are locked, and a note records the result. An analyst must then approve before the device is wiped; a decline, a timeout or a serial with no matching device only adds a note.
 """
 
 
