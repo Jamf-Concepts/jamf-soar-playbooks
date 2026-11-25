@@ -1,0 +1,100 @@
+name: Phantomcyber Release Prep
+
+# Builds a flat, renamed tree of the shipped playbook pairs for hand-copying
+# into https://github.com/phantomcyber/playbooks. That repo has no per-vendor
+# subdirectories - every playbook is a .json/.py (/.png) triplet in the repo
+# root, named "<Vendor>_<Capability>_In_Title_Case_With_Underscores" (see
+# e.g. CrowdStrike_OAuth_API_Network_Isolation, Azure_AD_Account_Locking).
+#
+# This repo's own playbooks/*.json + *.py pairs are named "Jamf - <Scenario>"
+# (Title Case + dash, per the convention in CLAUDE.md) because the filename
+# IS the playbook's name as SOAR's VPE exports it - that naming is for this
+# repo's own consumption model (added directly as a SOAR source-control
+# repo), not a fit for phantomcyber/playbooks. So this workflow does a
+# git-side-only rename into the target repo's convention, the same way the
+# asset-placeholder scrub documented in CLAUDE.md is a git-side export step,
+# never fed back into the VPE.
+#
+# Each run pushes a new phantomcyber-release-<timestamp> branch (rather than
+# force-updating one fixed branch) so earlier snapshots aren't overwritten -
+# same reasoning as jamf-splunk-soar's public-snapshot workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release-prep:
+    name: Build phantomcyber/playbooks-shaped tree
+    runs-on: [self-hosted, jamf-ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set release timestamp
+        run: echo "RELEASE_TS=$(date -u +%Y%m%d-%H%M%S)" >> "$GITHUB_ENV"
+
+      - name: Rebuild the tree as a flat, renamed allowlist
+        run: |
+          set -euo pipefail
+
+          declare -A RENAME=(
+            ["Jamf - Compliance Drift and MDM Tamper Remediation"]="Jamf_Compliance_Drift_and_MDM_Tamper_Remediation"
+            ["Jamf - Compromised User Device Sweep"]="Jamf_Compromised_User_Device_Sweep"
+            ["Jamf - Device Enrichment (Input)"]="Jamf_Device_Enrichment_Input"
+            ["Jamf - Device Enrichment and Triage"]="Jamf_Device_Enrichment_and_Triage"
+            ["Jamf - FileVault Recovery Access (macOS)"]="Jamf_FileVault_Recovery_Access_macOS"
+            ["Jamf - IdP Breach Bulk Quarantine"]="Jamf_IdP_Breach_Bulk_Quarantine"
+            ["Jamf - Lost or Stolen Device"]="Jamf_Lost_or_Stolen_Device"
+            ["Jamf - Malicious App or File Containment (macOS)"]="Jamf_Malicious_App_or_File_Containment_macOS"
+          )
+
+          staging=$(mktemp -d)
+          for old in "${!RENAME[@]}"; do
+            new="${RENAME[$old]}"
+            for ext in json py png; do
+              src="playbooks/${old}.${ext}"
+              if [ -f "$src" ]; then
+                cp "$src" "${staging}/${new}.${ext}"
+              fi
+            done
+          done
+
+          # Replace the working tree with ONLY the renamed allowlist - this
+          # is an explicit allowlist, not an exclude-list, so a new internal
+          # file added later can never leak through by omission.
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          mv "${staging}"/* .
+          rmdir "$staging"
+
+      - name: Prepend copyright and license header to each .py
+        run: |
+          set -euo pipefail
+          year=$(date -u +%Y)
+          for f in *.py; do
+            if grep -q 'SPDX-License-Identifier' "$f"; then
+              continue
+            fi
+            tmp=$(mktemp)
+            {
+              printf '# Copyright %s, Jamf Software LLC\n' "$year"
+              printf '# SPDX-License-Identifier: MIT\n'
+              printf '# https://opensource.org/license/mit\n\n'
+              cat "$f"
+            } > "$tmp"
+            mv "$tmp" "$f"
+          done
+
+      - name: Commit release-prep tree
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: phantomcyber/playbooks release prep ($RELEASE_TS)" --quiet
+
+      - name: Push phantomcyber-release-<timestamp> branch
+        run: git push origin "HEAD:refs/heads/phantomcyber-release-${RELEASE_TS}"
