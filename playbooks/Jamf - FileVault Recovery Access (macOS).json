@@ -4,7 +4,7 @@
     "category": "Uncategorized",
     "coa": {
         "data": {
-            "description": "",
+            "description": "Accepts a Mac serial number from the event and retrieves its FileVault recovery key, local user accounts and compliance status, then sets a recovery lock and locks the device. An analyst must approve before the device is wiped; a decline, a timeout or a serial with no matching device only adds a note. Use to secure access to a Mac after a compromise or during offboarding.",
             "edges": [
                 {
                     "id": "port_0_to_port_2",
@@ -791,7 +791,7 @@
                     "y": 1040
                 }
             },
-            "notes": "",
+            "notes": "Inputs: Mac serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, get filevault recovery key, get local user accounts, get compliance status, set recovery lock, lock device, wipe device (after analyst approval)\nOutputs: notes on the event (the FileVault recovery key itself is never written to a note)\nBefore use, replace: <your-jamf-asset> on every action block; <security-analyst-role> on the approval prompt; <your-recovery-lock-password> (prefer a secret); <your-lock-screen-message> and <your-support-phone>; the lock PIN 000000 with your own 6-digit PIN. The code_1 notify step adds a note; replace it with a restricted-channel notifier if you need one.",
             "origin": {
                 "playbook_id": 182,
                 "playbook_name": "Jamf - FileVault Recovery Access (macOS)",
