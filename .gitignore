@@ -71,3 +71,12 @@ logs/
 # Local scratch space (not part of the repo)
 # ---------------------------------------------------------------------------
 personal/
+
+# ---------------------------------------------------------------------------
+# Claude Code: personal/local-only files.
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+.claude/token-efficiency/
+
+# Playwright MCP tool scratch output
+.playwright-mcp/
