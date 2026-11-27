@@ -79,7 +79,7 @@ Flow: `resolve_devices` → `devices_found?` → `check_compliance` → `build_q
 → `approve_bulk_quarantine` → `is_quarantine_approved?` → `quarantine_add_group` →
 `quarantine_lock` → `quarantine_push` → `report_results`.
 
-**Customer-config:** `<your-jamf-asset>`; computer + mobile quarantine groups
+**Customer-config:** a Jamf Pro asset named `jamf_pro` (or change the asset on each action block); computer + mobile quarantine groups
 (`<your-computer-quarantine-group>` / `<your-mobile-quarantine-group>`); lock PIN
 (`<your-6-digit-pin>`); approver role (`<your-security-analyst-role>`); batch cap (`MAX_DEVICES`).
 
@@ -101,11 +101,13 @@ all end the run safely at `note_no_drift` rather than escalating.
 Flow (v3, block names in order): `has_serial?` → `resolve_device` → `device_found?` →
 `redeploy_framework` → `force_checkin` → `check_compliance` → `is_compliant?` →
 `quarantine_device` → `lock_device` → `containment_ok?` → `approve_wipe` → `is_wipe_approved?`
-→ `wipe_device` → `wipe_ok?`. Every terminal path writes a container note (`has_serial` no →
+→ `wipe_device` → `note_wipe_outcome`. Every terminal path writes a container note (`has_serial` no →
 `note_no_serial`; `device_found` no → `note_no_device`; `is_compliant` else → `note_no_drift`;
 `containment_ok` no → `note_containment_failed`; `is_wipe_approved` no → `note_wipe_declined`;
-`wipe_ok` yes → `note_wipe_queued`, no → `note_wipe_failed`). `wipe_ok` gates the "ERASE queued"
-note on the wipe actually succeeding, so a failed erase never reports as queued. The wipe prompt
+`wipe_device` → `note_wipe_outcome`, which reads the wipe status and writes "ERASE queued" only when
+the wipe succeeded and "ERASE NOT queued" otherwise), so a failed erase never reports as queued. That
+block replaces the former `wipe_ok` decision and its two note blocks, keeping the playbook under Splunk's
+20-block limit. The wipe prompt
 is shown only if `containment_ok` confirms quarantine AND lock both succeeded.
 
 > **Deferred — enrichment stage.** Issue #4 also calls for an enrichment step
@@ -124,7 +126,7 @@ is shown only if `containment_ok` confirms quarantine AND lock both succeeded.
 > computers.
 
 **Customer-config points** (replace the `<...>` placeholders on import):
-- Jamf asset — `assets=["<your-jamf-asset>"]` on every action block
+- Jamf asset — a Jamf Pro asset named `jamf_pro` (or change the asset on each action block)
 - Quarantine static group — `group_name` on `quarantine_device`
 - Lock PIN — `<your-6-digit-pin>` on `lock_device` (the `wipe_device` erase PIN was dropped — modern Macs don't use it)
 - Lock return message + callback number — on `lock_device`
@@ -148,15 +150,15 @@ recovery key, local user accounts, and compliance status. It secures the Mac (se
 lock device), adds a note, and holds at an analyst approval gate. The wipe runs **only** on
 approval; a decline or a no-device path just adds a note.
 
-Flow: `get_device_by_serial` → device found? → `get_filevault_recovery_key` →
-`get_local_user_accounts` → `get_compliance_status` → `set_recovery_lock` → `lock_device` →
-note/notify → `prompt` → `wipe_device`.
+Flow: `find mac by serial` → `device found` → `get filevault key` → `get local accounts` →
+`get compliance status` → `set recovery lock` → `lock mac` → `note step outcomes` →
+`approve wipe` → `wipe approved` → `wipe mac`.
 
 > **The FileVault recovery key is sensitive.** Never route it to a broad channel or a
 > container note. The notify step ships as a plain note — replace it with a restricted-channel
 > notifier before use.
 
-**Customer-config:** `<your-jamf-asset>`; approver role (`<security-analyst-role>`);
+**Customer-config:** a Jamf Pro asset named `jamf_pro` (or change the asset on each action block); approver role (`<security-analyst-role>`);
 recovery-lock password (`<your-recovery-lock-password>`, prefer a secret); lock-screen message
 and support phone (`<your-lock-screen-message>` / `<your-support-phone>`); lock PIN (defaults to
 `000000` — replace with a chosen 6-digit PIN).
@@ -169,7 +171,7 @@ and locks it. It posts a containment summary with per-device status, then a sing
 that enumerates the whole fleet before any wipe. The wipe runs only on approval and sets
 `confirm` to the device ID, as the connector requires.
 
-**Customer-config:** `<your-jamf-asset>`; computer and mobile suspended groups
+**Customer-config:** a Jamf Pro asset named `jamf_pro` (or change the asset on each action block); computer and mobile suspended groups
 (`<your-computer-suspended-group-id>` / `<your-mobile-suspended-group-id>`); callback number
 (`<your-callback-number>`); approver role (`<your-approver-role>`).
 
@@ -186,6 +188,9 @@ path just writes a note.
   the disclosure note and prompt all act on every matched row, so a serial matching more than one
   record would be erased under one approval. The note warns when that happens; hard-gating to
   exactly one match is not implemented.
+- **One block per wipe result.** `note mobile wipe outcome` / `note computer wipe outcome` read the
+  wipe status and write the "queued" or "failed" note, which keeps the playbook at Splunk's
+  20-block limit.
 - **Partial lookups.** `get device by serial` is best-effort and returns success with
   `summary.skipped` when one platform was skipped for auth. The no-device path distinguishes that
   from a clean miss, so a privilege gap isn't read as "no such device".
@@ -193,7 +198,7 @@ path just writes a note.
 Enrichment (the Device Enrichment Input sub-playbook) and quarantine (add to static group) are
 not included.
 
-**Customer-config:** `<your-jamf-asset>` (on all five action blocks); approver role
+**Customer-config:** a Jamf Pro asset named `jamf_pro` (or change the asset on all five action blocks); approver role
 (`<security-analyst-role>`); lock PIN (`000000` — replace with a 6-digit PIN); lock-screen message.
 
 ### `Jamf - Malicious App or File Containment (macOS)`
@@ -204,7 +209,7 @@ installed-apps read fails, the run ends with a note and takes no containment. If
 the playbook isolates the device (static group, lock, blank push) with an honest per-action status,
 then holds at an analyst approval gate before any wipe. Each container should carry one detection.
 
-**Customer-config:** `<your-jamf-asset>`; isolation group (`<your-isolation-group-id>`);
+**Customer-config:** a Jamf Pro asset named `jamf_pro` (or change the asset on each action block); isolation group (`<your-isolation-group-id>`);
 callback number (`<your-callback-number>`); approver role (`<your-approver-role>`).
 
 ## Required Jamf capabilities

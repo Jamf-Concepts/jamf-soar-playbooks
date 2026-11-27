@@ -70,6 +70,43 @@ jobs:
           mv "${staging}"/* .
           rmdir "$staging"
 
+      - name: Point sub-playbook calls at the renamed community playbooks
+        # phantomcyber/playbooks lives in SOAR's "community" repo, and the files were just
+        # renamed, so a call such as "jamf-soar-playbooks/Jamf - Device Enrichment (Input)"
+        # must become "community/Jamf_Device_Enrichment_Input" or the parent playbook fails.
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          def renamed(old):
+              new = old.replace(" - ", "_").replace("(", "").replace(")", "").replace(" ", "_")
+              assert Path(f"{new}.json").is_file(), f"sub-playbook target {old!r} -> {new!r} is not in the tree"
+              return new
+
+          for jp in sorted(Path(".").glob("*.json")):
+              d = json.loads(jp.read_text())
+              calls = {}
+              for node in d["coa"]["data"]["nodes"].values():
+                  data = node["data"]
+                  if node.get("type") == "playbook":
+                      old_ref = f'{data["playbookRepoName"]}/{data["playbookName"]}'
+                      data["playbookName"] = renamed(data["playbookName"])
+                      data["playbookRepoName"] = "community"
+                      calls[old_ref] = f'community/{data["playbookName"]}'
+              if not calls:
+                  continue
+              jp.write_text(json.dumps(d, indent=4))
+              pp = jp.with_suffix(".py")
+              py = pp.read_text()
+              for old_ref, new_ref in calls.items():
+                  assert f'phantom.playbook("{old_ref}"' in py, (pp.name, old_ref)
+                  py = py.replace(f'phantom.playbook("{old_ref}"', f'phantom.playbook("{new_ref}"')
+              pp.write_text(py)
+              print(f"{jp.stem}: {calls}")
+          PY
+
       - name: Prepend copyright and license header to each .py
         run: |
           set -euo pipefail

@@ -1,5 +1,5 @@
 """
-
+Accepts a device hostname and a flagged file name from the event, looks up the Mac in Jamf and checks its installed applications for the flagged app. If it is present, the Mac is added to an isolation group, locked and sent a blank push, and a note reports the actual result of each action. An analyst must approve before any wipe, and the wipe is blocked if the hostname matches more than one device. If the app is not found or cannot be confirmed, only a note is added.
 """
 
 
@@ -12,22 +12,26 @@ from datetime import datetime, timedelta
 def on_start(container):
     phantom.debug('on_start() called')
 
-    # call 'get_device_by_name_1' block
-    get_device_by_name_1(container=container)
+    # call 'find_mac_by_hostname' block
+    find_mac_by_hostname(container=container)
 
     return
 
 @phantom.playbook_block()
-def get_device_by_name_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_device_by_name_1() called")
+def find_mac_by_hostname(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("find_mac_by_hostname() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Looks up the Mac in Jamf Pro by the hostname from the event artifact.
+    ################################################################################
 
     container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.deviceHostname","artifact:*.id"])
 
     parameters = []
 
-    # build parameters list for 'get_device_by_name_1' call
+    # build parameters list for 'find_mac_by_hostname' call
     for container_artifact_item in container_artifact_data:
         if container_artifact_item[0] is not None:
             parameters.append({
@@ -45,44 +49,52 @@ def get_device_by_name_1(action=None, success=None, container=None, results=None
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by name", parameters=parameters, name="get_device_by_name_1", assets=["<your-jamf-asset>"], callback=decision_1)
+    phantom.act("get device by name", parameters=parameters, name="find_mac_by_hostname", assets=["jamf_pro"], callback=device_found)
 
     return
 
 
 @phantom.playbook_block()
-def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_1() called")
+def device_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("device_found() called")
+
+    ################################################################################
+    # Continues only if the lookup succeeded and returned at least one device.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         logical_operator="and",
         conditions=[
-            ["get_device_by_name_1:action_result.summary.total", ">", 0],
-            ["get_device_by_name_1:action_result.status", "==", "success"]
+            ["find_mac_by_hostname:action_result.summary.total", ">", 0],
+            ["find_mac_by_hostname:action_result.status", "==", "success"]
         ],
         conditions_dps=[
-            ["get_device_by_name_1:action_result.summary.total", ">", 0],
-            ["get_device_by_name_1:action_result.status", "==", "success"]
+            ["find_mac_by_hostname:action_result.summary.total", ">", 0],
+            ["find_mac_by_hostname:action_result.status", "==", "success"]
         ],
-        name="decision_1:condition_1",
+        name="device_found:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        get_installed_applications_1(action=action, success=success, container=container, results=results, handle=handle)
+        get_installed_apps(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_1(action=action, success=success, container=container, results=results, handle=handle)
+    note_no_device(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1() called")
+def note_no_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_no_device() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note when no device matched the hostname.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
@@ -100,28 +112,32 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_1_called", value="True")
+    phantom.save_block_result(key="note_no_device_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def get_installed_applications_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_installed_applications_1() called")
+def get_installed_apps(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("get_installed_apps() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_name_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.data.*.type","get_device_by_name_1:action_result.data.*.id","get_device_by_name_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Lists the applications installed on the Mac.
+    ################################################################################
+
+    find_mac_by_hostname_result_data = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.data.*.id","find_mac_by_hostname:action_result.data.*.type","find_mac_by_hostname:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'get_installed_applications_1' call
-    for get_device_by_name_1_result_item in get_device_by_name_1_result_data:
-        if get_device_by_name_1_result_item[1] is not None:
+    # build parameters list for 'get_installed_apps' call
+    for find_mac_by_hostname_result_item in find_mac_by_hostname_result_data:
+        if find_mac_by_hostname_result_item[0] is not None:
             parameters.append({
-                "device_type": get_device_by_name_1_result_item[0],
-                "device_id": get_device_by_name_1_result_item[1],
-                "context": {'artifact_id': get_device_by_name_1_result_item[2]},
+                "device_id": find_mac_by_hostname_result_item[0],
+                "device_type": find_mac_by_hostname_result_item[1],
+                "context": {'artifact_id': find_mac_by_hostname_result_item[2]},
             })
 
     ################################################################################
@@ -134,46 +150,55 @@ def get_installed_applications_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get installed applications", parameters=parameters, name="get_installed_applications_1", assets=["<your-jamf-asset>"], callback=decision_4)
+    phantom.act("get installed applications", parameters=parameters, name="get_installed_apps", assets=["jamf_pro"], callback=app_found)
 
     return
 
 
 @phantom.playbook_block()
-def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_2() called")
+def app_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("app_found() called")
+
+    ################################################################################
+    # Contains the Mac only if the flagged app is among its installed applications.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         logical_operator="or",
         conditions=[
-            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"],
-            ["get_installed_applications_1:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
+            ["artifact:*.cef.fileName", "in", "get_installed_apps:action_result.data.*.name"],
+            ["get_installed_apps:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
         ],
         conditions_dps=[
-            ["artifact:*.cef.fileName", "in", "get_installed_applications_1:action_result.data.*.name"],
-            ["get_installed_applications_1:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
+            ["artifact:*.cef.fileName", "in", "get_installed_apps:action_result.data.*.name"],
+            ["get_installed_apps:action_result.data.*.name", "in", "artifact:*.cef.fileName"]
         ],
-        name="decision_2:condition_1",
+        name="app_found:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        add_to_static_group_1(action=action, success=success, container=container, results=results, handle=handle)
-        lock_device_1(action=action, success=success, container=container, results=results, handle=handle)
-        send_blank_push_1(action=action, success=success, container=container, results=results, handle=handle)
+        add_to_isolation_group(action=action, success=success, container=container, results=results, handle=handle)
+        lock_mac(action=action, success=success, container=container, results=results, handle=handle)
+        send_blank_push(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_2(action=action, success=success, container=container, results=results, handle=handle)
+    note_not_contained(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_2() called")
+def note_not_contained(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_not_contained() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note when the flagged app was not found, 
+    # or when the app list could not be read.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
@@ -181,38 +206,51 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
 
     rows = phantom.collect2(container=container, datapath=["artifact:*.cef.fileName"])
     fn = rows[0][0] if rows and rows[0] and rows[0][0] else "the flagged file"
-    phantom.add_note(container=container, note_type="general",
-        title="Malicious File Containment — Detection",
-        content="Flagged file **" + str(fn) + "** was not found among the device's installed apps — no containment taken.",
-        note_format="markdown")
-    
+    st = phantom.collect2(container=container, datapath=["get_installed_apps:action_result.status"], action_results=results)
+    statuses = [str(r[0]).lower() if r and r[0] else "missing" for r in st]
+    lookup_ok = bool(statuses) and all(s == "success" for s in statuses)
+
+    if not lookup_ok:
+        phantom.add_note(container=container, note_type="general",
+            title="Malicious App Containment — Detection Inconclusive",
+            content="Could not confirm whether **" + str(fn) + "** is present — device app enumeration failed. **Device NOT contained.** Review manually.",
+            note_format="markdown")
+    else:
+        phantom.add_note(container=container, note_type="general",
+            title="Malicious File Containment — Detection",
+            content="Flagged file **" + str(fn) + "** was not found among the device's installed apps — no containment taken.",
+            note_format="markdown")
     ################################################################################
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_2_called", value="True")
+    phantom.save_block_result(key="note_not_contained_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def add_to_static_group_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("add_to_static_group_1() called")
+def add_to_isolation_group(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("add_to_isolation_group() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_name_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.data.*.type","get_device_by_name_1:action_result.data.*.id","get_device_by_name_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # This block uses custom code. Adds the Mac to the isolation group.
+    ################################################################################
+
+    find_mac_by_hostname_result_data = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.data.*.id","find_mac_by_hostname:action_result.data.*.type","find_mac_by_hostname:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'add_to_static_group_1' call
-    for get_device_by_name_1_result_item in get_device_by_name_1_result_data:
-        if get_device_by_name_1_result_item[1] is not None:
+    # build parameters list for 'add_to_isolation_group' call
+    for find_mac_by_hostname_result_item in find_mac_by_hostname_result_data:
+        if find_mac_by_hostname_result_item[0] is not None:
             parameters.append({
-                "device_type": get_device_by_name_1_result_item[0],
-                "device_id": get_device_by_name_1_result_item[1],
                 "group_id": "<your-isolation-group-id>",
-                "context": {'artifact_id': get_device_by_name_1_result_item[2]},
+                "device_id": find_mac_by_hostname_result_item[0],
+                "device_type": find_mac_by_hostname_result_item[1],
+                "context": {'artifact_id': find_mac_by_hostname_result_item[2]},
             })
 
     ################################################################################
@@ -221,9 +259,9 @@ def add_to_static_group_1(action=None, success=None, container=None, results=Non
 
     ISOLATION_GROUP = "<your-isolation-group-id>"
     rows = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.id",
-        "get_device_by_name_1:action_result.data.*.type",
-        "get_device_by_name_1:action_result.parameter.context.artifact_id"])
+        "find_mac_by_hostname:action_result.data.*.id",
+        "find_mac_by_hostname:action_result.data.*.type",
+        "find_mac_by_hostname:action_result.parameter.context.artifact_id"])
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
@@ -237,39 +275,43 @@ def add_to_static_group_1(action=None, success=None, container=None, results=Non
     ## Custom Code End
     ################################################################################
 
-    phantom.act("add to static group", parameters=parameters, name="add_to_static_group_1", assets=["<your-jamf-asset>"], callback=join_format_1)
+    phantom.act("add to static group", parameters=parameters, name="add_to_isolation_group", assets=["jamf_pro"], callback=join_format_containment_results)
 
     return
 
 
 @phantom.playbook_block()
-def lock_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("lock_device_1() called")
+def lock_mac(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("lock_mac() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_name_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.data.*.type","get_device_by_name_1:action_result.data.*.id","get_device_by_name_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # This block uses custom code. Locks the Mac.
+    ################################################################################
+
+    find_mac_by_hostname_result_data = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.data.*.id","find_mac_by_hostname:action_result.data.*.type","find_mac_by_hostname:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'lock_device_1' call
-    for get_device_by_name_1_result_item in get_device_by_name_1_result_data:
-        if get_device_by_name_1_result_item[1] is not None:
+    # build parameters list for 'lock_mac' call
+    for find_mac_by_hostname_result_item in find_mac_by_hostname_result_data:
+        if find_mac_by_hostname_result_item[0] is not None:
             parameters.append({
-                "device_type": get_device_by_name_1_result_item[0],
-                "device_id": get_device_by_name_1_result_item[1],
-                "context": {'artifact_id': get_device_by_name_1_result_item[2]},
+                "device_id": find_mac_by_hostname_result_item[0],
+                "device_type": find_mac_by_hostname_result_item[1],
+                "context": {'artifact_id': find_mac_by_hostname_result_item[2]},
             })
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    import random
+    import secrets
     rows = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.id",
-        "get_device_by_name_1:action_result.data.*.type",
-        "get_device_by_name_1:action_result.parameter.context.artifact_id"])
+        "find_mac_by_hostname:action_result.data.*.id",
+        "find_mac_by_hostname:action_result.data.*.type",
+        "find_mac_by_hostname:action_result.parameter.context.artifact_id"])
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
@@ -277,7 +319,7 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
             continue
         seen.add(str(did))
         parameters.append({"device_type": dtype, "device_id": did,
-            "pin": str(random.randint(100000, 999999)),
+            "pin": str(100000 + secrets.randbelow(900000)),
             "message": "This device has been isolated by security (detected malicious app). Contact IT.",
             "phone_number": "<your-callback-number>", "context": {"artifact_id": aid}})
 
@@ -285,28 +327,32 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["<your-jamf-asset>"], callback=join_format_1)
+    phantom.act("lock device", parameters=parameters, name="lock_mac", assets=["jamf_pro"], callback=join_format_containment_results)
 
     return
 
 
 @phantom.playbook_block()
-def send_blank_push_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("send_blank_push_1() called")
+def send_blank_push(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("send_blank_push() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_name_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.data.*.type","get_device_by_name_1:action_result.data.*.id","get_device_by_name_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # This block uses custom code. Sends a blank push so the Mac checks in.
+    ################################################################################
+
+    find_mac_by_hostname_result_data = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.data.*.id","find_mac_by_hostname:action_result.data.*.type","find_mac_by_hostname:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'send_blank_push_1' call
-    for get_device_by_name_1_result_item in get_device_by_name_1_result_data:
-        if get_device_by_name_1_result_item[1] is not None:
+    # build parameters list for 'send_blank_push' call
+    for find_mac_by_hostname_result_item in find_mac_by_hostname_result_data:
+        if find_mac_by_hostname_result_item[0] is not None:
             parameters.append({
-                "device_type": get_device_by_name_1_result_item[0],
-                "device_id": get_device_by_name_1_result_item[1],
-                "context": {'artifact_id': get_device_by_name_1_result_item[2]},
+                "device_id": find_mac_by_hostname_result_item[0],
+                "device_type": find_mac_by_hostname_result_item[1],
+                "context": {'artifact_id': find_mac_by_hostname_result_item[2]},
             })
 
     ################################################################################
@@ -314,9 +360,9 @@ def send_blank_push_1(action=None, success=None, container=None, results=None, h
     ################################################################################
 
     rows = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.id",
-        "get_device_by_name_1:action_result.data.*.type",
-        "get_device_by_name_1:action_result.parameter.context.artifact_id"])
+        "find_mac_by_hostname:action_result.data.*.id",
+        "find_mac_by_hostname:action_result.data.*.type",
+        "find_mac_by_hostname:action_result.parameter.context.artifact_id"])
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
@@ -329,25 +375,29 @@ def send_blank_push_1(action=None, success=None, container=None, results=None, h
     ## Custom Code End
     ################################################################################
 
-    phantom.act("send blank push", parameters=parameters, name="send_blank_push_1", assets=["<your-jamf-asset>"], callback=join_format_1)
+    phantom.act("send blank push", parameters=parameters, name="send_blank_push", assets=["jamf_pro"], callback=join_format_containment_results)
 
     return
 
 
 @phantom.playbook_block()
-def join_format_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("join_format_1() called")
+def join_format_containment_results(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("join_format_containment_results() called")
 
-    if phantom.completed(action_names=["add_to_static_group_1", "lock_device_1", "send_blank_push_1"]):
-        # call connected block "format_1"
-        format_1(container=container, handle=handle)
+    if phantom.completed(action_names=["add_to_isolation_group", "lock_mac", "send_blank_push"]):
+        # call connected block "format_containment_results"
+        format_containment_results(container=container, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def format_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("format_1() called")
+def format_containment_results(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("format_containment_results() called")
+
+    ################################################################################
+    # This block uses custom code. Formats the actual result of each containment action.
+    ################################################################################
 
     template = """"""
 
@@ -359,8 +409,8 @@ def format_1(action=None, success=None, container=None, results=None, handle=Non
     ################################################################################
 
     dev = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.id",
-        "get_device_by_name_1:action_result.data.*.general.name"])
+        "find_mac_by_hostname:action_result.data.*.id",
+        "find_mac_by_hostname:action_result.data.*.general.name"])
     seen, devs = set(), []
     for r in dev:
         if r[0] is not None and str(r[0]) not in seen:
@@ -368,7 +418,7 @@ def format_1(action=None, success=None, container=None, results=None, handle=Non
 
     fr = phantom.collect2(container=container, datapath=["artifact:*.cef.fileName"])
     flagged_all = sorted({str(x[0]) for x in fr if x and x[0]})
-    ap = phantom.collect2(container=container, datapath=["get_installed_applications_1:action_result.data.*.name"])
+    ap = phantom.collect2(container=container, datapath=["get_installed_apps:action_result.data.*.name"])
     app_names = [str(a[0]) for a in ap if a and a[0]]
     confirmed = sorted({f for f in flagged_all for a in app_names if f in a or a in f})
     flagged = ", ".join(confirmed) or "(none matched)"
@@ -386,10 +436,10 @@ def format_1(action=None, success=None, container=None, results=None, handle=Non
         return {str(x[0]): str(x[1]).lower() for x in rows if x and x[0] is not None}
     def _pin(did):
         rows = phantom.collect2(container=container, datapath=[
-            "lock_device_1:action_result.parameter.device_id", "lock_device_1:action_result.parameter.pin"])
+            "lock_mac:action_result.parameter.device_id", "lock_mac:action_result.parameter.pin"])
         m = {str(x[0]): x[1] for x in rows if x and x[0] is not None}
         return m.get(str(did))
-    grp, lok, psh = _stat("add_to_static_group_1"), _stat("lock_device_1"), _stat("send_blank_push_1")
+    grp, lok, psh = _stat("add_to_isolation_group"), _stat("lock_mac"), _stat("send_blank_push")
     def mark(m, did):
         s = m.get(str(did))
         return "✅" if s == "success" else ("⚠️ FAILED" if s else "— not attempted")
@@ -413,22 +463,27 @@ def format_1(action=None, success=None, container=None, results=None, handle=Non
     ## Custom Code End
     ################################################################################
 
-    phantom.format(container=container, template=template, parameters=parameters, name="format_1")
+    phantom.format(container=container, template=template, parameters=parameters, name="format_containment_results")
 
-    code_3(container=container)
+    note_containment_results(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_3() called")
+def note_containment_results(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_containment_results() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note with the result of each containment 
+    # action.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    text = phantom.get_format_data(name="format_1")
+    text = phantom.get_format_data(name="format_containment_results")
     def _flat(x):
         out = []
         if isinstance(x, (list, tuple)):
@@ -444,16 +499,21 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_3_called", value="True")
+    phantom.save_block_result(key="note_containment_results_called", value="True")
 
-    decision_5(container=container)
+    single_device(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def format_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("format_2() called")
+def format_wipe_prompt(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("format_wipe_prompt() called")
+
+    ################################################################################
+    # This block uses custom code. Builds the device details shown in the wipe approval 
+    # prompt.
+    ################################################################################
 
     template = """"""
 
@@ -465,8 +525,8 @@ def format_2(action=None, success=None, container=None, results=None, handle=Non
     ################################################################################
 
     dev = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.general.name",
-        "get_device_by_name_1:action_result.data.*.id"])
+        "find_mac_by_hostname:action_result.data.*.general.name",
+        "find_mac_by_hostname:action_result.data.*.id"])
     seen, names = set(), []
     for r in dev:
         did = r[1]
@@ -484,16 +544,20 @@ def format_2(action=None, success=None, container=None, results=None, handle=Non
     ## Custom Code End
     ################################################################################
 
-    phantom.format(container=container, template=template, parameters=parameters, name="format_2")
+    phantom.format(container=container, template=template, parameters=parameters, name="format_wipe_prompt")
 
-    prompt_1(container=container)
+    approve_wipe(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("prompt_1() called")
+def approve_wipe(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("approve_wipe() called")
+
+    ################################################################################
+    # Asks an analyst whether to wipe the Mac. Times out after 30 minutes.
+    ################################################################################
 
     # set approver and message variables for phantom.prompt call
 
@@ -503,7 +567,7 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 
     # parameter list for template variable replacement
     parameters = [
-        "format_2:formatted_data"
+        "format_wipe_prompt:formatted_data"
     ]
 
     # responses
@@ -521,56 +585,64 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
         }
     ]
 
-    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_1", parameters=parameters, response_types=response_types, callback=decision_3)
+    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="approve_wipe", parameters=parameters, response_types=response_types, callback=wipe_approved)
 
     return
 
 
 @phantom.playbook_block()
-def decision_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_3() called")
+def wipe_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_approved() called")
+
+    ################################################################################
+    # Wipes the Mac only if the analyst chose Wipe.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["prompt_1:action_result.summary.responses.0", "==", "Wipe"]
+            ["approve_wipe:action_result.summary.responses.0", "==", "Wipe"]
         ],
         conditions_dps=[
-            ["prompt_1:action_result.summary.responses.0", "==", "Wipe"]
+            ["approve_wipe:action_result.summary.responses.0", "==", "Wipe"]
         ],
-        name="decision_3:condition_1",
+        name="wipe_approved:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
+        wipe_mac(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_5(action=action, success=success, container=container, results=results, handle=handle)
+    note_wipe_not_approved(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def wipe_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("wipe_device_1() called")
+def wipe_mac(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_mac() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_name_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.data.*.type","get_device_by_name_1:action_result.data.*.id","get_device_by_name_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # This block uses custom code. Erases the Mac. Runs only after analyst approval.
+    ################################################################################
+
+    find_mac_by_hostname_result_data = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.data.*.id","find_mac_by_hostname:action_result.data.*.type","find_mac_by_hostname:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'wipe_device_1' call
-    for get_device_by_name_1_result_item in get_device_by_name_1_result_data:
-        if get_device_by_name_1_result_item[1] is not None:
+    # build parameters list for 'wipe_mac' call
+    for find_mac_by_hostname_result_item in find_mac_by_hostname_result_data:
+        if find_mac_by_hostname_result_item[0] is not None:
             parameters.append({
-                "device_type": get_device_by_name_1_result_item[0],
-                "device_id": get_device_by_name_1_result_item[1],
                 "confirm": True,
-                "context": {'artifact_id': get_device_by_name_1_result_item[2]},
+                "device_id": find_mac_by_hostname_result_item[0],
+                "device_type": find_mac_by_hostname_result_item[1],
+                "context": {'artifact_id': find_mac_by_hostname_result_item[2]},
             })
 
     ################################################################################
@@ -578,9 +650,9 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ################################################################################
 
     rows = phantom.collect2(container=container, datapath=[
-        "get_device_by_name_1:action_result.data.*.id",
-        "get_device_by_name_1:action_result.data.*.type",
-        "get_device_by_name_1:action_result.parameter.context.artifact_id"])
+        "find_mac_by_hostname:action_result.data.*.id",
+        "find_mac_by_hostname:action_result.data.*.type",
+        "find_mac_by_hostname:action_result.parameter.context.artifact_id"])
     seen, parameters = set(), []
     for r in rows:
         did, dtype, aid = r[0], r[1], r[2]
@@ -593,23 +665,27 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"], callback=code_4)
+    phantom.act("wipe device", parameters=parameters, name="wipe_mac", assets=["jamf_pro"], callback=note_wipe_outcome)
 
     return
 
 
 @phantom.playbook_block()
-def code_4(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_4() called")
+def note_wipe_outcome(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_wipe_outcome() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note with the result of the wipe.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
     rows = phantom.collect2(container=container, datapath=[
-        "wipe_device_1:action_result.parameter.device_id",
-        "wipe_device_1:action_result.status",
-        "wipe_device_1:action_result.message"])
+        "wipe_mac:action_result.parameter.device_id",
+        "wipe_mac:action_result.status",
+        "wipe_mac:action_result.message"])
     if not rows:
         body = "_Wipe not executed (no approval, or blocked — multiple detections)._"
     else:
@@ -629,14 +705,19 @@ def code_4(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_4_called", value="True")
+    phantom.save_block_result(key="note_wipe_outcome_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def code_5(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_5() called")
+def note_wipe_not_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_wipe_not_approved() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note that the wipe was not approved or the 
+    # prompt timed out.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
@@ -651,98 +732,56 @@ def code_5(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_5_called", value="True")
+    phantom.save_block_result(key="note_wipe_not_approved_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def decision_4(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_4() called")
+def single_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("single_device() called")
+
+    ################################################################################
+    # Asks for wipe approval only if the hostname matched exactly one device.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["get_installed_applications_1:action_result.status", "==", "success"]
+            ["find_mac_by_hostname:action_result.summary.total", "<=", 1]
         ],
         conditions_dps=[
-            ["get_installed_applications_1:action_result.status", "==", "success"]
+            ["find_mac_by_hostname:action_result.summary.total", "<=", 1]
         ],
-        name="decision_4:condition_1",
+        name="single_device:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        decision_2(action=action, success=success, container=container, results=results, handle=handle)
+        format_wipe_prompt(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_6(action=action, success=success, container=container, results=results, handle=handle)
+    note_wipe_blocked(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def code_6(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_6() called")
+def note_wipe_blocked(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_wipe_blocked() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note that the wipe was blocked because the 
+    # hostname matched more than one device.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    rows = phantom.collect2(container=container, datapath=["artifact:*.cef.fileName"])
-    fn = rows[0][0] if rows and rows[0] and rows[0][0] else "the flagged file"
-    phantom.add_note(container=container, note_type="general",
-        title="Malicious App Containment — Detection Inconclusive",
-        content="Could not confirm whether **" + str(fn) + "** is present — device app enumeration failed. **Device NOT contained.** Review manually.",
-        note_format="markdown")
-
-    ################################################################################
-    ## Custom Code End
-    ################################################################################
-
-    phantom.save_block_result(key="code_6_called", value="True")
-
-    return
-
-
-@phantom.playbook_block()
-def decision_5(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_5() called")
-
-    # check for 'if' condition 1
-    found_match_1 = phantom.decision(
-        container=container,
-        conditions=[
-            ["get_device_by_name_1:action_result.summary.total", "<=", 1]
-        ],
-        conditions_dps=[
-            ["get_device_by_name_1:action_result.summary.total", "<=", 1]
-        ],
-        name="decision_5:condition_1",
-        delimiter=None)
-
-    # call connected blocks if condition 1 matched
-    if found_match_1:
-        format_2(action=action, success=success, container=container, results=results, handle=handle)
-        return
-
-    # check for 'else' condition 2
-    code_7(action=action, success=success, container=container, results=results, handle=handle)
-
-    return
-
-
-@phantom.playbook_block()
-def code_7(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_7() called")
-
-    ################################################################################
-    ## Custom Code Start
-    ################################################################################
-
-    rows = phantom.collect2(container=container, datapath=["get_device_by_name_1:action_result.summary.total"])
+    rows = phantom.collect2(container=container, datapath=["find_mac_by_hostname:action_result.summary.total"])
     n = rows[0][0] if rows and rows[0] else "multiple"
     phantom.add_note(container=container, note_type="general",
         title="Malicious App Containment — Wipe Blocked",
@@ -753,7 +792,7 @@ def code_7(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_7_called", value="True")
+    phantom.save_block_result(key="note_wipe_blocked_called", value="True")
 
     return
 

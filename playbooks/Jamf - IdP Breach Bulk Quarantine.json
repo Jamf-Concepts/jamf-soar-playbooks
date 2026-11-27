@@ -4,7 +4,7 @@
     "category": "Jamf Incident Response",
     "coa": {
         "data": {
-            "description": "Jamf - IdP Breach Bulk Quarantine (batched up-front approval, no bulk wipe).",
+            "description": "Accepts usernames from the event, finds the affected Jamf devices and posts the full list as a note. A single analyst approval covers the whole batch; if more devices are found than the batch limit (25 by default), the run stops with a note instead. On approval, each device is added to a quarantine group, locked and sent a blank push, and a final note reports the actual result of every action. Devices are never wiped.",
             "edges": [
                 {
                     "id": "port_0_to_port_2",
@@ -150,7 +150,7 @@
                     "targetPort": "1_in"
                 }
             ],
-            "hash": "",
+            "hash": "3f71b61f652453212c5ecc057d696f0e90eb2156",
             "nodes": {
                 "0": {
                     "data": {
@@ -165,8 +165,8 @@
                     "id": "0",
                     "type": "start",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 100
+                    "x": 1430,
+                    "y": 199.99999999999994
                 },
                 "1": {
                     "data": {
@@ -181,13 +181,17 @@
                     "id": "1",
                     "type": "end",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 1700
+                    "x": 1430,
+                    "y": 2148
                 },
                 "10": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "is quarantine approved",
+                            "customNameId": 0,
+                            "description": "Quarantines the devices only if the analyst answered Yes.",
+                            "join": [],
+                            "note": "Quarantines the devices only if the analyst answered Yes."
                         },
                         "conditions": [
                             {
@@ -201,6 +205,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_10_if",
+                                "customName": "approved",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -215,6 +220,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_10_else",
+                                "customName": "not approved",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -228,13 +234,17 @@
                     "id": "10",
                     "type": "decision",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1050
+                    "x": 1830,
+                    "y": 1264
                 },
                 "11": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note not approved",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the bulk quarantine was not approved or the prompt timed out.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the bulk quarantine was not approved or the prompt timed out."
                         },
                         "functionId": 11,
                         "functionName": "note_not_approved",
@@ -246,23 +256,27 @@
                     "errors": {},
                     "id": "11",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - bulk quarantine NOT approved\",\n          content=\"The analyst declined the bulk quarantine, or the prompt timed out. No containment was performed.\",\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - bulk quarantine NOT approved\",\n          content=\"The analyst declined the bulk quarantine, or the approval prompt timed out. No containment was performed. Follow up manually if the breach is confirmed.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 1050
+                    "x": 1580,
+                    "y": 1972
                 },
                 "12": {
                     "data": {
                         "action": "add to static group",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "quarantine add group",
+                            "customNameId": 0,
+                            "description": "Adds each device to the computer or mobile quarantine group.",
+                            "join": [],
+                            "note": "Adds each device to the computer or mobile quarantine group."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 12,
                         "functionName": "quarantine_add_group",
@@ -314,21 +328,25 @@
                     "id": "12",
                     "type": "action",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1180
+                    "x": 1920,
+                    "y": 1444
                 },
                 "13": {
                     "data": {
                         "action": "lock device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "quarantine lock",
+                            "customNameId": 0,
+                            "description": "Locks each device.",
+                            "join": [],
+                            "note": "Locks each device."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 13,
                         "functionName": "quarantine_lock",
@@ -378,21 +396,25 @@
                     "id": "13",
                     "type": "action",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1320
+                    "x": 1920,
+                    "y": 1620
                 },
                 "14": {
                     "data": {
                         "action": "send blank push",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "quarantine push",
+                            "customNameId": 0,
+                            "description": "Sends a blank push to each device so it checks in.",
+                            "join": [],
+                            "note": "Sends a blank push to each device so it checks in."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 14,
                         "functionName": "quarantine_push",
@@ -439,13 +461,17 @@
                     "id": "14",
                     "type": "action",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1460
+                    "x": 1920,
+                    "y": 1796
                 },
                 "15": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "report results",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note with the actual result of every action for every device.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note with the actual result of every action for every device."
                         },
                         "functionId": 15,
                         "functionName": "report_results",
@@ -459,21 +485,25 @@
                     "type": "code",
                     "userCode": "\n    # Build results from REAL per-action statuses (never report a failed contain as success).\n    # Full logic in the .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - bulk quarantine results\",\n          content=\"Per-action success/failure counts for add-to-group, lock, and blank push.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1580
+                    "x": 1920,
+                    "y": 1972
                 },
                 "2": {
                     "data": {
                         "action": "get device by username",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "resolve devices",
+                            "customNameId": 0,
+                            "description": "Looks up every Jamf device for the usernames in the event artifacts.",
+                            "join": [],
+                            "note": "Looks up every Jamf device for the usernames in the event artifacts."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 2,
                         "functionName": "resolve_devices",
@@ -519,13 +549,17 @@
                     "id": "2",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 250
+                    "x": 1410,
+                    "y": 348
                 },
                 "3": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "devices found",
+                            "customNameId": 0,
+                            "description": "Continues only if the lookup succeeded and returned at least one device.",
+                            "join": [],
+                            "note": "Continues only if the lookup succeeded and returned at least one device."
                         },
                         "conditions": [
                             {
@@ -545,6 +579,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_3_if",
+                                "customName": "found",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -559,6 +594,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_3_else",
+                                "customName": "not found",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -572,13 +608,17 @@
                     "id": "3",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 380
+                    "x": 1490,
+                    "y": 524
                 },
                 "4": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no devices",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note when no Jamf devices were found for the usernames.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note when no Jamf devices were found for the usernames."
                         },
                         "functionId": 4,
                         "functionName": "note_no_devices",
@@ -590,23 +630,27 @@
                     "errors": {},
                     "id": "4",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - no devices resolved\",\n          content=\"No Jamf devices resolved for the affected username(s), or the lookup failed. No containment was attempted.\",\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - no devices resolved\",\n          content=\"No Jamf devices resolved for the affected username(s), or the lookup failed. No containment was attempted. Check the usernames, and that the Jamf Account integration has the devices:read capability, then re-run.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1320,
-                    "y": 380
+                    "x": 900,
+                    "y": 1972
                 },
                 "5": {
                     "data": {
                         "action": "get compliance status",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "check compliance",
+                            "customNameId": 0,
+                            "description": "Gets each device's compliance status from Jamf Pro for the preview.",
+                            "join": [],
+                            "note": "Gets each device's compliance status from Jamf Pro for the preview."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 5,
                         "functionName": "check_compliance",
@@ -653,13 +697,17 @@
                     "id": "5",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 520
+                    "x": 1580,
+                    "y": 704
                 },
                 "6": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "build quarantine preview",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Posts the full list of devices to quarantine as a note, or stops with a note if there are more than the batch limit.",
+                            "join": [],
+                            "note": "This block uses custom code. Posts the full list of devices to quarantine as a note, or stops with a note if there are more than the batch limit."
                         },
                         "functionId": 6,
                         "functionName": "build_quarantine_preview",
@@ -673,13 +721,17 @@
                     "type": "code",
                     "userCode": "\n    # Post a dry-run note listing every device (scope disclosure) and enforce the AGGREGATE\n    # batch cap (count > MAX_DEVICES -> note_batch_too_large, else -> approve). Full logic in the\n    # .py source of truth.\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - proposed quarantine (review before approving)\",\n          content=\"Lists every resolved device + compliance; a Yes quarantines ALL listed. Aborts if over the batch cap.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 650
+                    "x": 1580,
+                    "y": 880
                 },
                 "8": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note batch too large",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note and stops when more devices were found than the batch limit (25 by default).",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note and stops when more devices were found than the batch limit (25 by default)."
                         },
                         "functionId": 8,
                         "functionName": "note_batch_too_large",
@@ -691,15 +743,19 @@
                     "errors": {},
                     "id": "8",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - batch too large, aborted\",\n          content=\"The affected device set exceeds the batch-size cap. Bulk quarantine was ABORTED; no containment attempted.\",\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"IdP breach - batch too large, aborted\",\n          content=\"The affected device set exceeds the batch-size cap (MAX_DEVICES). Bulk quarantine was ABORTED and no containment was attempted, to prevent a runaway mass action. Re-scope the set, or raise the cap deliberately after review.\",\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1320,
-                    "y": 780
+                    "x": 1240,
+                    "y": 1972
                 },
                 "9": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "approve bulk quarantine",
+                            "customNameId": 0,
+                            "description": "Asks an analyst to approve quarantining every device in the list with one approval. Times out after 30 minutes.",
+                            "join": [],
+                            "note": "Asks an analyst to approve quarantining every device in the list with one approval. Times out after 30 minutes."
                         },
                         "approver": {
                             "type": "role",
@@ -728,11 +784,11 @@
                     "id": "9",
                     "type": "prompt",
                     "warnings": {},
-                    "x": 700,
-                    "y": 920
+                    "x": 1750,
+                    "y": 1072
                 }
             },
-            "notes": ""
+            "notes": "Inputs: usernames (artifact cef.sourceUserName)\nInteractions: Jamf Pro\nActions: get device by username, get compliance status, add to static group, lock device, send blank push\nOutputs: notes on the event\nBefore use: a Jamf Pro asset named jamf_pro (or change the asset on every action block); replace <your-security-analyst-role> on the approval prompt, <your-computer-quarantine-group> and <your-mobile-quarantine-group>, the lock PIN <your-6-digit-pin>, <your-return-message> and <your-callback-number>. The batch limit is MAX_DEVICES (25) in the preview block."
         },
         "input_spec": null,
         "output_spec": null,
@@ -742,7 +798,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-07T00:00:00.000000+00:00",
+    "create_time": "2026-11-27T13:39:07.662251+00:00",
     "draft_mode": false,
     "labels": [
         "*"

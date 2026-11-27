@@ -1,5 +1,6 @@
 # Changelog — jamf-soar-playbooks
 
+- 2026-11-26 — All eight playbooks ready for Splunk's community playbook checks: every block has a name, description and note; decision paths are labelled; action blocks use the Jamf Pro 2.0.0 app and the `jamf_pro` asset; each playbook has a canvas screenshot. Lost or Stolen Device, Compliance Drift and Malicious App now report a wipe or lookup result from one block instead of a decision plus two notes, keeping each within Splunk's 20-block limit. Behaviour is unchanged for a single matched device. With several matches, the wipe-outcome notes now say "queued" only if every wipe queued and otherwise list each device's result, and Malicious App reports "Detection Inconclusive" if any app lookup failed. The IdP Breach notes get back their full guidance text, lock PINs come from `secrets`, and the release-prep workflow now points sub-playbook calls at `community/<renamed playbook>`.
 - 2026-11-25 — FileVault Recovery Access (macOS): added a description and setup notes in SOAR's format; design notes moved to docs/design-notes/.
 - 2026-11-25 — Lost or Stolen Device: added a description and setup notes in SOAR's format; design notes moved to docs/design-notes/.
 - 2026-07-08 — Docs now point to the connector's public documentation instead of its internal repo.

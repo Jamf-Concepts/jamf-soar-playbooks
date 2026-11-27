@@ -4,7 +4,7 @@
     "category": "Uncategorized",
     "coa": {
         "data": {
-            "description": "",
+            "description": "Accepts paired lists of Jamf device IDs and device types and collects device details, compliance status, group membership, installed applications, configuration profiles, local accounts and extension attributes. Returns a formatted enrichment summary as output. Read-only; no changes are made to the device.",
             "edges": [
                 {
                     "id": "port_0_to_port_2",
@@ -112,7 +112,7 @@
                     "targetPort": "7_in"
                 }
             ],
-            "hash": "42b3929f47080d7f706683908117b97a1f37b02b",
+            "hash": "fb15aeaf4d6c2fd4fdfd28e7259dc616ae224d46",
             "nodes": {
                 "0": {
                     "data": {
@@ -127,8 +127,8 @@
                     "id": "0",
                     "type": "start",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 419.99999999999983
+                    "x": 1940,
+                    "y": 200
                 },
                 "1": {
                     "data": {
@@ -143,16 +143,20 @@
                     "id": "1",
                     "type": "end",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 840
+                    "x": 1940,
+                    "y": 732
                 },
                 "10": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "format enrichment summary",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Formats the results of every lookup into one enrichment summary, marking any lookup that failed.",
+                            "join": [],
+                            "note": "This block uses custom code. Formats the results of every lookup into one enrichment summary, marking any lookup that failed."
                         },
                         "functionId": 1,
-                        "functionName": "format_1",
+                        "functionName": "format_enrichment_summary",
                         "id": "10",
                         "parameters": [],
                         "template": "",
@@ -161,26 +165,30 @@
                     "errors": {},
                     "id": "10",
                     "type": "format",
-                    "userCode": "\n    ACTS = [\"get_device_1\",\"get_compliance_status_1\",\"get_group_membership_1\",\n            \"get_installed_applications_1\",\"get_configuration_profiles_1\",\n            \"get_local_user_accounts_1\",\"get_extension_attributes_1\"]\n\n    def _ok(action):\n        rows = phantom.collect2(container=container, datapath=[action + \":action_result.status\"])\n        vals = [str(r[0]).lower() for r in rows if r and r[0]]\n        return bool(vals) and all(v == \"success\" for v in vals)\n\n    st = {a: _ok(a) for a in ACTS}\n    FAIL = \"\u26a0\ufe0f not retrieved\"\n\n    def field(action, dp, join=False, empty=\"\u2014\"):\n        if not st[action]:\n            return FAIL\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        if not vals:\n            return \"none\" if join else empty\n        return \", \".join(vals) if join else vals[0]\n\n    name       = field(\"get_device_1\", \"get_device_1:action_result.data.*.general.name\")\n    serial     = field(\"get_device_1\", \"get_device_1:action_result.data.*.serial_number\")\n    user       = field(\"get_device_1\", \"get_device_1:action_result.data.*.username\")\n    compliance = field(\"get_compliance_status_1\", \"get_compliance_status_1:action_result.data.*.compliance_state\")\n    apps       = field(\"get_installed_applications_1\", \"get_installed_applications_1:action_result.summary.total\", empty=\"0\")\n    groups     = field(\"get_group_membership_1\", \"get_group_membership_1:action_result.data.*.group_name\", join=True)\n    profiles   = field(\"get_configuration_profiles_1\", \"get_configuration_profiles_1:action_result.summary.total\", empty=\"0\")\n    accounts   = field(\"get_local_user_accounts_1\", \"get_local_user_accounts_1:action_result.summary.total\", empty=\"0\")\n    extattrs   = field(\"get_extension_attributes_1\", \"get_extension_attributes_1:action_result.summary.total\", empty=\"0\")\n\n    ok = sum(st.values())\n    summary = (\n        \"## Jamf Device Enrichment \u2014 \" + name + \"\\n\\n\"\n        + \"_\" + str(ok) + \" of 7 lookups succeeded_\\n\\n\"\n        + \"- **Serial:** \" + serial + \"\\n\"\n        + \"- **User:** \" + user + \"\\n\"\n        + \"- **Compliance:** \" + compliance + \"\\n\"\n        + \"- **Group memberships:** \" + groups + \"\\n\"\n        + \"- **Installed apps:** \" + apps + \"\\n\"\n        + \"- **Configuration profiles:** \" + profiles + \"\\n\"\n        + \"- **Local user accounts:** \" + accounts + \"\\n\"\n        + \"- **Extension attributes:** \" + extattrs\n    )\n    template = summary.replace(\"{\", \"{{\").replace(\"}\", \"}}\")\n    parameters = []\n\n",
+                    "userCode": "\n    ACTS = [\"get_device_details\",\"get_compliance_status\",\"get_group_membership\",\n            \"get_installed_apps\",\"get_configuration_profiles\",\n            \"get_local_accounts\",\"get_extension_attributes\"]\n\n    def _ok(action):\n        rows = phantom.collect2(container=container, datapath=[action + \":action_result.status\"])\n        vals = [str(r[0]).lower() for r in rows if r and r[0]]\n        return bool(vals) and all(v == \"success\" for v in vals)\n\n    st = {a: _ok(a) for a in ACTS}\n    FAIL = \"\u26a0\ufe0f not retrieved\"\n\n    def field(action, dp, join=False, empty=\"\u2014\"):\n        if not st[action]:\n            return FAIL\n        rows = phantom.collect2(container=container, datapath=[dp])\n        vals = [str(r[0]) for r in rows if r and r[0] not in (None, \"\")]\n        if not vals:\n            return \"none\" if join else empty\n        return \", \".join(vals) if join else vals[0]\n\n    name       = field(\"get_device_details\", \"get_device_details:action_result.data.*.general.name\")\n    serial     = field(\"get_device_details\", \"get_device_details:action_result.data.*.serial_number\")\n    user       = field(\"get_device_details\", \"get_device_details:action_result.data.*.username\")\n    compliance = field(\"get_compliance_status\", \"get_compliance_status:action_result.data.*.compliance_state\")\n    apps       = field(\"get_installed_apps\", \"get_installed_apps:action_result.summary.total\", empty=\"0\")\n    groups     = field(\"get_group_membership\", \"get_group_membership:action_result.data.*.group_name\", join=True)\n    profiles   = field(\"get_configuration_profiles\", \"get_configuration_profiles:action_result.summary.total\", empty=\"0\")\n    accounts   = field(\"get_local_accounts\", \"get_local_accounts:action_result.summary.total\", empty=\"0\")\n    extattrs   = field(\"get_extension_attributes\", \"get_extension_attributes:action_result.summary.total\", empty=\"0\")\n\n    ok = sum(st.values())\n    summary = (\n        \"## Jamf Device Enrichment \u2014 \" + name + \"\\n\\n\"\n        + \"_\" + str(ok) + \" of 7 lookups succeeded_\\n\\n\"\n        + \"- **Serial:** \" + serial + \"\\n\"\n        + \"- **User:** \" + user + \"\\n\"\n        + \"- **Compliance:** \" + compliance + \"\\n\"\n        + \"- **Group memberships:** \" + groups + \"\\n\"\n        + \"- **Installed apps:** \" + apps + \"\\n\"\n        + \"- **Configuration profiles:** \" + profiles + \"\\n\"\n        + \"- **Local user accounts:** \" + accounts + \"\\n\"\n        + \"- **Extension attributes:** \" + extattrs\n    )\n    template = summary.replace(\"{\", \"{{\").replace(\"}\", \"}}\")\n    parameters = []\n\n",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 720
+                    "x": 1920,
+                    "y": 540
                 },
                 "2": {
                     "data": {
                         "action": "get device",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get device details",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Gets each device's inventory details from Jamf Pro.",
+                            "join": [],
+                            "note": "This block uses custom code. Gets each device's inventory details from Jamf Pro."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_device_1",
+                        "functionName": "get_device_details",
                         "id": "2",
                         "loop": {
                             "conditions": [
@@ -225,24 +233,28 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 540
+                    "x": 900,
+                    "y": 356
                 },
                 "3": {
                     "data": {
                         "action": "get installed applications",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get installed apps",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Lists the applications installed on each device.",
+                            "join": [],
+                            "note": "This block uses custom code. Lists the applications installed on each device."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_installed_applications_1",
+                        "functionName": "get_installed_apps",
                         "id": "3",
                         "loop": {
                             "conditions": [
@@ -287,24 +299,28 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
-                    "x": 700,
-                    "y": 540
+                    "x": 1240,
+                    "y": 356
                 },
                 "4": {
                     "data": {
                         "action": "get group membership",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get group membership",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Lists the Jamf groups each device belongs to.",
+                            "join": [],
+                            "note": "This block uses custom code. Lists the Jamf groups each device belongs to."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_group_membership_1",
+                        "functionName": "get_group_membership",
                         "id": "4",
                         "loop": {
                             "conditions": [
@@ -349,24 +365,28 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n    \n",
                     "warnings": {},
-                    "x": 420,
-                    "y": 540
+                    "x": 1580,
+                    "y": 356
                 },
                 "5": {
                     "data": {
                         "action": "get compliance status",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get compliance status",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Gets each device's compliance status from Jamf Pro.",
+                            "join": [],
+                            "note": "This block uses custom code. Gets each device's compliance status from Jamf Pro."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_compliance_status_1",
+                        "functionName": "get_compliance_status",
                         "id": "5",
                         "loop": {
                             "conditions": [
@@ -411,24 +431,28 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
-                    "x": 120,
-                    "y": 540
+                    "x": 1920,
+                    "y": 356
                 },
                 "6": {
                     "data": {
                         "action": "get configuration profiles",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get configuration profiles",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Lists the configuration profiles installed on each device.",
+                            "join": [],
+                            "note": "This block uses custom code. Lists the configuration profiles installed on each device."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_configuration_profiles_1",
+                        "functionName": "get_configuration_profiles",
                         "id": "6",
                         "loop": {
                             "conditions": [
@@ -473,24 +497,28 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
-                    "x": 1303.3333740234375,
-                    "y": 539.8333740234375
+                    "x": 2260,
+                    "y": 348
                 },
                 "7": {
                     "data": {
                         "action": "get local user accounts",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get local accounts",
+                            "customNameId": 0,
+                            "description": "Lists each device's local user accounts.",
+                            "join": [],
+                            "note": "Lists each device's local user accounts."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_local_user_accounts_1",
+                        "functionName": "get_local_accounts",
                         "id": "7",
                         "loop": {
                             "conditions": [
@@ -533,24 +561,28 @@
                     "id": "7",
                     "type": "action",
                     "warnings": {},
-                    "x": 1600,
-                    "y": 540
+                    "x": 2600,
+                    "y": 356
                 },
                 "8": {
                     "data": {
                         "action": "get extension attributes",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get extension attributes",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Gets each device's extension attribute values from Jamf Pro.",
+                            "join": [],
+                            "note": "This block uses custom code. Gets each device's extension attribute values from Jamf Pro."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_extension_attributes_1",
+                        "functionName": "get_extension_attributes",
                         "id": "8",
                         "loop": {
                             "conditions": [
@@ -595,15 +627,17 @@
                     "type": "action",
                     "userCode": "\n    assert len(playbook_input_device_id) == len(playbook_input_device_type), \"device_id/device_type must be paired, equal-length lists\"\n    parameters = [\n        {\"device_id\": did[0], \"device_type\": dtype[0]}\n        for did, dtype in zip(playbook_input_device_id, playbook_input_device_type)\n        if did[0] is not None\n    ]\n\n",
                     "warnings": {},
-                    "x": 1920,
-                    "y": 540
+                    "x": 2940,
+                    "y": 348
                 }
             },
-            "notes": ""
+            "notes": "Inputs: device_id (jamf device id) and device_type (computer or mobile), as paired lists of equal length\nInteractions: Jamf Pro\nActions: get device, get compliance status, get group membership, get installed applications, get configuration profiles, get local user accounts, get extension attributes\nOutputs: enrichment_summary (formatted text)\nBefore use: a Jamf Pro asset named jamf_pro (or change the asset on every action block)."
         },
         "input_spec": [
             {
-                "contains": [],
+                "contains": [
+                    "jamf device id"
+                ],
                 "description": "contains type 'jamf device id'",
                 "name": "device_id"
             },
@@ -617,7 +651,7 @@
             {
                 "contains": [],
                 "datapaths": [
-                    "format_1:formatted_data"
+                    "format_enrichment_summary:formatted_data"
                 ],
                 "deduplicate": false,
                 "description": "",
@@ -631,10 +665,14 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T10:47:42.810291+00:00",
+    "create_time": "2026-11-26T14:02:04.883634+00:00",
     "draft_mode": false,
     "labels": [
         "*"
     ],
-    "tags": []
+    "tags": [
+        "jamf",
+        "enrichment",
+        "jamf device id"
+    ]
 }

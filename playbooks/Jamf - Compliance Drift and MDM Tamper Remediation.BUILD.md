@@ -7,6 +7,12 @@ or serials belong in this file.
 
 SOAR playbooks must be authored in the VPE — build here, and SOAR generates valid files.
 
+> **Update (2026-11-26):** the committed playbook now has custom block names (for example
+> `resolve device`, `note wipe outcome`), uses the Jamf Pro 2.0.0 app and the `jamf_pro` asset, and
+> replaces `wipe_ok` + `note_wipe_queued` + `note_wipe_failed` with one `note wipe outcome` block
+> (19 blocks). This build sheet still describes the earlier graph; the playbook files and the README
+> are the current reference.
+
 > ✅ **The committed graph is now v2 — 19 nodes / 22 edges** (PR #10 review rebuild). It imported
 > to SOAR clean (`passed_validation: true`, no node warnings) and **ran green live** (run 57).
 > **Build/read from ["Target rebuild (v2)"](#target-rebuild-v2--pr-10-review) below — that is the

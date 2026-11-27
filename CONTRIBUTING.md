@@ -71,7 +71,9 @@ sync — review accordingly.
 These are **templates**, not one customer's deployment. Do not hardcode
 environment specifics:
 
-- No real asset names — use a clearly-marked placeholder (e.g. `<your-jamf-asset>`).
+- Action blocks use the generic asset name `jamf_pro` (the app name in lowercase with
+  underscores, which Splunk's community playbook checks require). Never a real
+  deployment's asset name.
 - No real static-group names or IDs — call out where the customer sets theirs.
 - No tenant URLs, label values, or analyst email addresses.
 
