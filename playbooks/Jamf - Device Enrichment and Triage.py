@@ -1,5 +1,5 @@
 """
-
+Accepts a username from the event, finds the user's devices in Jamf, runs the Device Enrichment (Input) playbook on them and adds the resulting summary to the case as a note. Read-only; no changes are made to any device.
 """
 
 
@@ -12,22 +12,26 @@ from datetime import datetime, timedelta
 def on_start(container):
     phantom.debug('on_start() called')
 
-    # call 'get_device_by_username_1' block
-    get_device_by_username_1(container=container)
+    # call 'find_devices_by_username' block
+    find_devices_by_username(container=container)
 
     return
 
 @phantom.playbook_block()
-def get_device_by_username_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_device_by_username_1() called")
+def find_devices_by_username(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("find_devices_by_username() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Looks up the user's devices in Jamf Pro by the username from the event artifact.
+    ################################################################################
 
     container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.sourceUserName","artifact:*.id"])
 
     parameters = []
 
-    # build parameters list for 'get_device_by_username_1' call
+    # build parameters list for 'find_devices_by_username' call
     for container_artifact_item in container_artifact_data:
         if container_artifact_item[0] is not None:
             parameters.append({
@@ -45,19 +49,24 @@ def get_device_by_username_1(action=None, success=None, container=None, results=
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by username", parameters=parameters, name="get_device_by_username_1", assets=["<your-jamf-asset>"], callback=decision_1)
+    phantom.act("get device by username", parameters=parameters, name="find_devices_by_username", assets=["jamf_pro"], callback=devices_found)
 
     return
 
 
 @phantom.playbook_block()
-def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1() called")
+def note_enrichment_summary(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_enrichment_summary() called")
+
+    ################################################################################
+    # This block uses custom code. Adds the enrichment summary returned by the sub-playbook 
+    # to the event as a note.
+    ################################################################################
 
     id_value = container.get("id", None)
-    playbook_jamf___device_enrichment__input__1_output_enrichment_summary = phantom.collect2(container=container, datapath=["playbook_jamf___device_enrichment__input__1:playbook_output:enrichment_summary"])
+    run_device_enrichment_output_enrichment_summary = phantom.collect2(container=container, datapath=["run_device_enrichment:playbook_output:enrichment_summary"])
 
-    playbook_jamf___device_enrichment__input__1_output_enrichment_summary_values = [item[0] for item in playbook_jamf___device_enrichment__input__1_output_enrichment_summary]
+    run_device_enrichment_output_enrichment_summary_values = [item[0] for item in run_device_enrichment_output_enrichment_summary]
 
     ################################################################################
     ## Custom Code Start
@@ -73,7 +82,7 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
             out.append(str(x))
         return out
 
-    text = "\n".join(_flat(playbook_jamf___device_enrichment__input__1_output_enrichment_summary))
+    text = "\n".join(_flat(run_device_enrichment_output_enrichment_summary))
 
     phantom.add_note(
         container=container,
@@ -87,26 +96,30 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_1__inputs:0:playbook_jamf___device_enrichment__input__1:playbook_output:enrichment_summary", value=json.dumps(playbook_jamf___device_enrichment__input__1_output_enrichment_summary_values))
-    phantom.save_block_result(key="code_1__inputs:1:container:id", value=json.dumps(id_value))
+    phantom.save_block_result(key="note_enrichment_summary__inputs:0:run_device_enrichment:playbook_output:enrichment_summary", value=json.dumps(run_device_enrichment_output_enrichment_summary_values))
+    phantom.save_block_result(key="note_enrichment_summary__inputs:1:container:id", value=json.dumps(id_value))
 
-    phantom.save_block_result(key="code_1_called", value="True")
+    phantom.save_block_result(key="note_enrichment_summary_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def playbook_jamf___device_enrichment__input__1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("playbook_jamf___device_enrichment__input__1() called")
+def run_device_enrichment(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("run_device_enrichment() called")
 
-    get_device_by_username_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_username_1:action_result.data.*.id","get_device_by_username_1:action_result.data.*.type"], action_results=results)
+    ################################################################################
+    # Runs the Jamf - Device Enrichment (Input) playbook on the devices found.
+    ################################################################################
 
-    get_device_by_username_1_result_item_0 = [item[0] for item in get_device_by_username_1_result_data]
-    get_device_by_username_1_result_item_1 = [item[1] for item in get_device_by_username_1_result_data]
+    find_devices_by_username_result_data = phantom.collect2(container=container, datapath=["find_devices_by_username:action_result.data.*.id","find_devices_by_username:action_result.data.*.type"], action_results=results)
+
+    find_devices_by_username_result_item_0 = [item[0] for item in find_devices_by_username_result_data]
+    find_devices_by_username_result_item_1 = [item[1] for item in find_devices_by_username_result_data]
 
     inputs = {
-        "device_id": get_device_by_username_1_result_item_0,
-        "device_type": get_device_by_username_1_result_item_1,
+        "device_id": find_devices_by_username_result_item_0,
+        "device_type": find_devices_by_username_result_item_1,
     }
 
     ################################################################################
@@ -120,41 +133,50 @@ def playbook_jamf___device_enrichment__input__1(action=None, success=None, conta
     ################################################################################
 
     # call playbook "jamf-soar-playbooks/Jamf - Device Enrichment (Input)", returns the playbook_run_id
-    playbook_run_id = phantom.playbook("jamf-soar-playbooks/Jamf - Device Enrichment (Input)", container=container, name="playbook_jamf___device_enrichment__input__1", callback=code_1, inputs=inputs)
+    playbook_run_id = phantom.playbook("jamf-soar-playbooks/Jamf - Device Enrichment (Input)", container=container, name="run_device_enrichment", callback=note_enrichment_summary, inputs=inputs)
 
     return
 
 
 @phantom.playbook_block()
-def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_1() called")
+def devices_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("devices_found() called")
+
+    ################################################################################
+    # Continues only if Jamf Pro returned at least one device for the user.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["get_device_by_username_1:action_result.summary.total", ">", 0]
+            ["find_devices_by_username:action_result.summary.total", ">", 0]
         ],
         conditions_dps=[
-            ["get_device_by_username_1:action_result.summary.total", ">", 0]
+            ["find_devices_by_username:action_result.summary.total", ">", 0]
         ],
-        name="decision_1:condition_1",
+        name="devices_found:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        playbook_jamf___device_enrichment__input__1(action=action, success=success, container=container, results=results, handle=handle)
+        run_device_enrichment(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_2(action=action, success=success, container=container, results=results, handle=handle)
+    note_no_devices(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_2() called")
+def note_no_devices(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_no_devices() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note when no Jamf device was found for the 
+    # user.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
@@ -175,7 +197,7 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_2_called", value="True")
+    phantom.save_block_result(key="note_no_devices_called", value="True")
 
     return
 

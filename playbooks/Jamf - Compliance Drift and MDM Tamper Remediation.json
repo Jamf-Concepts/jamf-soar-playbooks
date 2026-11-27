@@ -4,7 +4,7 @@
     "category": "Jamf Incident Response",
     "coa": {
         "data": {
-            "description": "Jamf - Compliance Drift and MDM Tamper Remediation (correct-first, gated wipe).",
+            "description": "Accepts a device serial number from the event and attempts to restore MDM control by redeploying the management framework and forcing a check-in, then re-checks compliance. If the device is still non-compliant, it is quarantined and locked, and an analyst is asked to approve before any wipe. A note is added on every outcome. Computers only.",
             "edges": [
                 {
                     "id": "port_2_to_port_13",
@@ -235,47 +235,14 @@
                     "targetPort": "1_in"
                 },
                 {
-                    "id": "port_12_to_port_22",
+                    "id": "port_12_to_port_19",
                     "sourceNode": "12",
                     "sourcePort": "12_out",
-                    "targetNode": "22",
-                    "targetPort": "22_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_22_if",
-                            "index": 0
-                        }
-                    ],
-                    "id": "port_22_to_port_19",
-                    "sourceNode": "22",
-                    "sourcePort": "22_out",
                     "targetNode": "19",
                     "targetPort": "19_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_22_else",
-                            "index": 1
-                        }
-                    ],
-                    "id": "port_22_to_port_23",
-                    "sourceNode": "22",
-                    "sourcePort": "22_out",
-                    "targetNode": "23",
-                    "targetPort": "23_in"
-                },
-                {
-                    "id": "port_23_to_port_1",
-                    "sourceNode": "23",
-                    "sourcePort": "23_out",
-                    "targetNode": "1",
-                    "targetPort": "1_in"
                 }
             ],
-            "hash": "",
+            "hash": "96261f8ee5d0b147d86e9a9e284ed207099b1512",
             "nodes": {
                 "0": {
                     "data": {
@@ -290,8 +257,8 @@
                     "id": "0",
                     "type": "start",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 99.99999999999972
+                    "x": 1770,
+                    "y": 200
                 },
                 "1": {
                     "data": {
@@ -306,13 +273,17 @@
                     "id": "1",
                     "type": "end",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 1600
+                    "x": 1770,
+                    "y": 2848
                 },
                 "10": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "approve wipe",
+                            "customNameId": 0,
+                            "description": "Asks an analyst to approve wiping the computer. Times out after 30 minutes.",
+                            "join": [],
+                            "note": "Asks an analyst to approve wiping the computer. Times out after 30 minutes."
                         },
                         "approver": {
                             "type": "role",
@@ -341,13 +312,17 @@
                     "id": "10",
                     "type": "prompt",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1450
+                    "x": 2090,
+                    "y": 2124
                 },
                 "11": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "is wipe approved",
+                            "customNameId": 0,
+                            "description": "Wipes the computer only if the analyst answered Yes.",
+                            "join": [],
+                            "note": "Wipes the computer only if the analyst answered Yes."
                         },
                         "conditions": [
                             {
@@ -361,6 +336,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_11_if",
+                                "customName": "approved",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -375,6 +351,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_11_else",
+                                "customName": "not approved",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -388,21 +365,25 @@
                     "id": "11",
                     "type": "decision",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1550
+                    "x": 2170,
+                    "y": 2316
                 },
                 "12": {
                     "data": {
                         "action": "wipe device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "wipe device",
+                            "customNameId": 0,
+                            "description": "Erases the computer. Runs only after analyst approval.",
+                            "join": [],
+                            "note": "Erases the computer. Runs only after analyst approval."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 12,
                         "functionName": "wipe_device",
@@ -454,13 +435,17 @@
                     "id": "12",
                     "type": "action",
                     "warnings": {},
-                    "x": 500,
-                    "y": 1650
+                    "x": 2260,
+                    "y": 2496
                 },
                 "13": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "device found",
+                            "customNameId": 0,
+                            "description": "Continues only if Jamf Pro returned a matching device.",
+                            "join": [],
+                            "note": "Continues only if Jamf Pro returned a matching device."
                         },
                         "conditions": [
                             {
@@ -474,6 +459,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_13_if",
+                                "customName": "found",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -488,6 +474,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_13_else",
+                                "customName": "not found",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -501,13 +488,17 @@
                     "id": "13",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 350
+                    "x": 1660,
+                    "y": 704
                 },
                 "14": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no device",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note when no device matched the serial.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note when no device matched the serial."
                         },
                         "functionId": 14,
                         "functionName": "note_no_device",
@@ -521,13 +512,17 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - no device found\",\n          content=(\n              \"No Jamf device matched the serial from the event. \"\n              \"Playbook stopped; no correction or containment was attempted. \"\n              \"Verify the serial and re-run. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1320,
-                    "y": 350
+                    "x": 900,
+                    "y": 2672
                 },
                 "15": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no drift",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the computer is compliant, so no containment was taken.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the computer is compliant, so no containment was taken."
                         },
                         "functionId": 15,
                         "functionName": "note_no_drift",
@@ -541,13 +536,17 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - no containment taken\",\n          content=(\n              \"The device is COMPLIANT, its state is UNKNOWN/None, there was no compliance data, \"\n              \"or the compliance read failed (e.g. 403). No containment was taken. \"\n              \"Open a manual review if drift is still suspected. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1320,
-                    "y": 900
+                    "x": 1240,
+                    "y": 2672
                 },
                 "16": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "containment ok",
+                            "customNameId": 0,
+                            "description": "Asks for wipe approval only if both the quarantine and the lock succeeded.",
+                            "join": [],
+                            "note": "Asks for wipe approval only if both the quarantine and the lock succeeded."
                         },
                         "conditions": [
                             {
@@ -567,6 +566,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_16_if",
+                                "customName": "contained",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -581,6 +581,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_16_else",
+                                "customName": "not contained",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -594,13 +595,17 @@
                     "id": "16",
                     "type": "decision",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1300
+                    "x": 2000,
+                    "y": 1944
                 },
                 "17": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note containment failed",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note when the quarantine or the lock did not succeed.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note when the quarantine or the lock did not succeed."
                         },
                         "functionId": 17,
                         "functionName": "note_containment_failed",
@@ -614,13 +619,17 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - containment did not succeed\",\n          content=(\n              \"Quarantine and/or lock did not report success (a failure, or a queued MDM command \"\n              \"on an offline device). The device may be UNCONTAINED. \"\n              \"Manual review required before any wipe; wipe prompt was NOT shown. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 1350
+                    "x": 1580,
+                    "y": 2672
                 },
                 "18": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note wipe declined",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the wipe was declined or the prompt timed out.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the wipe was declined or the prompt timed out."
                         },
                         "functionId": 18,
                         "functionName": "note_wipe_declined",
@@ -634,16 +643,20 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - wipe NOT approved\",\n          content=(\n              \"The analyst declined the wipe, or the approval prompt timed out. \"\n              \"The device remains quarantined + locked; no erase was performed. \"\n              \"Follow up manually. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 1600
+                    "x": 1920,
+                    "y": 2672
                 },
                 "19": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note wipe outcome",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note saying whether the erase command was queued or failed.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note saying whether the erase command was queued or failed."
                         },
                         "functionId": 19,
-                        "functionName": "note_wipe_queued",
+                        "functionName": "note_wipe_outcome",
                         "id": "19",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -652,23 +665,27 @@
                     "errors": {},
                     "id": "19",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - ERASE command queued\",\n          content=(\n              \"An ERASE_DEVICE MDM command was QUEUED for the device (not a confirmed erase). \"\n              \"The device wipes on its next check-in. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
+                    "userCode": "\n    rows = phantom.collect2(container=container, datapath=[\"wipe_device:action_result.status\", \"wipe_device:action_result.message\", \"wipe_device:action_result.parameter.device_id\"], action_results=results)\n    outcomes = [(r[2], r[0], r[1]) for r in rows if r] or [(None, None, \"no wipe result was returned\")]\n    failed = [o for o in outcomes if o[1] != \"success\"]\n\n    if not failed:\n        phantom.add_note(\n              container=container,\n              title=\"Compliance drift - ERASE command queued\",\n              content=(\n                  \"An ERASE_DEVICE MDM command was QUEUED for the device (not a confirmed erase). \"\n                  \"The device wipes on its next check-in. \"\n              ),\n              note_type=\"general\",\n          )\n    else:\n        lines = [\"- device {}: {} ({})\".format(d, s, m) for d, s, m in outcomes]\n        phantom.add_note(\n              container=container,\n              title=\"Compliance drift - ERASE command NOT queued\",\n              content=(\n                  \"The wipe action returned an error - the ERASE command was NOT queued for every device. \"\n                  \"The device is still quarantined + locked. Manual intervention required.\\n\"\n                  + \"\\n\".join(lines)\n              ),\n              note_type=\"general\",\n          )\n",
                     "warnings": {},
-                    "x": 500,
-                    "y": 1750
+                    "x": 2260,
+                    "y": 2672
                 },
                 "2": {
                     "data": {
                         "action": "get device by serial",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "resolve device",
+                            "customNameId": 0,
+                            "description": "Looks up the computer in Jamf Pro by the serial number from the event artifact.",
+                            "join": [],
+                            "note": "Looks up the computer in Jamf Pro by the serial number from the event artifact."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 2,
                         "functionName": "resolve_device",
@@ -714,13 +731,17 @@
                     "id": "2",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 250
+                    "x": 1580,
+                    "y": 528
                 },
                 "20": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "has serial",
+                            "customNameId": 0,
+                            "description": "Continues only if the event has a serial number.",
+                            "join": [],
+                            "note": "Continues only if the event has a serial number."
                         },
                         "conditions": [
                             {
@@ -734,6 +755,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_20_if",
+                                "customName": "serial present",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -748,6 +770,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_20_else",
+                                "customName": "no serial",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -761,13 +784,17 @@
                     "id": "20",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 175
+                    "x": 1830,
+                    "y": 348
                 },
                 "21": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no serial",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the event had no serial number.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the event had no serial number."
                         },
                         "functionId": 21,
                         "functionName": "note_no_serial",
@@ -781,88 +808,25 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - no serial on artifact\",\n          content=(\n              \"The triggering artifact carried no serialNumber, so no device could be resolved. \"\n              \"Playbook stopped; nothing was attempted. Map the event's serial to cef.serialNumber. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
                     "warnings": {},
-                    "x": 1320,
-                    "y": 175
-                },
-                "22": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_22_0",
-                                        "op": "==",
-                                        "param": "wipe_device:action_result.status",
-                                        "value": "success"
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_22_if",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_22_else",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_22_else",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 22,
-                        "functionName": "wipe_ok",
-                        "id": "22",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "22",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 500,
-                    "y": 1830
-                },
-                "23": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionId": 23,
-                        "functionName": "note_wipe_failed",
-                        "id": "23",
-                        "inputParameters": [],
-                        "outputVariables": [],
-                        "type": "code"
-                    },
-                    "errors": {},
-                    "id": "23",
-                    "type": "code",
-                    "userCode": "\n    phantom.add_note(\n          container=container,\n          title=\"Compliance drift - ERASE command NOT queued\",\n          content=(\n              \"The wipe action returned an error - the ERASE command was NOT queued. \"\n              \"The device is still quarantined + locked. Manual intervention required. \"\n          ),\n          note_type=\"general\",\n      )\n\n",
-                    "warnings": {},
-                    "x": 800,
-                    "y": 1900
+                    "x": 2600,
+                    "y": 2672
                 },
                 "3": {
                     "data": {
                         "action": "redeploy management framework",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "redeploy framework",
+                            "customNameId": 0,
+                            "description": "Redeploys the Jamf management framework to restore MDM control.",
+                            "join": [],
+                            "note": "Redeploys the Jamf management framework to restore MDM control."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 3,
                         "functionName": "redeploy_framework",
@@ -908,21 +872,25 @@
                     "id": "3",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 400
+                    "x": 1750,
+                    "y": 884
                 },
                 "4": {
                     "data": {
                         "action": "send blank push",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "force checkin",
+                            "customNameId": 0,
+                            "description": "Sends a blank push so the computer checks in.",
+                            "join": [],
+                            "note": "Sends a blank push so the computer checks in."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 4,
                         "functionName": "force_checkin",
@@ -969,21 +937,25 @@
                     "id": "4",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 550
+                    "x": 1750,
+                    "y": 1060
                 },
                 "6": {
                     "data": {
                         "action": "get compliance status",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "check compliance",
+                            "customNameId": 0,
+                            "description": "Gets the computer's compliance status after the redeploy.",
+                            "join": [],
+                            "note": "Gets the computer's compliance status after the redeploy."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 6,
                         "functionName": "check_compliance",
@@ -1030,13 +1002,17 @@
                     "id": "6",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 850
+                    "x": 1750,
+                    "y": 1236
                 },
                 "7": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "is compliant",
+                            "customNameId": 0,
+                            "description": "Contains the computer only if it is still non-compliant.",
+                            "join": [],
+                            "note": "Contains the computer only if it is still non-compliant."
                         },
                         "conditions": [
                             {
@@ -1056,6 +1032,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_7_if",
+                                "customName": "non compliant",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -1070,6 +1047,7 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_7_else",
+                                "customName": "compliant",
                                 "logic": "and",
                                 "type": "else"
                             }
@@ -1083,21 +1061,25 @@
                     "id": "7",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 900
+                    "x": 1830,
+                    "y": 1412
                 },
                 "8": {
                     "data": {
                         "action": "add to static group",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "quarantine device",
+                            "customNameId": 0,
+                            "description": "Adds the computer to the quarantine group.",
+                            "join": [],
+                            "note": "Adds the computer to the quarantine group."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 8,
                         "functionName": "quarantine_device",
@@ -1149,21 +1131,25 @@
                     "id": "8",
                     "type": "action",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1150
+                    "x": 1920,
+                    "y": 1592
                 },
                 "9": {
                     "data": {
                         "action": "lock device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "lock device",
+                            "customNameId": 0,
+                            "description": "Locks the computer with the lock-screen message and PIN.",
+                            "join": [],
+                            "note": "Locks the computer with the lock-screen message and PIN."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 9,
                         "functionName": "lock_device",
@@ -1213,11 +1199,11 @@
                     "id": "9",
                     "type": "action",
                     "warnings": {},
-                    "x": 700,
-                    "y": 1300
+                    "x": 1920,
+                    "y": 1768
                 }
             },
-            "notes": ""
+            "notes": "Inputs: computer serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, redeploy management framework, send blank push, get compliance status, add to static group, lock device, wipe device (after analyst approval)\nOutputs: notes on the event\nBefore use: a Jamf Pro asset named jamf_pro (or change the asset on every action block); replace <your-quarantine-group>, the lock PIN <your-6-digit-pin>, <your-return-message> and <your-callback-number>. The wipe prompt goes to the Administrator role; change it to your approver role."
         },
         "input_spec": null,
         "output_spec": null,
@@ -1227,7 +1213,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-03T12:28:20.317972+00:00",
+    "create_time": "2026-11-27T13:24:18.515497+00:00",
     "draft_mode": false,
     "labels": [
         "*"

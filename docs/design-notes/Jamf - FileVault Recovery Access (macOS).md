@@ -19,10 +19,10 @@ A decline, a timeout or a no-device path only adds a note.
 
 - The serial is read from `artifact:*.cef.serialNumber` in a code block (`collect2`), not
   through the visual datapath picker, which stores a non-standard CEF field as a literal.
-- The FileVault recovery key is sensitive. `code_1` writes only whether the key was
+- The FileVault recovery key is sensitive. `note step outcomes` writes only whether the key was
   retrieved and escrowed (`summary.key_present`), never the key itself. Keep it that way
   and never route the key to a broad channel or note.
-- `code_1` is the notify step and is a note today. Replace it with a restricted-channel
+- `note step outcomes` is the notify step and is a note today. Replace it with a restricted-channel
   notifier if your process needs one.
 - If the key was not obtained, the note warns the analyst not to approve the wipe while the
   disk contents are still needed.

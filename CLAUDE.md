@@ -8,8 +8,9 @@ README is the reference for what each template does and what it needs.
 
 - **Never auto-wipe.** Every wipe/erase sits behind an analyst approval prompt that is
   reached only on an explicit yes. Do not remove or bypass that gate.
-- **Keep templates generic.** Every customer value is a `<...>` placeholder: no real
-  asset names, group IDs, tenant URLs, approver names, or secrets. Scrub `.tgz`/export
+- **Keep templates generic.** Every customer value is a `<...>` placeholder, except the
+  asset name, which is the generic `jamf_pro` (Splunk's community checks require the app
+  name in lowercase). No real asset names, group IDs, tenant URLs, approver names, or secrets. Scrub `.tgz`/export
   files before committing; they embed asset names and group IDs.
 - **Work on a feature branch and open a PR.** Never commit to `main`.
 - **`git fetch` before editing a playbook on a shared branch.** SOAR source control

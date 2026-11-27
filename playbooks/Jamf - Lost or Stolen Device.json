@@ -146,37 +146,11 @@
                     "targetPort": "24_in"
                 },
                 {
-                    "id": "port_23_to_port_32",
+                    "id": "port_23_to_port_33",
                     "sourceNode": "23",
                     "sourcePort": "23_out",
-                    "targetNode": "32",
-                    "targetPort": "32_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_0",
-                            "index": 0
-                        }
-                    ],
-                    "id": "port_32_to_port_33",
-                    "sourceNode": "32",
-                    "sourcePort": "32_out",
                     "targetNode": "33",
                     "targetPort": "33_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_decision6_else",
-                            "index": 1
-                        }
-                    ],
-                    "id": "port_32_to_port_34",
-                    "sourceNode": "32",
-                    "sourcePort": "32_out",
-                    "targetNode": "34",
-                    "targetPort": "34_in"
                 },
                 {
                     "id": "port_7_to_port_25",
@@ -226,37 +200,11 @@
                     "targetPort": "29_in"
                 },
                 {
-                    "id": "port_28_to_port_35",
+                    "id": "port_28_to_port_36",
                     "sourceNode": "28",
                     "sourcePort": "28_out",
-                    "targetNode": "35",
-                    "targetPort": "35_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_0",
-                            "index": 0
-                        }
-                    ],
-                    "id": "port_35_to_port_36",
-                    "sourceNode": "35",
-                    "sourcePort": "35_out",
                     "targetNode": "36",
                     "targetPort": "36_in"
-                },
-                {
-                    "conditions": [
-                        {
-                            "conditionKey": "condition_key_decision7_else",
-                            "index": 1
-                        }
-                    ],
-                    "id": "port_35_to_port_37",
-                    "sourceNode": "35",
-                    "sourcePort": "35_out",
-                    "targetNode": "37",
-                    "targetPort": "37_in"
                 },
                 {
                     "id": "port_17_to_port_1",
@@ -294,28 +242,14 @@
                     "targetPort": "1_in"
                 },
                 {
-                    "id": "port_34_to_port_1",
-                    "sourceNode": "34",
-                    "sourcePort": "34_out",
-                    "targetNode": "1",
-                    "targetPort": "1_in"
-                },
-                {
                     "id": "port_36_to_port_1",
                     "sourceNode": "36",
                     "sourcePort": "36_out",
                     "targetNode": "1",
                     "targetPort": "1_in"
-                },
-                {
-                    "id": "port_37_to_port_1",
-                    "sourceNode": "37",
-                    "sourcePort": "37_out",
-                    "targetNode": "1",
-                    "targetPort": "1_in"
                 }
             ],
-            "hash": "",
+            "hash": "badfe07c082ee5e37529509a431de33dcac15b51",
             "nodes": {
                 "0": {
                     "data": {
@@ -330,8 +264,8 @@
                     "id": "0",
                     "type": "start",
                     "warnings": {},
-                    "x": 980,
-                    "y": 239.9999999999991
+                    "x": 1770,
+                    "y": 199.99999999999994
                 },
                 "1": {
                     "data": {
@@ -346,24 +280,224 @@
                     "id": "1",
                     "type": "end",
                     "warnings": {},
-                    "x": 1080,
-                    "y": 1380
+                    "x": 1770,
+                    "y": 2172
+                },
+                "16": {
+                    "data": {
+                        "advanced": {
+                            "customName": "device found",
+                            "customNameId": 0,
+                            "description": "Continues only if Jamf Pro returned a matching device.",
+                            "join": [],
+                            "note": "Continues only if Jamf Pro returned a matching device."
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_0",
+                                        "op": "!=",
+                                        "param": "find_device_by_serial:action_result.data.*.id",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_0",
+                                "customName": "found",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_162bd076-c8ab-4dce-945e-3779aeb253cb",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_eb33a61b-f000-4778-8edb-4566220734f0",
+                                "customName": "not found",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 1,
+                        "functionName": "device_found",
+                        "id": "16",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "16",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 1660,
+                    "y": 704
+                },
+                "17": {
+                    "data": {
+                        "advanced": {
+                            "customName": "note lookup failed",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note when no device matched, the lookup failed, or a platform was skipped.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note when no device matched, the lookup failed, or a platform was skipped."
+                        },
+                        "functionId": 5,
+                        "functionName": "note_lookup_failed",
+                        "id": "17",
+                        "inputParameters": [],
+                        "outputVariables": [],
+                        "type": "code"
+                    },
+                    "errors": {},
+                    "id": "17",
+                    "type": "code",
+                    "userCode": "\n    rows = phantom.collect2(container=container, datapath=[\"find_device_by_serial:action_result.status\", \"find_device_by_serial:action_result.summary.skipped\"], action_results=results)\n    lookup_status = rows[0][0] if rows and rows[0] else None\n    skipped = rows[0][1] if rows and len(rows[0]) > 1 else None\n\n    if lookup_status != \"success\":\n        title = \"Lost or Stolen Device - device lookup FAILED\"\n        content = (\"The 'get device by serial' lookup did not succeed (status: {}). \"\n                     \"No device was resolved and no actions were taken. This usually means a \"\n                     \"Jamf asset / credential / privilege problem, NOT a wrong serial - check \"\n                     \"the asset config and API role, then re-run.\".format(lookup_status))\n    elif skipped:\n        # get device by serial is best-effort across computer + mobile: it returns success even\n        # when one platform was SKIPPED for auth/privilege (recorded in summary.skipped). Do NOT\n        # report that as a clean \"no device matched\" - the lost/stolen device may be on the\n        # skipped platform and is NOT contained.\n        title = \"Lost or Stolen Device - device lookup PARTIALLY failed (a platform was skipped)\"\n        content = (\"The lookup succeeded on one platform but SKIPPED another due to a read/privilege \"\n                     \"error ({}), and no device matched on the platform that WAS read. The lost/stolen \"\n                     \"device may be on the SKIPPED platform and is NOT contained. Grant the API role \"\n                     \"read access to the skipped platform, then re-run - do not assume the serial is wrong.\".format(skipped))\n    else:\n        title = \"Lost or Stolen Device - no device matched\"\n        content = (\"No Jamf device matched the provided serial number (both platforms were read). \"\n                     \"No actions were taken. Verify the serial is correct and re-run.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
+                    "warnings": {},
+                    "x": 2260,
+                    "y": 1988
+                },
+                "18": {
+                    "data": {
+                        "advanced": {
+                            "customName": "device type",
+                            "customNameId": 0,
+                            "description": "Sends mobile devices to Lost Mode and computers to lock.",
+                            "join": [],
+                            "note": "Sends mobile devices to Lost Mode and computers to lock."
+                        },
+                        "conditions": [
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_0",
+                                        "op": "==",
+                                        "param": "find_device_by_serial:action_result.data.*.type",
+                                        "value": "mobile"
+                                    }
+                                ],
+                                "conditionIndex": 0,
+                                "conditionKey": "condition_key_0",
+                                "customName": "mobile",
+                                "logic": "and",
+                                "type": "if"
+                            },
+                            {
+                                "comparisons": [
+                                    {
+                                        "comparisonKey": "comparison_key_devtype_else",
+                                        "op": "==",
+                                        "param": "",
+                                        "value": ""
+                                    }
+                                ],
+                                "conditionIndex": 1,
+                                "conditionKey": "condition_key_devtype_else",
+                                "customName": "computer",
+                                "logic": "and",
+                                "type": "else"
+                            }
+                        ],
+                        "functionId": 2,
+                        "functionName": "device_type",
+                        "id": "18",
+                        "type": "decision"
+                    },
+                    "errors": {},
+                    "id": "18",
+                    "type": "decision",
+                    "warnings": {},
+                    "x": 1490,
+                    "y": 884
+                },
+                "19": {
+                    "data": {
+                        "action": "enable lost mode",
+                        "actionType": "contain",
+                        "advanced": {
+                            "customName": "enable lost mode",
+                            "customNameId": 0,
+                            "description": "Puts the mobile device into Lost Mode with the lost or stolen message.",
+                            "join": [],
+                            "note": "Puts the mobile device into Lost Mode with the lost or stolen message."
+                        },
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "jamf_pro"
+                        ],
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
+                        "connectorVersion": "v1",
+                        "functionId": 1,
+                        "functionName": "enable_lost_mode",
+                        "id": "19",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "find_device_by_serial:action_result.data.*.id",
+                            "device_type": "mobile",
+                            "message": "This device has been reported lost or stolen. Please contact IT/Security."
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
+                    },
+                    "errors": {},
+                    "id": "19",
+                    "type": "action",
+                    "warnings": {},
+                    "x": 1070,
+                    "y": 1064
                 },
                 "2": {
                     "data": {
                         "action": "get device by serial",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "find device by serial",
+                            "customNameId": 0,
+                            "description": "Looks up the device in Jamf Pro by the serial number from the event artifact.",
+                            "join": [],
+                            "note": "Looks up the device in Jamf Pro by the serial number from the event artifact."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_device_by_serial_1",
+                        "functionName": "find_device_by_serial",
                         "id": "2",
                         "loop": {
                             "conditions": [
@@ -406,255 +540,20 @@
                     "id": "2",
                     "type": "action",
                     "warnings": {},
-                    "x": 1060,
-                    "y": 340
-                },
-                "16": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_0",
-                                        "op": "!=",
-                                        "param": "get_device_by_serial_1:action_result.data.*.id",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_0",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_162bd076-c8ab-4dce-945e-3779aeb253cb",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_eb33a61b-f000-4778-8edb-4566220734f0",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 1,
-                        "functionName": "decision_1",
-                        "id": "16",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "16",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 1020,
-                    "y": 440
-                },
-                "17": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionId": 5,
-                        "functionName": "code_5",
-                        "id": "17",
-                        "inputParameters": [],
-                        "outputVariables": [],
-                        "type": "code"
-                    },
-                    "errors": {},
-                    "id": "17",
-                    "type": "code",
-                    "userCode": "\n    rows = phantom.collect2(container=container, datapath=[\"get_device_by_serial_1:action_result.status\", \"get_device_by_serial_1:action_result.summary.skipped\"], action_results=results)\n    lookup_status = rows[0][0] if rows and rows[0] else None\n    skipped = rows[0][1] if rows and len(rows[0]) > 1 else None\n\n    if lookup_status != \"success\":\n        title = \"Lost or Stolen Device - device lookup FAILED\"\n        content = (\"The 'get device by serial' lookup did not succeed (status: {}). \"\n                     \"No device was resolved and no actions were taken. This usually means a \"\n                     \"Jamf asset / credential / privilege problem, NOT a wrong serial - check \"\n                     \"the asset config and API role, then re-run.\".format(lookup_status))\n    elif skipped:\n        # get device by serial is best-effort across computer + mobile: it returns success even\n        # when one platform was SKIPPED for auth/privilege (recorded in summary.skipped). Do NOT\n        # report that as a clean \"no device matched\" - the lost/stolen device may be on the\n        # skipped platform and is NOT contained.\n        title = \"Lost or Stolen Device - device lookup PARTIALLY failed (a platform was skipped)\"\n        content = (\"The lookup succeeded on one platform but SKIPPED another due to a read/privilege \"\n                     \"error ({}), and no device matched on the platform that WAS read. The lost/stolen \"\n                     \"device may be on the SKIPPED platform and is NOT contained. Grant the API role \"\n                     \"read access to the skipped platform, then re-run - do not assume the serial is wrong.\".format(skipped))\n    else:\n        title = \"Lost or Stolen Device - no device matched\"\n        content = (\"No Jamf device matched the provided serial number (both platforms were read). \"\n                     \"No actions were taken. Verify the serial is correct and re-run.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
-                    "warnings": {},
-                    "x": 1280,
-                    "y": 460
-                },
-                "18": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_0",
-                                        "op": "==",
-                                        "param": "get_device_by_serial_1:action_result.data.*.type",
-                                        "value": "mobile"
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_0",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_devtype_else",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_devtype_else",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 2,
-                        "functionName": "decision_2",
-                        "id": "18",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "18",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 1020,
-                    "y": 560
-                },
-                "7": {
-                    "data": {
-                        "action": "lock device",
-                        "actionType": "contain",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "lock_device_1",
-                        "id": "7",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_type": "computer",
-                            "message": "This device has been reported lost or stolen. Please contact IT/Security.",
-                            "pin": "000000"
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "7",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 680,
-                    "y": 680
-                },
-                "19": {
-                    "data": {
-                        "action": "enable lost mode",
-                        "actionType": "contain",
-                        "advanced": {
-                            "join": []
-                        },
-                        "connector": "Jamf Pro",
-                        "connectorConfigs": [
-                            "<your-jamf-asset>"
-                        ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
-                        "connectorVersion": "v1",
-                        "functionId": 1,
-                        "functionName": "enable_lost_mode_1",
-                        "id": "19",
-                        "loop": {
-                            "conditions": [
-                                {
-                                    "comparisons": [
-                                        {
-                                            "comparisonKey": "comparison_key_0",
-                                            "op": "==",
-                                            "param": "",
-                                            "value": ""
-                                        }
-                                    ],
-                                    "conditionIndex": 0,
-                                    "conditionKey": "condition_key_0",
-                                    "logic": "and",
-                                    "type": "if"
-                                }
-                            ],
-                            "enabled": false,
-                            "exitAfterUnit": "m",
-                            "exitAfterValue": 10,
-                            "exitConditionEnabled": false,
-                            "exitLoopAfter": 2,
-                            "pauseUnit": "m",
-                            "pauseValue": 2
-                        },
-                        "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_type": "mobile",
-                            "message": "This device has been reported lost or stolen. Please contact IT/Security."
-                        },
-                        "requiredParameters": [
-                            {
-                                "data_type": "string",
-                                "field": "device_id"
-                            }
-                        ],
-                        "tab": "byConnector",
-                        "type": "action"
-                    },
-                    "errors": {},
-                    "id": "19",
-                    "type": "action",
-                    "warnings": {},
-                    "x": 1360,
-                    "y": 680
+                    "x": 1580,
+                    "y": 528
                 },
                 "20": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note mobile containment",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note with the Lost Mode result.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note with the Lost Mode result."
                         },
                         "functionId": 1,
-                        "functionName": "code_1",
+                        "functionName": "note_mobile_containment",
                         "id": "20",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -663,29 +562,33 @@
                     "errors": {},
                     "id": "20",
                     "type": "code",
-                    "userCode": "\n    dev = phantom.collect2(container=container, datapath=[\"get_device_by_serial_1:action_result.data.*.id\", \"get_device_by_serial_1:action_result.data.*.serial_number\", \"get_device_by_serial_1:action_result.data.*.type\"], action_results=results)\n    lm = phantom.collect2(container=container, datapath=[\"enable_lost_mode_1:action_result.status\"], action_results=results)\n\n    matched = [d for d in dev if d and d[0] is not None]\n    lost_status = lm[0][0] if lm and lm[0] else None\n\n    lines = []\n    lines.append(\"Lost or Stolen Device - containment outcomes (mobile):\")\n    # scope truthfulness: a serial should match one device, but enumerate ALL matches so the\n    # analyst sees the full blast radius before approving (containment + wipe act on every match).\n    if len(matched) > 1:\n        lines.append(\"WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.\".format(len(matched)))\n    for d in matched:\n        serial = d[1] if len(d) > 1 else None\n        dtype = d[2] if len(d) > 2 else None\n        lines.append(\"- device id {} (serial {}, type {})\".format(d[0], serial, dtype))\n    lines.append(\"- Enable Lost Mode - MDM command status: {}\".format(lost_status))\n    if lost_status != \"success\":\n        lines.append(\"WARNING: Enable Lost Mode did not succeed - review before approving a wipe.\")\n    lines.append(\"MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.\")\n    lines.append(\"An analyst approval is required before any wipe (irreversible).\")\n\n    phantom.add_note(container=container, title=\"Lost or Stolen Device - containment outcomes (mobile)\", content=\"\\n\".join(lines), note_type=\"general\")\n",
+                    "userCode": "\n    dev = phantom.collect2(container=container, datapath=[\"find_device_by_serial:action_result.data.*.id\", \"find_device_by_serial:action_result.data.*.serial_number\", \"find_device_by_serial:action_result.data.*.type\"], action_results=results)\n    lm = phantom.collect2(container=container, datapath=[\"enable_lost_mode:action_result.status\"], action_results=results)\n\n    matched = [d for d in dev if d and d[0] is not None]\n    lost_status = lm[0][0] if lm and lm[0] else None\n\n    lines = []\n    lines.append(\"Lost or Stolen Device - containment outcomes (mobile):\")\n    # scope truthfulness: a serial should match one device, but enumerate ALL matches so the\n    # analyst sees the full blast radius before approving (containment + wipe act on every match).\n    if len(matched) > 1:\n        lines.append(\"WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.\".format(len(matched)))\n    for d in matched:\n        serial = d[1] if len(d) > 1 else None\n        dtype = d[2] if len(d) > 2 else None\n        lines.append(\"- device id {} (serial {}, type {})\".format(d[0], serial, dtype))\n    lines.append(\"- Enable Lost Mode - MDM command status: {}\".format(lost_status))\n    if lost_status != \"success\":\n        lines.append(\"WARNING: Enable Lost Mode did not succeed - review before approving a wipe.\")\n    lines.append(\"MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.\")\n    lines.append(\"An analyst approval is required before any wipe (irreversible).\")\n\n    phantom.add_note(container=container, title=\"Lost or Stolen Device - containment outcomes (mobile)\", content=\"\\n\".join(lines), note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 1360,
-                    "y": 780
+                    "x": 1070,
+                    "y": 1248
                 },
                 "21": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "approve mobile wipe",
+                            "customNameId": 0,
+                            "description": "Asks an analyst to approve wiping the mobile device. Times out after 30 minutes.",
+                            "join": [],
+                            "note": "Asks an analyst to approve wiping the mobile device. Times out after 30 minutes."
                         },
                         "approver": {
                             "type": "role",
                             "value": "<security-analyst-role>"
                         },
                         "functionId": 1,
-                        "functionName": "prompt_1",
+                        "functionName": "approve_mobile_wipe",
                         "id": "21",
                         "message": "A MOBILE device reported LOST or STOLEN has been placed in Lost Mode. Approve a REMOTE WIPE?\nThis permanently ERASES the device and is IRREVERSIBLE.\n\nDevice id: {0}\nSerial: {1}\nType: {2}\nEnable lost mode status: {3}\n\nApprove only if the device is confirmed unrecoverable and a wipe is authorized.",
                         "parameters": [
-                            "get_device_by_serial_1:action_result.data.*.id",
-                            "get_device_by_serial_1:action_result.data.*.serial_number",
-                            "get_device_by_serial_1:action_result.data.*.type",
-                            "enable_lost_mode_1:action_result.status"
+                            "find_device_by_serial:action_result.data.*.id",
+                            "find_device_by_serial:action_result.data.*.serial_number",
+                            "find_device_by_serial:action_result.data.*.type",
+                            "enable_lost_mode:action_result.status"
                         ],
                         "responseTime": 30,
                         "responses": [
@@ -705,13 +608,17 @@
                     "id": "21",
                     "type": "prompt",
                     "warnings": {},
-                    "x": 1360,
-                    "y": 880
+                    "x": 1070,
+                    "y": 1432
                 },
                 "22": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "mobile wipe approved",
+                            "customNameId": 0,
+                            "description": "Wipes the mobile device only if the analyst answered Yes.",
+                            "join": [],
+                            "note": "Wipes the mobile device only if the analyst answered Yes."
                         },
                         "conditions": [
                             {
@@ -719,12 +626,13 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "==",
-                                        "param": "prompt_1:action_result.summary.responses.0",
+                                        "param": "approve_mobile_wipe:action_result.summary.responses.0",
                                         "value": "Yes"
                                     }
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_0",
+                                "customName": "approved",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -739,12 +647,13 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_mobile_else",
+                                "customName": "not approved",
                                 "logic": "and",
                                 "type": "else"
                             }
                         ],
                         "functionId": 3,
-                        "functionName": "decision_3",
+                        "functionName": "mobile_wipe_approved",
                         "id": "22",
                         "type": "decision"
                     },
@@ -752,24 +661,28 @@
                     "id": "22",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1360,
-                    "y": 980
+                    "x": 1150,
+                    "y": 1624
                 },
                 "23": {
                     "data": {
                         "action": "wipe device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "wipe mobile device",
+                            "customNameId": 0,
+                            "description": "Erases the mobile device. Runs only after analyst approval.",
+                            "join": [],
+                            "note": "Erases the mobile device. Runs only after analyst approval."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "wipe_device_1",
+                        "functionName": "wipe_mobile_device",
                         "id": "23",
                         "loop": {
                             "conditions": [
@@ -797,9 +710,9 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "confirm": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_type": "get_device_by_serial_1:action_result.data.*.type"
+                            "confirm": "find_device_by_serial:action_result.data.*.id",
+                            "device_id": "find_device_by_serial:action_result.data.*.id",
+                            "device_type": "find_device_by_serial:action_result.data.*.type"
                         },
                         "requiredParameters": [
                             {
@@ -818,16 +731,20 @@
                     "id": "23",
                     "type": "action",
                     "warnings": {},
-                    "x": 1300,
-                    "y": 1100
+                    "x": 900,
+                    "y": 1804
                 },
                 "24": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note mobile wipe declined",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the wipe was declined or the prompt timed out.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the wipe was declined or the prompt timed out."
                         },
                         "functionId": 2,
-                        "functionName": "code_2",
+                        "functionName": "note_mobile_wipe_declined",
                         "id": "24",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -836,18 +753,22 @@
                     "errors": {},
                     "id": "24",
                     "type": "code",
-                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_1:action_result.summary.responses.0\"], action_results=results)\n    lm = phantom.collect2(container=container, datapath=[\"enable_lost_mode_1:action_result.status\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n    lost_status = lm[0][0] if lm and lm[0] else None\n\n    # M1: only claim containment if enable-lost-mode actually succeeded; otherwise say so plainly.\n    if lost_status == \"success\":\n        contained = \"the device remains in Lost Mode (queued)\"\n    else:\n        contained = \"WARNING: Lost Mode was NOT successfully enabled ({}) - the device may NOT be contained, follow up\".format(lost_status)\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out (mobile)\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"No erase was performed; {}. Re-run if a wipe is still required.\".format(contained))\n    else:\n        title = \"Lost or Stolen Device - wipe denied (mobile)\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"No erase was performed; {}.\".format(contained))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"approve_mobile_wipe:action_result.summary.responses.0\"], action_results=results)\n    lm = phantom.collect2(container=container, datapath=[\"enable_lost_mode:action_result.status\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n    lost_status = lm[0][0] if lm and lm[0] else None\n\n    # M1: only claim containment if enable-lost-mode actually succeeded; otherwise say so plainly.\n    if lost_status == \"success\":\n        contained = \"the device remains in Lost Mode (queued)\"\n    else:\n        contained = \"WARNING: Lost Mode was NOT successfully enabled ({}) - the device may NOT be contained, follow up\".format(lost_status)\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out (mobile)\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"No erase was performed; {}. Re-run if a wipe is still required.\".format(contained))\n    else:\n        title = \"Lost or Stolen Device - wipe denied (mobile)\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"No erase was performed; {}.\".format(contained))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 1560,
-                    "y": 1080
+                    "x": 1240,
+                    "y": 1980
                 },
                 "25": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note computer containment",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note with the lock result.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note with the lock result."
                         },
                         "functionId": 3,
-                        "functionName": "code_3",
+                        "functionName": "note_computer_containment",
                         "id": "25",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -856,29 +777,33 @@
                     "errors": {},
                     "id": "25",
                     "type": "code",
-                    "userCode": "\n    dev = phantom.collect2(container=container, datapath=[\"get_device_by_serial_1:action_result.data.*.id\", \"get_device_by_serial_1:action_result.data.*.serial_number\", \"get_device_by_serial_1:action_result.data.*.type\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n\n    matched = [d for d in dev if d and d[0] is not None]\n    lock_status = lk[0][0] if lk and lk[0] else None\n\n    lines = []\n    lines.append(\"Lost or Stolen Device - containment outcomes (computer):\")\n    # scope truthfulness: enumerate ALL matches so the analyst sees the full blast radius\n    # before approving (containment + wipe act on every match).\n    if len(matched) > 1:\n        lines.append(\"WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.\".format(len(matched)))\n    for d in matched:\n        serial = d[1] if len(d) > 1 else None\n        dtype = d[2] if len(d) > 2 else None\n        lines.append(\"- device id {} (serial {}, type {})\".format(d[0], serial, dtype))\n    lines.append(\"- Lock device - MDM command status: {}\".format(lock_status))\n    if lock_status != \"success\":\n        lines.append(\"WARNING: Lock device did not succeed - review before approving a wipe.\")\n    lines.append(\"MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.\")\n    lines.append(\"An analyst approval is required before any wipe (irreversible).\")\n\n    phantom.add_note(container=container, title=\"Lost or Stolen Device - containment outcomes (computer)\", content=\"\\n\".join(lines), note_type=\"general\")\n",
+                    "userCode": "\n    dev = phantom.collect2(container=container, datapath=[\"find_device_by_serial:action_result.data.*.id\", \"find_device_by_serial:action_result.data.*.serial_number\", \"find_device_by_serial:action_result.data.*.type\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_computer:action_result.status\"], action_results=results)\n\n    matched = [d for d in dev if d and d[0] is not None]\n    lock_status = lk[0][0] if lk and lk[0] else None\n\n    lines = []\n    lines.append(\"Lost or Stolen Device - containment outcomes (computer):\")\n    # scope truthfulness: enumerate ALL matches so the analyst sees the full blast radius\n    # before approving (containment + wipe act on every match).\n    if len(matched) > 1:\n        lines.append(\"WARNING: {} devices matched this serial - ALL are contained and ALL will be wiped if approved. Review every device below before approving.\".format(len(matched)))\n    for d in matched:\n        serial = d[1] if len(d) > 1 else None\n        dtype = d[2] if len(d) > 2 else None\n        lines.append(\"- device id {} (serial {}, type {})\".format(d[0], serial, dtype))\n    lines.append(\"- Lock device - MDM command status: {}\".format(lock_status))\n    if lock_status != \"success\":\n        lines.append(\"WARNING: Lock device did not succeed - review before approving a wipe.\")\n    lines.append(\"MDM commands are QUEUED and apply when the device next checks in - containment is not guaranteed instant.\")\n    lines.append(\"An analyst approval is required before any wipe (irreversible).\")\n\n    phantom.add_note(container=container, title=\"Lost or Stolen Device - containment outcomes (computer)\", content=\"\\n\".join(lines), note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 680,
-                    "y": 780
+                    "x": 1750,
+                    "y": 1240
                 },
                 "26": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "approve computer wipe",
+                            "customNameId": 0,
+                            "description": "Asks an analyst to approve wiping the computer. Times out after 30 minutes.",
+                            "join": [],
+                            "note": "Asks an analyst to approve wiping the computer. Times out after 30 minutes."
                         },
                         "approver": {
                             "type": "role",
                             "value": "<security-analyst-role>"
                         },
                         "functionId": 2,
-                        "functionName": "prompt_2",
+                        "functionName": "approve_computer_wipe",
                         "id": "26",
                         "message": "A COMPUTER reported LOST or STOLEN has been locked. Approve a REMOTE WIPE?\nThis permanently ERASES the device and is IRREVERSIBLE.\n\nDevice id: {0}\nSerial: {1}\nType: {2}\nLock device status: {3}\n\nApprove only if the device is confirmed unrecoverable and a wipe is authorized.",
                         "parameters": [
-                            "get_device_by_serial_1:action_result.data.*.id",
-                            "get_device_by_serial_1:action_result.data.*.serial_number",
-                            "get_device_by_serial_1:action_result.data.*.type",
-                            "lock_device_1:action_result.status"
+                            "find_device_by_serial:action_result.data.*.id",
+                            "find_device_by_serial:action_result.data.*.serial_number",
+                            "find_device_by_serial:action_result.data.*.type",
+                            "lock_computer:action_result.status"
                         ],
                         "responseTime": 30,
                         "responses": [
@@ -898,13 +823,17 @@
                     "id": "26",
                     "type": "prompt",
                     "warnings": {},
-                    "x": 680,
-                    "y": 880
+                    "x": 1750,
+                    "y": 1432
                 },
                 "27": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "computer wipe approved",
+                            "customNameId": 0,
+                            "description": "Wipes the computer only if the analyst answered Yes.",
+                            "join": [],
+                            "note": "Wipes the computer only if the analyst answered Yes."
                         },
                         "conditions": [
                             {
@@ -912,12 +841,13 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "==",
-                                        "param": "prompt_2:action_result.summary.responses.0",
+                                        "param": "approve_computer_wipe:action_result.summary.responses.0",
                                         "value": "Yes"
                                     }
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_0",
+                                "customName": "approved",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -932,12 +862,13 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_computer_else",
+                                "customName": "not approved",
                                 "logic": "and",
                                 "type": "else"
                             }
                         ],
                         "functionId": 4,
-                        "functionName": "decision_4",
+                        "functionName": "computer_wipe_approved",
                         "id": "27",
                         "type": "decision"
                     },
@@ -945,24 +876,28 @@
                     "id": "27",
                     "type": "decision",
                     "warnings": {},
-                    "x": 680,
-                    "y": 980
+                    "x": 1830,
+                    "y": 1624
                 },
                 "28": {
                     "data": {
                         "action": "wipe device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "wipe computer",
+                            "customNameId": 0,
+                            "description": "Erases the computer. Runs only after analyst approval.",
+                            "join": [],
+                            "note": "Erases the computer. Runs only after analyst approval."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 2,
-                        "functionName": "wipe_device_2",
+                        "functionName": "wipe_computer",
                         "id": "28",
                         "loop": {
                             "conditions": [
@@ -990,9 +925,9 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "confirm": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_type": "get_device_by_serial_1:action_result.data.*.type"
+                            "confirm": "find_device_by_serial:action_result.data.*.id",
+                            "device_id": "find_device_by_serial:action_result.data.*.id",
+                            "device_type": "find_device_by_serial:action_result.data.*.type"
                         },
                         "requiredParameters": [
                             {
@@ -1011,16 +946,20 @@
                     "id": "28",
                     "type": "action",
                     "warnings": {},
-                    "x": 620,
-                    "y": 1100
+                    "x": 1580,
+                    "y": 1804
                 },
                 "29": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note computer wipe declined",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the wipe of the computer was declined or the prompt timed out.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the wipe of the computer was declined or the prompt timed out."
                         },
                         "functionId": 4,
-                        "functionName": "code_4",
+                        "functionName": "note_computer_wipe_declined",
                         "id": "29",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -1029,15 +968,19 @@
                     "errors": {},
                     "id": "29",
                     "type": "code",
-                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_2:action_result.summary.responses.0\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n    lock_status = lk[0][0] if lk and lk[0] else None\n\n    # M1: only claim containment if the lock actually succeeded; otherwise say so plainly.\n    if lock_status == \"success\":\n        contained = \"the device remains locked (queued)\"\n    else:\n        contained = \"WARNING: the lock did NOT succeed ({}) - the device may NOT be contained, follow up\".format(lock_status)\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out (computer)\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"No erase was performed; {}. Re-run if a wipe is still required.\".format(contained))\n    else:\n        title = \"Lost or Stolen Device - wipe denied (computer)\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"No erase was performed; {}.\".format(contained))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"approve_computer_wipe:action_result.summary.responses.0\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_computer:action_result.status\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n    lock_status = lk[0][0] if lk and lk[0] else None\n\n    # M1: only claim containment if the lock actually succeeded; otherwise say so plainly.\n    if lock_status == \"success\":\n        contained = \"the device remains locked (queued)\"\n    else:\n        contained = \"WARNING: the lock did NOT succeed ({}) - the device may NOT be contained, follow up\".format(lock_status)\n\n    if answer in (None, \"\"):\n        title = \"Lost or Stolen Device - wipe prompt timed out (computer)\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"No erase was performed; {}. Re-run if a wipe is still required.\".format(contained))\n    else:\n        title = \"Lost or Stolen Device - wipe denied (computer)\"\n        content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"No erase was performed; {}.\".format(contained))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 900,
-                    "y": 1080
+                    "x": 1920,
+                    "y": 1980
                 },
                 "30": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "has serial",
+                            "customNameId": 0,
+                            "description": "Continues only if the event has a serial number.",
+                            "join": [],
+                            "note": "Continues only if the event has a serial number."
                         },
                         "conditions": [
                             {
@@ -1051,6 +994,7 @@
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_0",
+                                "customName": "serial present",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -1065,12 +1009,13 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_decision5_else",
+                                "customName": "no serial",
                                 "logic": "and",
                                 "type": "else"
                             }
                         ],
                         "functionId": 5,
-                        "functionName": "decision_5",
+                        "functionName": "has_serial",
                         "id": "30",
                         "type": "decision"
                     },
@@ -1078,16 +1023,20 @@
                     "id": "30",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 300
+                    "x": 1830,
+                    "y": 348
                 },
                 "31": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no serial",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note that the event had no serial number.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note that the event had no serial number."
                         },
                         "functionId": 6,
-                        "functionName": "code_6",
+                        "functionName": "note_no_serial",
                         "id": "31",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -1098,63 +1047,20 @@
                     "type": "code",
                     "userCode": "\n    phantom.add_note(container=container,\n        title=\"Lost or Stolen Device - no serial on the event\",\n        content=(\"The triggering event has no serial (artifact:*.cef.serialNumber is empty), so no device could be \"\n                 \"resolved and no actions were taken. Add the device serial to the event and re-run - this is a \"\n                 \"missing-input condition, NOT a Jamf asset / credential / privilege problem.\"),\n        note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 1280,
-                    "y": 300
-                },
-                "32": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_0",
-                                        "op": "==",
-                                        "param": "wipe_device_1:action_result.status",
-                                        "value": "success"
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_0",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_decision6_else",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_decision6_else",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 6,
-                        "functionName": "decision_6",
-                        "id": "32",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "32",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 1300,
-                    "y": 1220
+                    "x": 2600,
+                    "y": 1988
                 },
                 "33": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note mobile wipe outcome",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note saying whether the wipe of the mobile device was queued or failed.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note saying whether the wipe of the mobile device was queued or failed."
                         },
                         "functionId": 7,
-                        "functionName": "code_7",
+                        "functionName": "note_mobile_wipe_outcome",
                         "id": "33",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -1163,85 +1069,22 @@
                     "errors": {},
                     "id": "33",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(container=container,\n        title=\"Lost or Stolen Device - wipe QUEUED (mobile)\",\n        content=(\"The remote WIPE (erase) was approved and the command was accepted / QUEUED for the mobile device. \"\n                 \"MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. \"\n                 \"Track completion in the device's Jamf command history.\"),\n        note_type=\"general\")\n",
+                    "userCode": "\n    rows = phantom.collect2(container=container, datapath=[\"wipe_mobile_device:action_result.status\", \"wipe_mobile_device:action_result.message\", \"wipe_mobile_device:action_result.parameter.device_id\"], action_results=results)\n    outcomes = [(r[2], r[0], r[1]) for r in rows if r] or [(None, None, \"no wipe result was returned\")]\n    failed = [o for o in outcomes if o[1] != \"success\"]\n\n    if not failed:\n        phantom.add_note(container=container,\n            title=\"Lost or Stolen Device - wipe QUEUED (mobile)\",\n            content=(\"The remote WIPE (erase) was approved and the command was accepted / QUEUED for the mobile device. \"\n                     \"MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. \"\n                     \"Track completion in the device's Jamf command history.\"),\n            note_type=\"general\")\n    else:\n        lines = [\"- device {}: {} ({})\".format(d, s, m) for d, s, m in outcomes]\n        phantom.add_note(container=container,\n            title=\"Lost or Stolen Device - wipe FAILED / NOT queued (mobile)\",\n            content=(\"The remote WIPE was approved but did NOT queue for every device. A device whose wipe did not queue is NOT being \"\n                     \"erased and still holds data - investigate (enrollment / supervision / privilege / device state) and re-run.\\n\"\n                     + \"\\n\".join(lines)),\n            note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 1240,
-                    "y": 1320
-                },
-                "34": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "functionId": 8,
-                        "functionName": "code_8",
-                        "id": "34",
-                        "inputParameters": [],
-                        "outputVariables": [],
-                        "type": "code"
-                    },
-                    "errors": {},
-                    "id": "34",
-                    "type": "code",
-                    "userCode": "\n    st = phantom.collect2(container=container, datapath=[\"wipe_device_1:action_result.status\", \"wipe_device_1:action_result.message\"], action_results=results)\n    status = st[0][0] if st and st[0] else None\n    msg = st[0][1] if st and len(st[0]) > 1 else None\n\n    phantom.add_note(container=container,\n        title=\"Lost or Stolen Device - wipe FAILED / NOT queued (mobile)\",\n        content=(\"The remote WIPE was approved but did NOT queue (status: {}). The device is NOT being erased and \"\n                 \"still holds data - investigate (enrollment / supervision / privilege / device state) and re-run. \"\n                 \"Detail: {}\".format(status, msg)),\n        note_type=\"general\")\n",
-                    "warnings": {},
-                    "x": 1440,
-                    "y": 1320
-                },
-                "35": {
-                    "data": {
-                        "advanced": {
-                            "join": []
-                        },
-                        "conditions": [
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_0",
-                                        "op": "==",
-                                        "param": "wipe_device_2:action_result.status",
-                                        "value": "success"
-                                    }
-                                ],
-                                "conditionIndex": 0,
-                                "conditionKey": "condition_key_0",
-                                "logic": "and",
-                                "type": "if"
-                            },
-                            {
-                                "comparisons": [
-                                    {
-                                        "comparisonKey": "comparison_key_decision7_else",
-                                        "op": "==",
-                                        "param": "",
-                                        "value": ""
-                                    }
-                                ],
-                                "conditionIndex": 1,
-                                "conditionKey": "condition_key_decision7_else",
-                                "logic": "and",
-                                "type": "else"
-                            }
-                        ],
-                        "functionId": 7,
-                        "functionName": "decision_7",
-                        "id": "35",
-                        "type": "decision"
-                    },
-                    "errors": {},
-                    "id": "35",
-                    "type": "decision",
-                    "warnings": {},
-                    "x": 620,
-                    "y": 1220
+                    "x": 900,
+                    "y": 1980
                 },
                 "36": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note computer wipe outcome",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note saying whether the wipe of the computer was queued or failed.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note saying whether the wipe of the computer was queued or failed."
                         },
                         "functionId": 9,
-                        "functionName": "code_9",
+                        "functionName": "note_computer_wipe_outcome",
                         "id": "36",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -1250,33 +1093,80 @@
                     "errors": {},
                     "id": "36",
                     "type": "code",
-                    "userCode": "\n    phantom.add_note(container=container,\n        title=\"Lost or Stolen Device - wipe QUEUED (computer)\",\n        content=(\"The remote WIPE (erase) was approved and the command was accepted / QUEUED for the computer. \"\n                 \"MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. \"\n                 \"Track completion in the device's Jamf command history.\"),\n        note_type=\"general\")\n",
+                    "userCode": "\n    rows = phantom.collect2(container=container, datapath=[\"wipe_computer:action_result.status\", \"wipe_computer:action_result.message\", \"wipe_computer:action_result.parameter.device_id\"], action_results=results)\n    outcomes = [(r[2], r[0], r[1]) for r in rows if r] or [(None, None, \"no wipe result was returned\")]\n    failed = [o for o in outcomes if o[1] != \"success\"]\n\n    if not failed:\n        phantom.add_note(container=container,\n            title=\"Lost or Stolen Device - wipe QUEUED (computer)\",\n            content=(\"The remote WIPE (erase) was approved and the command was accepted / QUEUED for the computer device. \"\n                     \"MDM commands are queued and apply when the device next checks in - QUEUED is not confirmed-erased. \"\n                     \"Track completion in the device's Jamf command history.\"),\n            note_type=\"general\")\n    else:\n        lines = [\"- device {}: {} ({})\".format(d, s, m) for d, s, m in outcomes]\n        phantom.add_note(container=container,\n            title=\"Lost or Stolen Device - wipe FAILED / NOT queued (computer)\",\n            content=(\"The remote WIPE was approved but did NOT queue for every device. A device whose wipe did not queue is NOT being \"\n                     \"erased and still holds data - investigate (enrollment / supervision / privilege / device state) and re-run.\\n\"\n                     + \"\\n\".join(lines)),\n            note_type=\"general\")\n",
                     "warnings": {},
-                    "x": 560,
-                    "y": 1320
+                    "x": 1580,
+                    "y": 1980
                 },
-                "37": {
+                "7": {
                     "data": {
+                        "action": "lock device",
+                        "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "lock computer",
+                            "customNameId": 0,
+                            "description": "Locks the computer with the lock-screen message and PIN.",
+                            "join": [],
+                            "note": "Locks the computer with the lock-screen message and PIN."
                         },
-                        "functionId": 10,
-                        "functionName": "code_10",
-                        "id": "37",
-                        "inputParameters": [],
-                        "outputVariables": [],
-                        "type": "code"
+                        "connector": "Jamf Pro",
+                        "connectorConfigs": [
+                            "jamf_pro"
+                        ],
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
+                        "connectorVersion": "v1",
+                        "functionId": 1,
+                        "functionName": "lock_computer",
+                        "id": "7",
+                        "loop": {
+                            "conditions": [
+                                {
+                                    "comparisons": [
+                                        {
+                                            "comparisonKey": "comparison_key_0",
+                                            "op": "==",
+                                            "param": "",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "conditionIndex": 0,
+                                    "conditionKey": "condition_key_0",
+                                    "logic": "and",
+                                    "type": "if"
+                                }
+                            ],
+                            "enabled": false,
+                            "exitAfterUnit": "m",
+                            "exitAfterValue": 10,
+                            "exitConditionEnabled": false,
+                            "exitLoopAfter": 2,
+                            "pauseUnit": "m",
+                            "pauseValue": 2
+                        },
+                        "parameters": {
+                            "device_id": "find_device_by_serial:action_result.data.*.id",
+                            "device_type": "computer",
+                            "message": "This device has been reported lost or stolen. Please contact IT/Security.",
+                            "pin": "000000"
+                        },
+                        "requiredParameters": [
+                            {
+                                "data_type": "string",
+                                "field": "device_id"
+                            }
+                        ],
+                        "tab": "byConnector",
+                        "type": "action"
                     },
                     "errors": {},
-                    "id": "37",
-                    "type": "code",
-                    "userCode": "\n    st = phantom.collect2(container=container, datapath=[\"wipe_device_2:action_result.status\", \"wipe_device_2:action_result.message\"], action_results=results)\n    status = st[0][0] if st and st[0] else None\n    msg = st[0][1] if st and len(st[0]) > 1 else None\n\n    phantom.add_note(container=container,\n        title=\"Lost or Stolen Device - wipe FAILED / NOT queued (computer)\",\n        content=(\"The remote WIPE was approved but did NOT queue (status: {}). The device is NOT being erased and \"\n                 \"still holds data - investigate (enrollment / privilege / device state) and re-run. \"\n                 \"Detail: {}\".format(status, msg)),\n        note_type=\"general\")\n",
+                    "id": "7",
+                    "type": "action",
                     "warnings": {},
-                    "x": 760,
-                    "y": 1320
+                    "x": 1750,
+                    "y": 1064
                 }
             },
-            "notes": "Inputs: device serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, enable lost mode (mobile), lock device (computer), wipe device (after analyst approval)\nOutputs: notes on the event\nBefore use, replace: <your-jamf-asset> on all 5 action blocks; <security-analyst-role> on the wipe-approval prompts; the computer lock PIN 000000 with your own 6-digit PIN; the lost or stolen lock-screen message.",
+            "notes": "Inputs: device serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, enable lost mode (mobile), lock device (computer), wipe device (after analyst approval)\nOutputs: notes on the event\nBefore use: a Jamf Pro asset named jamf_pro (or change the asset on all 5 action blocks); replace <security-analyst-role> on the wipe-approval prompts; the computer lock PIN 000000 with your own 6-digit PIN; the lost or stolen lock-screen message.",
             "origin": {
                 "playbook_id": 234,
                 "playbook_name": "Jamf - Lost or Stolen Device",
@@ -1292,7 +1182,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T15:10:27.509803+00:00",
+    "create_time": "2026-11-27T13:13:01.262801+00:00",
     "draft_mode": false,
     "labels": [
         "*"

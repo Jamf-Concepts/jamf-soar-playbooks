@@ -129,7 +129,7 @@
                     "targetPort": "17_in"
                 }
             ],
-            "hash": "",
+            "hash": "88d29f4f89b2544106db9437fb0f33b3fb98ae26",
             "nodes": {
                 "0": {
                     "data": {
@@ -144,8 +144,8 @@
                     "id": "0",
                     "type": "start",
                     "warnings": {},
-                    "x": 980,
-                    "y": 239.9999999999992
+                    "x": 1260,
+                    "y": 200
                 },
                 "1": {
                     "data": {
@@ -160,13 +160,17 @@
                     "id": "1",
                     "type": "end",
                     "warnings": {},
-                    "x": 1080,
-                    "y": 1380
+                    "x": 900,
+                    "y": 1740
                 },
                 "10": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "wipe approved",
+                            "customNameId": 0,
+                            "description": "Wipes the Mac only if the analyst answered Yes. ",
+                            "join": [],
+                            "note": "Wipes the Mac only if the analyst answered Yes. "
                         },
                         "conditions": [
                             {
@@ -174,12 +178,13 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "==",
-                                        "param": "prompt_1:action_result.summary.responses.0",
+                                        "param": "approve_wipe:action_result.summary.responses.0",
                                         "value": "Yes"
                                     }
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_0",
+                                "customName": "approved",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -194,12 +199,13 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_be617d04-b7a6-4d2e-be7d-6870550b7e2a",
+                                "customName": "not approved",
                                 "logic": "and",
                                 "type": "else"
                             }
                         ],
                         "functionId": 1,
-                        "functionName": "decision_1",
+                        "functionName": "wipe_approved",
                         "id": "10",
                         "type": "decision"
                     },
@@ -207,24 +213,28 @@
                     "id": "10",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1180,
-                    "y": 1120
+                    "x": 1160,
+                    "y": 1440
                 },
                 "11": {
                     "data": {
                         "action": "wipe device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "wipe mac",
+                            "customNameId": 0,
+                            "description": "Erases the Mac. Runs only after analyst approval. ",
+                            "join": [],
+                            "note": "Erases the Mac. Runs only after analyst approval. "
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "wipe_device_1",
+                        "functionName": "wipe_mac",
                         "id": "11",
                         "loop": {
                             "conditions": [
@@ -252,8 +262,8 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "confirm": "get_device_by_serial_1:action_result.data.*.id",
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
+                            "confirm": "find_mac_by_serial:action_result.data.*.id",
+                            "device_id": "find_mac_by_serial:action_result.data.*.id",
                             "device_type": "computer"
                         },
                         "requiredParameters": [
@@ -273,16 +283,20 @@
                     "id": "11",
                     "type": "action",
                     "warnings": {},
-                    "x": 1060,
-                    "y": 1280
+                    "x": 880,
+                    "y": 1600
                 },
                 "14": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note step outcomes",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note with the result of each step, including whether the FileVault key was retrieved, but never the key itself. ",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note with the result of each step, including whether the FileVault key was retrieved, but never the key itself. "
                         },
                         "functionId": 1,
-                        "functionName": "code_1",
+                        "functionName": "note_step_outcomes",
                         "id": "14",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -291,18 +305,22 @@
                     "errors": {},
                     "id": "14",
                     "type": "code",
-                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_recovery_key_1:action_result.status\", \"get_filevault_recovery_key_1:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock_1:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_device_1:action_result.status\"], action_results=results)\n    cs = phantom.collect2(container=container, datapath=[\"get_compliance_status_1:action_result.status\", \"get_compliance_status_1:action_result.data.*.compliance_state\"], action_results=results)\n    lu = phantom.collect2(container=container, datapath=[\"get_local_user_accounts_1:action_result.status\", \"get_local_user_accounts_1:action_result.summary.total\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n    cs_status = cs[0][0] if cs else None\n    cs_state = cs[0][1] if cs and len(cs[0]) > 1 else None\n    lu_status = lu[0][0] if lu else None\n    lu_total = lu[0][1] if lu and len(lu[0]) > 1 else None\n       \n    lines = []\n    if fv_status != \"success\" or key_present not in (True, \"True\", \"true\"):\n         lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status, key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n         lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Compliance status: {} ({})\".format(cs_status, cs_state))\n    lines.append(\"- Local user accounts: {} (count: {})\".format(lu_status, lu_total))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n      \n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
+                    "userCode": "\n    fv = phantom.collect2(container=container, datapath=[\"get_filevault_key:action_result.status\", \"get_filevault_key:action_result.summary.key_present\"], action_results=results)\n    rl = phantom.collect2(container=container, datapath=[\"set_recovery_lock:action_result.status\"], action_results=results)\n    lk = phantom.collect2(container=container, datapath=[\"lock_mac:action_result.status\"], action_results=results)\n    cs = phantom.collect2(container=container, datapath=[\"get_compliance_status:action_result.status\", \"get_compliance_status:action_result.data.*.compliance_state\"], action_results=results)\n    lu = phantom.collect2(container=container, datapath=[\"get_local_accounts:action_result.status\", \"get_local_accounts:action_result.summary.total\"], action_results=results)\n\n    fv_status = fv[0][0] if fv else None\n    key_present = fv[0][1] if fv and len(fv[0]) > 1 else None\n    rl_status = rl[0][0] if rl else None\n    lock_status = lk[0][0] if lk else None\n    cs_status = cs[0][0] if cs else None\n    cs_state = cs[0][1] if cs and len(cs[0]) > 1 else None\n    lu_status = lu[0][0] if lu else None\n    lu_total = lu[0][1] if lu and len(lu[0]) > 1 else None\n       \n    lines = []\n    if fv_status != \"success\" or key_present not in (True, \"True\", \"true\"):\n         lines.append(\"WARNING: a FileVault recovery key was NOT obtained (retrieval: {}, key escrowed: {}). Do NOT approve the wipe if the disk contents are still needed.\".format(fv_status, key_present))\n    if rl_status != \"success\" or lock_status != \"success\":\n         lines.append(\"WARNING: securing the device did not fully succeed (set recovery lock: {}, lock device: {}). Review before approving the wipe.\".format(rl_status, lock_status))\n\n    lines.append(\"FileVault recovery access - step outcomes:\")\n    lines.append(\"- FileVault recovery key retrieval: {} (key escrowed in Jamf: {})\".format(fv_status, key_present))\n    lines.append(\"- Compliance status: {} ({})\".format(cs_status, cs_state))\n    lines.append(\"- Local user accounts: {} (count: {})\".format(lu_status, lu_total))\n    lines.append(\"- Set recovery lock (queued): {}\".format(rl_status))\n    lines.append(\"- Lock device (queued): {}\".format(lock_status))\n    lines.append(\"The FileVault recovery key is sensitive and is intentionally NOT included here.\")\n    lines.append(\"TODO: replace this note with a notification to a restricted security channel.\")\n      \n    phantom.add_note(container=container, title=\"FileVault recovery access - step outcomes\", content=\"\\n\".join(lines), note_type=\"general\")\n\n\n",
                     "warnings": {},
-                    "x": 960,
-                    "y": 960
+                    "x": 1080,
+                    "y": 1160
                 },
                 "15": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note wipe not approved",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note saying the wipe was declined or the prompt timed out. ",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note saying the wipe was declined or the prompt timed out. "
                         },
                         "functionId": 2,
-                        "functionName": "code_2",
+                        "functionName": "note_wipe_not_approved",
                         "id": "15",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -311,15 +329,19 @@
                     "errors": {},
                     "id": "15",
                     "type": "code",
-                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"prompt_1:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"FileVault recovery - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed. \"\n                     \"Re-run if a wipe is still required.\")\n    else:\n          title = \"FileVault recovery - wipe denied\"\n          content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n",
+                    "userCode": "\n    resp = phantom.collect2(container=container, datapath=[\"approve_wipe:action_result.summary.responses.0\"], action_results=results)\n    answer = resp[0][0] if resp and resp[0] else None\n\n    if answer in (None, \"\"):\n        title = \"FileVault recovery - wipe prompt timed out\"\n        content = (\"The wipe approval prompt timed out with no response (treated as no-wipe). \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed. \"\n                     \"Re-run if a wipe is still required.\")\n    else:\n          title = \"FileVault recovery - wipe denied\"\n          content = (\"The analyst declined the wipe at the approval prompt. \"\n                     \"The device remains contained (recovery lock + device lock queued); no erase was performed.\")\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n",
                     "warnings": {},
-                    "x": 1300,
-                    "y": 1220
+                    "x": 1240,
+                    "y": 1600
                 },
                 "16": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "device found",
+                            "customNameId": 0,
+                            "description": "Continues only if Jamf Pro returned a matching device.",
+                            "join": [],
+                            "note": "Continues only if Jamf Pro returned a matching device."
                         },
                         "conditions": [
                             {
@@ -327,12 +349,13 @@
                                     {
                                         "comparisonKey": "comparison_key_0",
                                         "op": "!=",
-                                        "param": "get_device_by_serial_1:action_result.data.*.id",
+                                        "param": "find_mac_by_serial:action_result.data.*.id",
                                         "value": ""
                                     }
                                 ],
                                 "conditionIndex": 0,
                                 "conditionKey": "condition_key_0",
+                                "customName": "found",
                                 "logic": "and",
                                 "type": "if"
                             },
@@ -347,12 +370,13 @@
                                 ],
                                 "conditionIndex": 1,
                                 "conditionKey": "condition_key_eb33a61b-f000-4778-8edb-4566220734f0",
+                                "customName": "not found",
                                 "logic": "and",
                                 "type": "else"
                             }
                         ],
                         "functionId": 2,
-                        "functionName": "decision_2",
+                        "functionName": "device_found",
                         "id": "16",
                         "type": "decision"
                     },
@@ -360,16 +384,20 @@
                     "id": "16",
                     "type": "decision",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 440
+                    "x": 1320,
+                    "y": 400
                 },
                 "17": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "note no device",
+                            "customNameId": 0,
+                            "description": "This block uses custom code. Adds a note when no device matched the serial or the lookup failed.",
+                            "join": [],
+                            "note": "This block uses custom code. Adds a note when no device matched the serial or the lookup failed."
                         },
                         "functionId": 3,
-                        "functionName": "code_3",
+                        "functionName": "note_no_device",
                         "id": "17",
                         "inputParameters": [],
                         "outputVariables": [],
@@ -378,26 +406,30 @@
                     "errors": {},
                     "id": "17",
                     "type": "code",
-                    "userCode": "\n    \n    rows = phantom.collect2(container=container, datapath=[\"get_device_by_serial_1:action_result.status\"], action_results=results)\n    lookup_status = rows[0][0] if rows and rows[0] else None\n\n    if lookup_status == \"success\":\n        title = \"FileVault recovery - no device matched\"\n        content = (\"No Jamf device matched the provided serial number. \"\n                     \"No actions were taken. Verify the serial is correct and re-run.\")\n    else:\n          title = \"FileVault recovery - device lookup FAILED\"\n          content = (\"The 'get device by serial' lookup did not succeed (status: {}). \"\n                     \"No device was resolved and no actions were taken. This usually means a \"\n                     \"Jamf asset / credential / privilege problem, NOT a wrong serial - check \"\n                     \"the asset config and API role, then re-run.\".format(lookup_status))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n\n",
+                    "userCode": "\n    \n    rows = phantom.collect2(container=container, datapath=[\"find_mac_by_serial:action_result.status\"], action_results=results)\n    lookup_status = rows[0][0] if rows and rows[0] else None\n\n    if lookup_status == \"success\":\n        title = \"FileVault recovery - no device matched\"\n        content = (\"No Jamf device matched the provided serial number. \"\n                     \"No actions were taken. Verify the serial is correct and re-run.\")\n    else:\n          title = \"FileVault recovery - device lookup FAILED\"\n          content = (\"The 'get device by serial' lookup did not succeed (status: {}). \"\n                     \"No device was resolved and no actions were taken. This usually means a \"\n                     \"Jamf asset / credential / privilege problem, NOT a wrong serial - check \"\n                     \"the asset config and API role, then re-run.\".format(lookup_status))\n\n    phantom.add_note(container=container, title=title, content=content, note_type=\"general\")\n\n\n",
                     "warnings": {},
-                    "x": 1208,
-                    "y": 504
+                    "x": 1420,
+                    "y": 560
                 },
                 "2": {
                     "data": {
                         "action": "get device by serial",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "find mac by serial",
+                            "customNameId": 0,
+                            "description": " Looks up the Mac in Jamf Pro by the serial number from the event artifact.",
+                            "join": [],
+                            "note": " Looks up the Mac in Jamf Pro by the serial number from the event artifact."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_device_by_serial_1",
+                        "functionName": "find_mac_by_serial",
                         "id": "2",
                         "loop": {
                             "conditions": [
@@ -440,24 +472,28 @@
                     "id": "2",
                     "type": "action",
                     "warnings": {},
-                    "x": 1060,
-                    "y": 340
+                    "x": 1240,
+                    "y": 300
                 },
                 "3": {
                     "data": {
                         "action": "get filevault recovery key",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get filevault key",
+                            "customNameId": 0,
+                            "description": "Retrieves the Mac's escrowed FileVault personal recovery key. The key is sensitive and is never written to a note.",
+                            "join": [],
+                            "note": "Retrieves the Mac's escrowed FileVault personal recovery key. The key is sensitive and is never written to a note."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_filevault_recovery_key_1",
+                        "functionName": "get_filevault_key",
                         "id": "3",
                         "loop": {
                             "conditions": [
@@ -485,7 +521,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id"
+                            "device_id": "find_mac_by_serial:action_result.data.*.id"
                         },
                         "requiredParameters": [
                             {
@@ -500,24 +536,28 @@
                     "id": "3",
                     "type": "action",
                     "warnings": {},
-                    "x": 1020,
-                    "y": 600
+                    "x": 1080,
+                    "y": 560
                 },
                 "4": {
                     "data": {
                         "action": "get local user accounts",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get local accounts",
+                            "customNameId": 0,
+                            "description": "Lists the Mac's local user accounts for the analyst.",
+                            "join": [],
+                            "note": "Lists the Mac's local user accounts for the analyst."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_local_user_accounts_1",
+                        "functionName": "get_local_accounts",
                         "id": "4",
                         "loop": {
                             "conditions": [
@@ -545,7 +585,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id"
+                            "device_id": "find_mac_by_serial:action_result.data.*.id"
                         },
                         "requiredParameters": [
                             {
@@ -560,7 +600,7 @@
                     "id": "4",
                     "type": "action",
                     "warnings": {},
-                    "x": 920,
+                    "x": 1080,
                     "y": 680
                 },
                 "5": {
@@ -568,16 +608,20 @@
                         "action": "get compliance status",
                         "actionType": "investigate",
                         "advanced": {
-                            "join": []
+                            "customName": "get compliance status",
+                            "customNameId": 0,
+                            "description": "Gets the Mac's compliance status from Jamf Pro for the analyst. ",
+                            "join": [],
+                            "note": "Gets the Mac's compliance status from Jamf Pro for the analyst. "
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "get_compliance_status_1",
+                        "functionName": "get_compliance_status",
                         "id": "5",
                         "loop": {
                             "conditions": [
@@ -605,7 +649,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_local_user_accounts_1:action_result.parameter.device_id",
+                            "device_id": "get_local_accounts:action_result.parameter.device_id",
                             "device_type": "computer"
                         },
                         "requiredParameters": [
@@ -621,24 +665,28 @@
                     "id": "5",
                     "type": "action",
                     "warnings": {},
-                    "x": 960,
-                    "y": 740
+                    "x": 1080,
+                    "y": 800
                 },
                 "6": {
                     "data": {
                         "action": "set recovery lock",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "set recovery lock",
+                            "customNameId": 0,
+                            "description": "Sets a recovery lock so the Mac can't be started from recovery without the password. ",
+                            "join": [],
+                            "note": "Sets a recovery lock so the Mac can't be started from recovery without the password. "
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "set_recovery_lock_1",
+                        "functionName": "set_recovery_lock",
                         "id": "6",
                         "loop": {
                             "conditions": [
@@ -666,7 +714,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
+                            "device_id": "find_mac_by_serial:action_result.data.*.id",
                             "device_type": "computer",
                             "operation": "set",
                             "password": "<your-recovery-lock-password>"
@@ -684,24 +732,28 @@
                     "id": "6",
                     "type": "action",
                     "warnings": {},
-                    "x": 940,
-                    "y": 820
+                    "x": 1080,
+                    "y": 920
                 },
                 "7": {
                     "data": {
                         "action": "lock device",
                         "actionType": "contain",
                         "advanced": {
-                            "join": []
+                            "customName": "lock mac",
+                            "customNameId": 0,
+                            "description": "Locks the Mac with the lock-screen message and PIN.",
+                            "join": [],
+                            "note": "Locks the Mac with the lock-screen message and PIN."
                         },
                         "connector": "Jamf Pro",
                         "connectorConfigs": [
-                            "<your-jamf-asset>"
+                            "jamf_pro"
                         ],
-                        "connectorId": "9b8c1d2e-4f6a-4b3c-9a1d-2e3f4a5b6c7d",
+                        "connectorId": "f3c23540-5606-4e6e-86a0-717faf0aa403",
                         "connectorVersion": "v1",
                         "functionId": 1,
-                        "functionName": "lock_device_1",
+                        "functionName": "lock_mac",
                         "id": "7",
                         "loop": {
                             "conditions": [
@@ -729,7 +781,7 @@
                             "pauseValue": 2
                         },
                         "parameters": {
-                            "device_id": "get_device_by_serial_1:action_result.data.*.id",
+                            "device_id": "find_mac_by_serial:action_result.data.*.id",
                             "device_type": "computer",
                             "message": "<your-lock-screen-message>",
                             "phone_number": "<your-support-phone>",
@@ -748,26 +800,30 @@
                     "id": "7",
                     "type": "action",
                     "warnings": {},
-                    "x": 1000,
-                    "y": 880
+                    "x": 1080,
+                    "y": 1040
                 },
                 "9": {
                     "data": {
                         "advanced": {
-                            "join": []
+                            "customName": "approve wipe",
+                            "customNameId": 0,
+                            "description": "Asks an analyst to approve wiping the Mac. Times out after 30 minutes.",
+                            "join": [],
+                            "note": "Asks an analyst to approve wiping the Mac. Times out after 30 minutes."
                         },
                         "approver": {
                             "type": "role",
                             "value": "<security-analyst-role>"
                         },
                         "functionId": 1,
-                        "functionName": "prompt_1",
+                        "functionName": "approve_wipe",
                         "id": "9",
                         "message": "Approve device WIPE? This permanently ERASES the Mac and is IRREVERSIBLE.\n- FileVault recovery key escrowed in Jamf: {0}\n  - Set recovery lock queued: {1}\n  - Lock device queued: {2}",
                         "parameters": [
-                            "get_filevault_recovery_key_1:action_result.summary.key_present",
-                            "set_recovery_lock_1:action_result.status",
-                            "lock_device_1:action_result.status"
+                            "get_filevault_key:action_result.summary.key_present",
+                            "set_recovery_lock:action_result.status",
+                            "lock_mac:action_result.status"
                         ],
                         "responseTime": 30,
                         "responses": [
@@ -787,11 +843,11 @@
                     "id": "9",
                     "type": "prompt",
                     "warnings": {},
-                    "x": 1060,
-                    "y": 1040
+                    "x": 1080,
+                    "y": 1280
                 }
             },
-            "notes": "Inputs: Mac serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, get filevault recovery key, get local user accounts, get compliance status, set recovery lock, lock device, wipe device (after analyst approval)\nOutputs: notes on the event (the FileVault recovery key itself is never written to a note)\nBefore use, replace: <your-jamf-asset> on every action block; <security-analyst-role> on the approval prompt; <your-recovery-lock-password> (prefer a secret); <your-lock-screen-message> and <your-support-phone>; the lock PIN 000000 with your own 6-digit PIN. The code_1 notify step adds a note; replace it with a restricted-channel notifier if you need one.",
+            "notes": "Inputs: Mac serial number (artifact cef.serialNumber)\nInteractions: Jamf Pro\nActions: get device by serial, get filevault recovery key, get local user accounts, get compliance status, set recovery lock, lock device, wipe device (after analyst approval)\nOutputs: notes on the event (the FileVault recovery key itself is never written to a note)\nBefore use: a Jamf Pro asset named jamf_pro (or change the asset on every action block); replace <security-analyst-role> on the approval prompt; <your-recovery-lock-password> (prefer a secret); <your-lock-screen-message> and <your-support-phone>; the lock PIN 000000 with your own 6-digit PIN. The code_1 notify step adds a note; replace it with a restricted-channel notifier if you need one.",
             "origin": {
                 "playbook_id": 182,
                 "playbook_name": "Jamf - FileVault Recovery Access (macOS)",
@@ -807,7 +863,7 @@
         "schema": "5.0.24",
         "version": "8.5.0.248"
     },
-    "create_time": "2026-07-06T10:50:23.248113+00:00",
+    "create_time": "2026-11-26T09:08:00.048397+00:00",
     "draft_mode": false,
     "labels": [
         "*"

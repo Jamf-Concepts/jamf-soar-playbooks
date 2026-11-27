@@ -12,22 +12,26 @@ from datetime import datetime, timedelta
 def on_start(container):
     phantom.debug('on_start() called')
 
-    # call 'get_device_by_serial_1' block
-    get_device_by_serial_1(container=container)
+    # call 'find_mac_by_serial' block
+    find_mac_by_serial(container=container)
 
     return
 
 @phantom.playbook_block()
-def get_device_by_serial_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_device_by_serial_1() called")
+def find_mac_by_serial(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("find_mac_by_serial() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    #  Looks up the Mac in Jamf Pro by the serial number from the event artifact.
+    ################################################################################
 
     container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.serialNumber","artifact:*.id"])
 
     parameters = []
 
-    # build parameters list for 'get_device_by_serial_1' call
+    # build parameters list for 'find_mac_by_serial' call
     for container_artifact_item in container_artifact_data:
         if container_artifact_item[0] is not None:
             parameters.append({
@@ -45,27 +49,32 @@ def get_device_by_serial_1(action=None, success=None, container=None, results=No
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get device by serial", parameters=parameters, name="get_device_by_serial_1", assets=["<your-jamf-asset>"], callback=decision_2)
+    phantom.act("get device by serial", parameters=parameters, name="find_mac_by_serial", assets=["jamf_pro"], callback=device_found)
 
     return
 
 
 @phantom.playbook_block()
-def get_filevault_recovery_key_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_filevault_recovery_key_1() called")
+def get_filevault_key(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("get_filevault_key() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Retrieves the Mac's escrowed FileVault personal recovery key. The key is sensitive 
+    # and is never written to a note.
+    ################################################################################
+
+    find_mac_by_serial_result_data = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.data.*.id","find_mac_by_serial:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'get_filevault_recovery_key_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
+    # build parameters list for 'get_filevault_key' call
+    for find_mac_by_serial_result_item in find_mac_by_serial_result_data:
+        if find_mac_by_serial_result_item[0] is not None:
             parameters.append({
-                "device_id": get_device_by_serial_1_result_item[0],
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "device_id": find_mac_by_serial_result_item[0],
+                "context": {'artifact_id': find_mac_by_serial_result_item[1]},
             })
 
     ################################################################################
@@ -78,27 +87,31 @@ def get_filevault_recovery_key_1(action=None, success=None, container=None, resu
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get filevault recovery key", parameters=parameters, name="get_filevault_recovery_key_1", assets=["<your-jamf-asset>"], callback=get_local_user_accounts_1)
+    phantom.act("get filevault recovery key", parameters=parameters, name="get_filevault_key", assets=["jamf_pro"], callback=get_local_accounts)
 
     return
 
 
 @phantom.playbook_block()
-def get_local_user_accounts_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_local_user_accounts_1() called")
+def get_local_accounts(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("get_local_accounts() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Lists the Mac's local user accounts for the analyst.
+    ################################################################################
+
+    find_mac_by_serial_result_data = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.data.*.id","find_mac_by_serial:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'get_local_user_accounts_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
+    # build parameters list for 'get_local_accounts' call
+    for find_mac_by_serial_result_item in find_mac_by_serial_result_data:
+        if find_mac_by_serial_result_item[0] is not None:
             parameters.append({
-                "device_id": get_device_by_serial_1_result_item[0],
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "device_id": find_mac_by_serial_result_item[0],
+                "context": {'artifact_id': find_mac_by_serial_result_item[1]},
             })
 
     ################################################################################
@@ -111,28 +124,32 @@ def get_local_user_accounts_1(action=None, success=None, container=None, results
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get local user accounts", parameters=parameters, name="get_local_user_accounts_1", assets=["<your-jamf-asset>"], callback=get_compliance_status_1)
+    phantom.act("get local user accounts", parameters=parameters, name="get_local_accounts", assets=["jamf_pro"], callback=get_compliance_status)
 
     return
 
 
 @phantom.playbook_block()
-def get_compliance_status_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("get_compliance_status_1() called")
+def get_compliance_status(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("get_compliance_status() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_local_user_accounts_1_result_data = phantom.collect2(container=container, datapath=["get_local_user_accounts_1:action_result.parameter.device_id","get_local_user_accounts_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Gets the Mac's compliance status from Jamf Pro for the analyst. 
+    ################################################################################
+
+    get_local_accounts_result_data = phantom.collect2(container=container, datapath=["get_local_accounts:action_result.parameter.device_id","get_local_accounts:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'get_compliance_status_1' call
-    for get_local_user_accounts_1_result_item in get_local_user_accounts_1_result_data:
-        if get_local_user_accounts_1_result_item[0] is not None:
+    # build parameters list for 'get_compliance_status' call
+    for get_local_accounts_result_item in get_local_accounts_result_data:
+        if get_local_accounts_result_item[0] is not None:
             parameters.append({
-                "device_id": get_local_user_accounts_1_result_item[0],
+                "device_id": get_local_accounts_result_item[0],
                 "device_type": "computer",
-                "context": {'artifact_id': get_local_user_accounts_1_result_item[1]},
+                "context": {'artifact_id': get_local_accounts_result_item[1]},
             })
 
     ################################################################################
@@ -145,30 +162,35 @@ def get_compliance_status_1(action=None, success=None, container=None, results=N
     ## Custom Code End
     ################################################################################
 
-    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status_1", assets=["<your-jamf-asset>"], callback=set_recovery_lock_1)
+    phantom.act("get compliance status", parameters=parameters, name="get_compliance_status", assets=["jamf_pro"], callback=set_recovery_lock)
 
     return
 
 
 @phantom.playbook_block()
-def set_recovery_lock_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("set_recovery_lock_1() called")
+def set_recovery_lock(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("set_recovery_lock() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Sets a recovery lock so the Mac can't be started from recovery without the password. 
+    # 
+    ################################################################################
+
+    find_mac_by_serial_result_data = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.data.*.id","find_mac_by_serial:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'set_recovery_lock_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
+    # build parameters list for 'set_recovery_lock' call
+    for find_mac_by_serial_result_item in find_mac_by_serial_result_data:
+        if find_mac_by_serial_result_item[0] is not None:
             parameters.append({
                 "password": "<your-recovery-lock-password>",
-                "device_id": get_device_by_serial_1_result_item[0],
+                "device_id": find_mac_by_serial_result_item[0],
                 "operation": "set",
                 "device_type": "computer",
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "context": {'artifact_id': find_mac_by_serial_result_item[1]},
             })
 
     ################################################################################
@@ -181,31 +203,35 @@ def set_recovery_lock_1(action=None, success=None, container=None, results=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.act("set recovery lock", parameters=parameters, name="set_recovery_lock_1", assets=["<your-jamf-asset>"], callback=lock_device_1)
+    phantom.act("set recovery lock", parameters=parameters, name="set_recovery_lock", assets=["jamf_pro"], callback=lock_mac)
 
     return
 
 
 @phantom.playbook_block()
-def lock_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("lock_device_1() called")
+def lock_mac(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("lock_mac() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Locks the Mac with the lock-screen message and PIN.
+    ################################################################################
+
+    find_mac_by_serial_result_data = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.data.*.id","find_mac_by_serial:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'lock_device_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
+    # build parameters list for 'lock_mac' call
+    for find_mac_by_serial_result_item in find_mac_by_serial_result_data:
+        if find_mac_by_serial_result_item[0] is not None:
             parameters.append({
                 "pin": "000000",
                 "message": "<your-lock-screen-message>",
-                "device_id": get_device_by_serial_1_result_item[0],
+                "device_id": find_mac_by_serial_result_item[0],
                 "device_type": "computer",
                 "phone_number": "<your-support-phone>",
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "context": {'artifact_id': find_mac_by_serial_result_item[1]},
             })
 
     ################################################################################
@@ -218,14 +244,18 @@ def lock_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("lock device", parameters=parameters, name="lock_device_1", assets=["<your-jamf-asset>"], callback=code_1)
+    phantom.act("lock device", parameters=parameters, name="lock_mac", assets=["jamf_pro"], callback=note_step_outcomes)
 
     return
 
 
 @phantom.playbook_block()
-def prompt_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("prompt_1() called")
+def approve_wipe(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("approve_wipe() called")
+
+    ################################################################################
+    # Asks an analyst to approve wiping the Mac. Times out after 30 minutes.
+    ################################################################################
 
     # set approver and message variables for phantom.prompt call
 
@@ -235,9 +265,9 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
 
     # parameter list for template variable replacement
     parameters = [
-        "get_filevault_recovery_key_1:action_result.summary.key_present",
-        "set_recovery_lock_1:action_result.status",
-        "lock_device_1:action_result.status"
+        "get_filevault_key:action_result.summary.key_present",
+        "set_recovery_lock:action_result.status",
+        "lock_mac:action_result.status"
     ]
 
     # responses
@@ -255,56 +285,64 @@ def prompt_1(action=None, success=None, container=None, results=None, handle=Non
         }
     ]
 
-    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="prompt_1", parameters=parameters, response_types=response_types, callback=decision_1)
+    phantom.prompt2(container=container, user=user, role=role, message=message, respond_in_mins=30, name="approve_wipe", parameters=parameters, response_types=response_types, callback=wipe_approved)
 
     return
 
 
 @phantom.playbook_block()
-def decision_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_1() called")
+def wipe_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_approved() called")
+
+    ################################################################################
+    # Wipes the Mac only if the analyst answered Yes. 
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["prompt_1:action_result.summary.responses.0", "==", "Yes"]
+            ["approve_wipe:action_result.summary.responses.0", "==", "Yes"]
         ],
         conditions_dps=[
-            ["prompt_1:action_result.summary.responses.0", "==", "Yes"]
+            ["approve_wipe:action_result.summary.responses.0", "==", "Yes"]
         ],
-        name="decision_1:condition_1",
+        name="wipe_approved:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        wipe_device_1(action=action, success=success, container=container, results=results, handle=handle)
+        wipe_mac(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_2(action=action, success=success, container=container, results=results, handle=handle)
+    note_wipe_not_approved(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def wipe_device_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("wipe_device_1() called")
+def wipe_mac(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("wipe_mac() called")
 
     # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
 
-    get_device_by_serial_1_result_data = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.data.*.id","get_device_by_serial_1:action_result.parameter.context.artifact_id"], action_results=results)
+    ################################################################################
+    # Erases the Mac. Runs only after analyst approval. 
+    ################################################################################
+
+    find_mac_by_serial_result_data = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.data.*.id","find_mac_by_serial:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # build parameters list for 'wipe_device_1' call
-    for get_device_by_serial_1_result_item in get_device_by_serial_1_result_data:
-        if get_device_by_serial_1_result_item[0] is not None:
+    # build parameters list for 'wipe_mac' call
+    for find_mac_by_serial_result_item in find_mac_by_serial_result_data:
+        if find_mac_by_serial_result_item[0] is not None:
             parameters.append({
-                "confirm": get_device_by_serial_1_result_item[0],
-                "device_id": get_device_by_serial_1_result_item[0],
+                "confirm": find_mac_by_serial_result_item[0],
+                "device_id": find_mac_by_serial_result_item[0],
                 "device_type": "computer",
-                "context": {'artifact_id': get_device_by_serial_1_result_item[1]},
+                "context": {'artifact_id': find_mac_by_serial_result_item[1]},
             })
 
     ################################################################################
@@ -317,24 +355,29 @@ def wipe_device_1(action=None, success=None, container=None, results=None, handl
     ## Custom Code End
     ################################################################################
 
-    phantom.act("wipe device", parameters=parameters, name="wipe_device_1", assets=["<your-jamf-asset>"])
+    phantom.act("wipe device", parameters=parameters, name="wipe_mac", assets=["jamf_pro"])
 
     return
 
 
 @phantom.playbook_block()
-def code_1(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_1() called")
+def note_step_outcomes(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_step_outcomes() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note with the result of each step, including 
+    # whether the FileVault key was retrieved, but never the key itself. 
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    fv = phantom.collect2(container=container, datapath=["get_filevault_recovery_key_1:action_result.status", "get_filevault_recovery_key_1:action_result.summary.key_present"], action_results=results)
-    rl = phantom.collect2(container=container, datapath=["set_recovery_lock_1:action_result.status"], action_results=results)
-    lk = phantom.collect2(container=container, datapath=["lock_device_1:action_result.status"], action_results=results)
-    cs = phantom.collect2(container=container, datapath=["get_compliance_status_1:action_result.status", "get_compliance_status_1:action_result.data.*.compliance_state"], action_results=results)
-    lu = phantom.collect2(container=container, datapath=["get_local_user_accounts_1:action_result.status", "get_local_user_accounts_1:action_result.summary.total"], action_results=results)
+    fv = phantom.collect2(container=container, datapath=["get_filevault_key:action_result.status", "get_filevault_key:action_result.summary.key_present"], action_results=results)
+    rl = phantom.collect2(container=container, datapath=["set_recovery_lock:action_result.status"], action_results=results)
+    lk = phantom.collect2(container=container, datapath=["lock_mac:action_result.status"], action_results=results)
+    cs = phantom.collect2(container=container, datapath=["get_compliance_status:action_result.status", "get_compliance_status:action_result.data.*.compliance_state"], action_results=results)
+    lu = phantom.collect2(container=container, datapath=["get_local_accounts:action_result.status", "get_local_accounts:action_result.summary.total"], action_results=results)
 
     fv_status = fv[0][0] if fv else None
     key_present = fv[0][1] if fv and len(fv[0]) > 1 else None
@@ -367,22 +410,27 @@ def code_1(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_1_called", value="True")
+    phantom.save_block_result(key="note_step_outcomes_called", value="True")
 
-    prompt_1(container=container)
+    approve_wipe(container=container)
 
     return
 
 
 @phantom.playbook_block()
-def code_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_2() called")
+def note_wipe_not_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_wipe_not_approved() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note saying the wipe was declined or the 
+    # prompt timed out. 
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    resp = phantom.collect2(container=container, datapath=["prompt_1:action_result.summary.responses.0"], action_results=results)
+    resp = phantom.collect2(container=container, datapath=["approve_wipe:action_result.summary.responses.0"], action_results=results)
     answer = resp[0][0] if resp and resp[0] else None
 
     if answer in (None, ""):
@@ -401,48 +449,57 @@ def code_2(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_2_called", value="True")
+    phantom.save_block_result(key="note_wipe_not_approved_called", value="True")
 
     return
 
 
 @phantom.playbook_block()
-def decision_2(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("decision_2() called")
+def device_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("device_found() called")
+
+    ################################################################################
+    # Continues only if Jamf Pro returned a matching device.
+    ################################################################################
 
     # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+            ["find_mac_by_serial:action_result.data.*.id", "!=", ""]
         ],
         conditions_dps=[
-            ["get_device_by_serial_1:action_result.data.*.id", "!=", ""]
+            ["find_mac_by_serial:action_result.data.*.id", "!=", ""]
         ],
-        name="decision_2:condition_1",
+        name="device_found:condition_1",
         delimiter=None)
 
     # call connected blocks if condition 1 matched
     if found_match_1:
-        get_filevault_recovery_key_1(action=action, success=success, container=container, results=results, handle=handle)
+        get_filevault_key(action=action, success=success, container=container, results=results, handle=handle)
         return
 
     # check for 'else' condition 2
-    code_3(action=action, success=success, container=container, results=results, handle=handle)
+    note_no_device(action=action, success=success, container=container, results=results, handle=handle)
 
     return
 
 
 @phantom.playbook_block()
-def code_3(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
-    phantom.debug("code_3() called")
+def note_no_device(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
+    phantom.debug("note_no_device() called")
+
+    ################################################################################
+    # This block uses custom code. Adds a note when no device matched the serial or 
+    # the lookup failed.
+    ################################################################################
 
     ################################################################################
     ## Custom Code Start
     ################################################################################
 
     
-    rows = phantom.collect2(container=container, datapath=["get_device_by_serial_1:action_result.status"], action_results=results)
+    rows = phantom.collect2(container=container, datapath=["find_mac_by_serial:action_result.status"], action_results=results)
     lookup_status = rows[0][0] if rows and rows[0] else None
 
     if lookup_status == "success":
@@ -463,7 +520,7 @@ def code_3(action=None, success=None, container=None, results=None, handle=None,
     ## Custom Code End
     ################################################################################
 
-    phantom.save_block_result(key="code_3_called", value="True")
+    phantom.save_block_result(key="note_no_device_called", value="True")
 
     return
 

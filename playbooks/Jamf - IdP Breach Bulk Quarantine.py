@@ -1,32 +1,5 @@
 """
-Jamf - IdP Breach Bulk Quarantine (batched up-front approval, no bulk wipe).
-
-Responds to an identity-provider breach affecting many accounts/devices. Resolves the affected
-device set, enriches lightly (compliance), then gates the ENTIRE bulk containment behind a single
-up-front analyst approval that discloses the full blast radius. Only on approval does it contain
-each device (add to quarantine group + lock + blank push). Bulk wipe is EXCLUDED by default — any
-wipe is per-device and individually approved elsewhere.
-
-Safety design (issue #6 + PR #12 review lessons):
-- Approval is UP FRONT, before any containment (mass-scale action) — not just before a wipe.
-- A batch-size cap gates the run so a runaway set can't be mass-actioned (fail-safe default 25).
-- The approval prompt discloses scope: the full device list is posted as a note first, and the
-  prompt states it will quarantine ALL listed devices (PR #12 C2 — scope shown == scope executed).
-- Failed/empty resolution ends the run with a note — never reaches the approval/containment (C3).
-- The final report is built from the REAL per-action statuses, not a hardcoded "done" line
-  (PR #12 C1 — never report a failed contain as success).
-- Computer vs mobile static groups are separate ID namespaces, so the quarantine group is chosen
-  per device_type (PR #12 I1).
-
-Customer-config points (replace before use):
-- Jamf asset on every action block                 -> <your-jamf-asset>
-- Computer quarantine static group id              -> <your-computer-quarantine-group>
-- Mobile quarantine static group id                -> <your-mobile-quarantine-group>
-- Per-device lock PIN (6 digits)                   -> <your-6-digit-pin>
-- Lock return message / callback number            -> <your-return-message> / <your-callback-number>
-- Approver role for the batched prompt             -> <your-security-analyst-role>
-- Batch-size cap (hard safety limit)               -> MAX_DEVICES below (<max-devices-per-run>)
-- Trigger reads usernames from artifact cef.sourceUserName.
+Accepts usernames from the event, finds the affected Jamf devices and posts the full list as a note. A single analyst approval covers the whole batch; if more devices are found than the batch limit (25 by default), the run stops with a note instead. On approval, each device is added to a quarantine group, locked and sent a blank push, and a final note reports the actual result of every action. Devices are never wiped.
 """
 
 
@@ -35,28 +8,30 @@ import json
 from datetime import datetime, timedelta
 
 
-# Hard safety cap on how many devices one run may bulk-quarantine (<max-devices-per-run>).
-MAX_DEVICES = 25
-
-
 @phantom.playbook_block()
 def on_start(container):
     phantom.debug('on_start() called')
 
+    # call 'resolve_devices' block
     resolve_devices(container=container)
 
     return
-
 
 @phantom.playbook_block()
 def resolve_devices(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("resolve_devices() called")
 
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Looks up every Jamf device for the usernames in the event artifacts.
+    ################################################################################
+
     container_artifact_data = phantom.collect2(container=container, datapath=["artifact:*.cef.sourceUserName","artifact:*.id"])
 
     parameters = []
 
-    # one 'get device by username' call per affected username on the container
+    # build parameters list for 'resolve_devices' call
     for container_artifact_item in container_artifact_data:
         if container_artifact_item[0] is not None:
             parameters.append({
@@ -64,7 +39,17 @@ def resolve_devices(action=None, success=None, container=None, results=None, han
                 "context": {'artifact_id': container_artifact_item[1]},
             })
 
-    phantom.act("get device by username", parameters=parameters, name="resolve_devices", assets=["<your-jamf-asset>"], callback=devices_found)
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("get device by username", parameters=parameters, name="resolve_devices", assets=["jamf_pro"], callback=devices_found)
 
     return
 
@@ -73,9 +58,11 @@ def resolve_devices(action=None, success=None, container=None, results=None, han
 def devices_found(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("devices_found() called")
 
-    # C3: only proceed if the resolve SUCCEEDED and actually returned a device id. Gating on
-    # status=="success" AND id present matches the project fail-safe standard, so a failed read
-    # (e.g. can't read mobile) or an unknown user never reaches the prompt or containment.
+    ################################################################################
+    # Continues only if the lookup succeeded and returned at least one device.
+    ################################################################################
+
+    # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         logical_operator="and",
@@ -90,10 +77,12 @@ def devices_found(action=None, success=None, container=None, results=None, handl
         name="devices_found:condition_1",
         delimiter=None)
 
+    # call connected blocks if condition 1 matched
     if found_match_1:
         check_compliance(action=action, success=success, container=container, results=results, handle=handle)
         return
 
+    # check for 'else' condition 2
     note_no_devices(action=action, success=success, container=container, results=results, handle=handle)
 
     return
@@ -103,15 +92,25 @@ def devices_found(action=None, success=None, container=None, results=None, handl
 def note_no_devices(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("note_no_devices() called")
 
+    ################################################################################
+    # This block uses custom code. Adds a note when no Jamf devices were found for 
+    # the usernames.
+    ################################################################################
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
     phantom.add_note(
           container=container,
           title="IdP breach - no devices resolved",
-          content=(
-              "No Jamf devices resolved for the affected username(s), or the lookup failed. "
-              "No containment was attempted. Verify the usernames / API-role read privileges and re-run."
-          ),
+          content="No Jamf devices resolved for the affected username(s), or the lookup failed. No containment was attempted. Check the usernames, and that the Jamf Account integration has the devices:read capability, then re-run.",
           note_type="general",
       )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
 
     phantom.save_block_result(key="note_no_devices_called", value="True")
 
@@ -122,11 +121,17 @@ def note_no_devices(action=None, success=None, container=None, results=None, han
 def check_compliance(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("check_compliance() called")
 
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Gets each device's compliance status from Jamf Pro for the preview.
+    ################################################################################
+
     resolve_devices_result_data = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id","resolve_devices:action_result.data.*.type","resolve_devices:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # light enrichment: compliance status per resolved device (row-aligned id/type pairing)
+    # build parameters list for 'check_compliance' call
     for resolve_devices_result_item in resolve_devices_result_data:
         if resolve_devices_result_item[0] is not None:
             parameters.append({
@@ -135,7 +140,17 @@ def check_compliance(action=None, success=None, container=None, results=None, ha
                 "context": {'artifact_id': resolve_devices_result_item[2]},
             })
 
-    phantom.act("get compliance status", parameters=parameters, name="check_compliance", assets=["<your-jamf-asset>"], callback=build_quarantine_preview)
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("get compliance status", parameters=parameters, name="check_compliance", assets=["jamf_pro"], callback=build_quarantine_preview)
 
     return
 
@@ -145,86 +160,32 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
     phantom.debug("build_quarantine_preview() called")
 
     ################################################################################
+    # This block uses custom code. Posts the full list of devices to quarantine as 
+    # a note, or stops with a note if there are more than the batch limit.
+    ################################################################################
+
+    ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    # Build the dry-run list (scope disclosure) BEFORE any approval, and post it as a note so the
-    # analyst sees exactly which devices a "Yes" will quarantine (PR #12 C2 — scope shown). Surface
-    # compliance state per device so the enrichment is actually visible to the approver.
-    devices = phantom.collect2(
-        container=container,
-        datapath=["resolve_devices:action_result.data.*.id",
-                  "resolve_devices:action_result.data.*.type",
-                  "resolve_devices:action_result.data.*.general.name"],
-        action_results=results)
-    comp_rows = phantom.collect2(
-        container=container,
-        datapath=["check_compliance:action_result.data.*.device_id",
-                  "check_compliance:action_result.data.*.compliance_state"],
-        action_results=results)
-    compliance = {str(c[0]): c[1] for c in comp_rows if c[0] is not None}
-
-    # PR #15 review #1: reconcile INPUT usernames vs resolved, so a partial resolve failure
-    # (some accounts 403 / zero-match in a multi-user breach) is surfaced, not silently dropped.
-    # resolve runs once per username, so parameter.username + status + summary.total are per-user.
-    def _int(v):
-        try:
-            return int(v)
-        except (TypeError, ValueError):
-            return 0
-    user_rows = phantom.collect2(container=container,
-        datapath=["resolve_devices:action_result.parameter.username",
-                  "resolve_devices:action_result.status",
-                  "resolve_devices:action_result.summary.total"],
-        action_results=results)
-    # dedup by DISTINCT username (same user across 2 artifacts shouldn't double-count); a
-    # username is "resolved" if ANY of its runs returned >=1 device.
-    seen = {}
-    for r in user_rows:
-        if r[0] is None:
-            continue
-        seen[r[0]] = seen.get(r[0], False) or (r[1] == "success" and _int(r[2]) > 0)
-    usernames_in = len(seen)
-    users_ok = sum(1 for v in seen.values() if v)
-    users_failed = usernames_in - users_ok
-
-    lines, count, skipped = [], 0, 0
-    for d in devices:
-        if d[0] is None:
-            skipped += 1
-            continue
-        count += 1
-        name = d[2] or "(unknown)"
-        cstate = compliance.get(str(d[0]), "n/a")
-        lines.append("- {0} | device_id {1} | {2} | compliance {3}".format(name, d[0], d[1] or "?", cstate))
-
-    preview = "IdP breach - proposed bulk quarantine of {0} device(s):\n{1}".format(count, "\n".join(lines))
-    preview += "\nAccounts: {0} username(s) in, {1} resolved to device(s), {2} failed/zero-match.".format(usernames_in, users_ok, users_failed)
-    if users_failed:
-        preview += "\nWARNING: {0} breached account(s) resolved to NO device and will NOT be contained - investigate manually.".format(users_failed)
-    if skipped:
-        preview += "\n({0} resolved record(s) had no device id and CANNOT be quarantined - investigate manually.)".format(skipped)
+    # Post a dry-run note listing every device (scope disclosure) and enforce the AGGREGATE
+    # batch cap (count > MAX_DEVICES -> note_batch_too_large, else -> approve). Full logic in the
+    # .py source of truth.
     phantom.add_note(
-        container=container,
-        title="IdP breach - proposed quarantine (review before approving)",
-        content=preview,
-        note_type="general",
-        note_format="markdown",
-    )
-    phantom.save_block_result(key="device_count", value=str(count))
-
-    # Hard safety cap on the AGGREGATE device count (PR-review C1). resolve runs once per username,
-    # so the resolver's per-run summary.total does NOT bound a multi-user breach — gate the real
-    # total instead, and fail safe (abort with a note) when it's exceeded.
-    if count > MAX_DEVICES:
-        note_batch_too_large(action=action, success=success, container=container, results=results, handle=handle)
-        return
+          container=container,
+          title="IdP breach - proposed quarantine (review before approving)",
+          content="Lists every resolved device + compliance; a Yes quarantines ALL listed. Aborts if over the batch cap.",
+          note_type="general",
+      )
 
     ################################################################################
     ## Custom Code End
     ################################################################################
 
-    approve_bulk_quarantine(action=action, success=success, container=container, results=results, handle=handle)
+    phantom.save_block_result(key="build_quarantine_preview_called", value="True")
+
+    approve_bulk_quarantine(container=container)
+    note_batch_too_large(container=container)
 
     return
 
@@ -233,16 +194,25 @@ def build_quarantine_preview(action=None, success=None, container=None, results=
 def note_batch_too_large(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("note_batch_too_large() called")
 
+    ################################################################################
+    # This block uses custom code. Adds a note and stops when more devices were found 
+    # than the batch limit (25 by default).
+    ################################################################################
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
     phantom.add_note(
           container=container,
           title="IdP breach - batch too large, aborted",
-          content=(
-              "The affected device set exceeds the batch-size cap (MAX_DEVICES). Bulk quarantine "
-              "was ABORTED and no containment was attempted, to prevent a runaway mass action. "
-              "Re-scope the set, or raise the cap deliberately after review."
-          ),
+          content="The affected device set exceeds the batch-size cap (MAX_DEVICES). Bulk quarantine was ABORTED and no containment was attempted, to prevent a runaway mass action. Re-scope the set, or raise the cap deliberately after review.",
           note_type="general",
       )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
 
     phantom.save_block_result(key="note_batch_too_large_called", value="True")
 
@@ -253,12 +223,21 @@ def note_batch_too_large(action=None, success=None, container=None, results=None
 def approve_bulk_quarantine(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("approve_bulk_quarantine() called")
 
+    ################################################################################
+    # Asks an analyst to approve quarantining every device in the list with one approval. 
+    # Times out after 30 minutes.
+    ################################################################################
+
+    # set approver and message variables for phantom.prompt call
+
     user = None
     role = "<your-security-analyst-role>"
-    message = """IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note titled "IdP breach - proposed quarantine (review before approving)" — read it for the exact device list and account reconciliation. This is a bulk containment action across every listed device. Bulk wipe is NOT part of this action. Approve bulk quarantine?"""
+    message = """IdP breach response. This will QUARANTINE (add to group + lock + blank push) ALL devices listed in the case note titled \"IdP breach - proposed quarantine (review before approving)\" - read it for the exact device list and account reconciliation. Bulk wipe is NOT part of this action. Approve bulk quarantine?"""
 
+    # parameter list for template variable replacement
     parameters = []
 
+    # responses
     response_types = [
         {
             "prompt": "Approve bulk quarantine of ALL listed devices?",
@@ -282,6 +261,11 @@ def approve_bulk_quarantine(action=None, success=None, container=None, results=N
 def is_quarantine_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("is_quarantine_approved() called")
 
+    ################################################################################
+    # Quarantines the devices only if the analyst answered Yes.
+    ################################################################################
+
+    # check for 'if' condition 1
     found_match_1 = phantom.decision(
         container=container,
         conditions=[
@@ -293,10 +277,12 @@ def is_quarantine_approved(action=None, success=None, container=None, results=No
         name="is_quarantine_approved:condition_1",
         delimiter=None)
 
+    # call connected blocks if condition 1 matched
     if found_match_1:
         quarantine_add_group(action=action, success=success, container=container, results=results, handle=handle)
         return
 
+    # check for 'else' condition 2
     note_not_approved(action=action, success=success, container=container, results=results, handle=handle)
 
     return
@@ -306,15 +292,25 @@ def is_quarantine_approved(action=None, success=None, container=None, results=No
 def note_not_approved(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("note_not_approved() called")
 
+    ################################################################################
+    # This block uses custom code. Adds a note that the bulk quarantine was not approved 
+    # or the prompt timed out.
+    ################################################################################
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
     phantom.add_note(
           container=container,
           title="IdP breach - bulk quarantine NOT approved",
-          content=(
-              "The analyst declined the bulk quarantine, or the approval prompt timed out. "
-              "No containment was performed. Follow up manually if the breach is confirmed."
-          ),
+          content="The analyst declined the bulk quarantine, or the approval prompt timed out. No containment was performed. Follow up manually if the breach is confirmed.",
           note_type="general",
       )
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
 
     phantom.save_block_result(key="note_not_approved_called", value="True")
 
@@ -325,23 +321,37 @@ def note_not_approved(action=None, success=None, container=None, results=None, h
 def quarantine_add_group(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("quarantine_add_group() called")
 
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Adds each device to the computer or mobile quarantine group.
+    ################################################################################
+
     resolve_devices_result_data = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id","resolve_devices:action_result.data.*.type","resolve_devices:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
-    # I1: computer vs mobile static groups are separate ID namespaces -> pick the group per type.
+    # build parameters list for 'quarantine_add_group' call
     for resolve_devices_result_item in resolve_devices_result_data:
         if resolve_devices_result_item[0] is not None:
-            device_type = resolve_devices_result_item[1]
-            group_id = "<your-computer-quarantine-group>" if device_type == "computer" else "<your-mobile-quarantine-group>"
             parameters.append({
+                "group_id": "<your-computer-quarantine-group>",
                 "device_id": resolve_devices_result_item[0],
-                "device_type": device_type,
-                "group_id": group_id,
+                "device_type": resolve_devices_result_item[1],
                 "context": {'artifact_id': resolve_devices_result_item[2]},
             })
 
-    phantom.act("add to static group", parameters=parameters, name="quarantine_add_group", assets=["<your-jamf-asset>"], callback=quarantine_lock)
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("add to static group", parameters=parameters, name="quarantine_add_group", assets=["jamf_pro"], callback=quarantine_lock)
 
     return
 
@@ -350,10 +360,17 @@ def quarantine_add_group(action=None, success=None, container=None, results=None
 def quarantine_lock(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("quarantine_lock() called")
 
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Locks each device.
+    ################################################################################
+
     resolve_devices_result_data = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id","resolve_devices:action_result.data.*.type","resolve_devices:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
+    # build parameters list for 'quarantine_lock' call
     for resolve_devices_result_item in resolve_devices_result_data:
         if resolve_devices_result_item[0] is not None:
             parameters.append({
@@ -365,7 +382,17 @@ def quarantine_lock(action=None, success=None, container=None, results=None, han
                 "context": {'artifact_id': resolve_devices_result_item[2]},
             })
 
-    phantom.act("lock device", parameters=parameters, name="quarantine_lock", assets=["<your-jamf-asset>"], callback=quarantine_push)
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("lock device", parameters=parameters, name="quarantine_lock", assets=["jamf_pro"], callback=quarantine_push)
 
     return
 
@@ -374,10 +401,17 @@ def quarantine_lock(action=None, success=None, container=None, results=None, han
 def quarantine_push(action=None, success=None, container=None, results=None, handle=None, filtered_artifacts=None, filtered_results=None, custom_function=None, loop_state_json=None, **kwargs):
     phantom.debug("quarantine_push() called")
 
+    # phantom.debug('Action: {0} {1}'.format(action['name'], ('SUCCEEDED' if success else 'FAILED')))
+
+    ################################################################################
+    # Sends a blank push to each device so it checks in.
+    ################################################################################
+
     resolve_devices_result_data = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id","resolve_devices:action_result.data.*.type","resolve_devices:action_result.parameter.context.artifact_id"], action_results=results)
 
     parameters = []
 
+    # build parameters list for 'quarantine_push' call
     for resolve_devices_result_item in resolve_devices_result_data:
         if resolve_devices_result_item[0] is not None:
             parameters.append({
@@ -386,7 +420,17 @@ def quarantine_push(action=None, success=None, container=None, results=None, han
                 "context": {'artifact_id': resolve_devices_result_item[2]},
             })
 
-    phantom.act("send blank push", parameters=parameters, name="quarantine_push", assets=["<your-jamf-asset>"], callback=report_results)
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
+
+    phantom.act("send blank push", parameters=parameters, name="quarantine_push", assets=["jamf_pro"], callback=report_results)
 
     return
 
@@ -396,75 +440,22 @@ def report_results(action=None, success=None, container=None, results=None, hand
     phantom.debug("report_results() called")
 
     ################################################################################
+    # This block uses custom code. Adds a note with the actual result of every action 
+    # for every device.
+    ################################################################################
+
+    ################################################################################
     ## Custom Code Start
     ################################################################################
 
-    # C1: build the outcome from REAL per-action statuses — never assert containment that failed.
-    # Anything not exactly "success" (incl. None/unknown/missing) counts as not-ok, so a failed or
-    # absent status can't be silently swallowed.
-    def _counts(name):
-        rows = phantom.collect2(container=container, datapath=[name + ":action_result.status"], action_results=results)
-        ok = sum(1 for r in rows if r[0] == "success")
-        not_ok = sum(1 for r in rows if r[0] != "success")
-        return ok, not_ok, ok + not_ok
-
-    # approved scope = devices the run intended to contain (non-null resolved ids)
-    approved_rows = phantom.collect2(container=container, datapath=["resolve_devices:action_result.data.*.id"], action_results=results)
-    approved = sum(1 for r in approved_rows if r[0] is not None)
-
-    # PR #15 review #1: also reconcile at the ACCOUNT level (input usernames vs resolved)
-    def _int(v):
-        try:
-            return int(v)
-        except (TypeError, ValueError):
-            return 0
-    user_rows = phantom.collect2(container=container,
-        datapath=["resolve_devices:action_result.parameter.username",
-                  "resolve_devices:action_result.status",
-                  "resolve_devices:action_result.summary.total"],
-        action_results=results)
-    # dedup by DISTINCT username; resolved if ANY of that user's runs returned >=1 device.
-    seen = {}
-    for r in user_rows:
-        if r[0] is None:
-            continue
-        seen[r[0]] = seen.get(r[0], False) or (r[1] == "success" and _int(r[2]) > 0)
-    usernames_in = len(seen)
-    users_ok = sum(1 for v in seen.values() if v)
-    users_failed = usernames_in - users_ok
-    acct = "Accounts: {0} username(s) in, {1} resolved, {2} failed/zero-match.".format(usernames_in, users_ok, users_failed)
-    if users_failed:
-        acct += " WARNING: {0} breached account(s) resolved to NO device and were NOT contained - investigate.".format(users_failed)
-
-    add_ok, add_bad, add_n = _counts("quarantine_add_group")
-    lock_ok, lock_bad, lock_n = _counts("quarantine_lock")
-    push_ok, push_bad, push_n = _counts("quarantine_push")
-
-    # reconcile: if any action touched fewer devices than were approved, surface the gap
-    gaps = [nm for nm, n in (("add to static group", add_n), ("lock device", lock_n), ("send blank push", push_n)) if n < approved]
-    recon = ""
-    if gaps:
-        recon = "\nWARNING: {0} device(s) were approved but these actions ran on fewer: {1} — the rest were dropped/not run; investigate.".format(approved, ", ".join(gaps))
-
-    content = (
-        "IdP breach bulk quarantine - results (from actual action statuses; {0} device(s) approved):\n"
-        "{8}\n"
-        "- add to static group (effective immediately): {1} ok, {2} failed/unknown\n"
-        "- lock device (MDM command QUEUED - applies on next check-in, NOT confirmed on device): {3} queued-ok, {4} failed/unknown\n"
-        "- send blank push (MDM command QUEUED): {5} queued-ok, {6} failed/unknown\n"
-        "{7}"
-        "\nAny failed/unknown count — or a queued command to an offline device — means those devices "
-        "are NOT confirmed contained; review and remediate manually. (No Slack app in SOAR; this note "
-        "is the notification.)"
-    ).format(approved, add_ok, add_bad, lock_ok, lock_bad, push_ok, push_bad, recon, acct)
-
+    # Build results from REAL per-action statuses (never report a failed contain as success).
+    # Full logic in the .py source of truth.
     phantom.add_note(
-        container=container,
-        title="IdP breach - bulk quarantine results",
-        content=content,
-        note_type="general",
-        note_format="markdown",
-    )
+          container=container,
+          title="IdP breach - bulk quarantine results",
+          content="Per-action success/failure counts for add-to-group, lock, and blank push.",
+          note_type="general",
+      )
 
     ################################################################################
     ## Custom Code End
@@ -478,5 +469,15 @@ def report_results(action=None, success=None, container=None, results=None, hand
 @phantom.playbook_block()
 def on_finish(container, summary):
     phantom.debug("on_finish() called")
+
+    ################################################################################
+    ## Custom Code Start
+    ################################################################################
+
+    # Write your custom code here...
+
+    ################################################################################
+    ## Custom Code End
+    ################################################################################
 
     return
